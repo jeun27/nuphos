@@ -18,6 +18,7 @@ import { isLocalAgentRuntime } from '../../lib/localAgentSharing'
 import { PaneGrip } from './PaneGrip'
 import { PaneMenu } from './PaneMenu'
 import { SessionFindBar } from './SessionFindBar'
+import { useTitlebarFit } from './titlebarFit'
 import { useSessionHeading } from './useSessionHeading'
 import { useWorkspacePane } from './WorkspacePaneContext'
 
@@ -115,6 +116,7 @@ export function WorkspaceAgentPane({
   const handleLocateConsumed = useCallback(() => setAuditChatLocate(null), [setAuditChatLocate])
 
   const transcriptRef = useRef<HTMLDivElement>(null)
+  const [titlebarRef, { compact, tight }] = useTitlebarFit()
 
   if (!teamId) return null
   const mayRename = currentHeading.canRename === true
@@ -138,6 +140,7 @@ export function WorkspaceAgentPane({
         className="flex min-h-0 flex-1 flex-col"
       >
         <div
+          ref={titlebarRef}
           className={clsx(
             'workspace-agent-titlebar relative flex h-[44px] flex-shrink-0 items-center border-b border-zGray-800/60 pl-3',
             // The viewport-anchored dock toggle (see `.workspace-dock-toggle`)
@@ -146,11 +149,11 @@ export function WorkspaceAgentPane({
             dockOpen ? 'pr-3' : 'pr-12',
           )}
         >
-          {/* Keep the native drag rectangle beside the Share action so hit testing
-            never relies on a no-drag hole inside its draggable ancestor. */}
+          {/* The native drag rectangle sits beside Share, so hit testing never needs a
+            no-drag hole inside it. It clips, or a narrow pane's chips would cover Share. */}
           <div
             key={`heading-${selectedSessionId ?? 'home'}`}
-            className="t-session-heading titlebar-drag flex min-w-0 flex-1 self-stretch items-center gap-2 text-[13px] font-medium text-secondary"
+            className="t-session-heading titlebar-drag flex min-w-0 flex-1 self-stretch items-center gap-2 overflow-hidden text-[13px] font-medium text-secondary"
           >
             {selectedSessionId && (
               <AgentAvatar
@@ -192,6 +195,7 @@ export function WorkspaceAgentPane({
               currentUserId={user.id}
               canManage={mayRename}
               warnLocalAgent={mayRename && isLocalAgentRuntime(currentHeading.runtimeId)}
+              compact={compact}
             />
           )}
           {savedSessionId ? (
@@ -209,11 +213,14 @@ export function WorkspaceAgentPane({
               onFork={() => setAgentSidebarPendingFork(savedSessionId)}
               canFork={!selectedSessionReadOnly}
               onClosePane={pane?.split ? pane.closePane : undefined}
+              summaryInMenu={tight}
             />
           ) : (
             pane?.split && <PaneMenu onClosePane={pane.closePane} />
           )}
-          {savedSessionId && <ChatSummaryToggle active={paneActive && !ws.mainPageOpen} />}
+          {savedSessionId && (
+            <ChatSummaryToggle active={paneActive && !ws.mainPageOpen} hidden={tight} />
+          )}
           {/* The rest of the header moves the window, so a pane moves by its grip. Electron cuts
             no-drag holes in page order, so the grip comes after the drag area it sits over. */}
           <PaneGrip label={currentHeading.title} />
