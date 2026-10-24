@@ -2,6 +2,8 @@ import clsx from 'clsx'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { shelfEdges, shelfWatchKey } from './boxDeskShelfModel'
+
 import './BoxDeskShelf.css'
 
 import type { KeyboardEvent, ReactNode } from 'react'
@@ -27,14 +29,13 @@ const smooth = () =>
 export function DeskShelf({ children }: { children: ReactNode }) {
   const row = useRef<HTMLUListElement>(null)
   const [more, setMore] = useState({ left: false, right: false })
+  const watchKey = shelfWatchKey(children)
 
   const measure = useCallback(() => {
     const el = row.current
 
     if (!el) return
-    // A pixel of slack: fractional zoom can leave the row a hair short of its end.
-    const left = el.scrollLeft > 1
-    const right = el.scrollLeft + el.clientWidth < el.scrollWidth - 1
+    const { left, right } = shelfEdges(el)
 
     setMore((was) => (was.left === left && was.right === right ? was : { left, right }))
   }, [])
@@ -56,7 +57,7 @@ export function DeskShelf({ children }: { children: ReactNode }) {
       el.removeEventListener('scroll', measure)
       el.removeEventListener('wheel', shiftWheel)
     }
-  }, [measure, children])
+  }, [measure, watchKey])
 
   const step = (direction: -1 | 1) =>
     row.current?.scrollBy({ left: direction * STEP_PX, behavior: smooth() })
