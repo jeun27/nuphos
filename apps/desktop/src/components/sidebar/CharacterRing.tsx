@@ -1,4 +1,3 @@
-import clsx from 'clsx'
 import { useId } from 'react'
 
 import { ProfileCharacterImage } from '../ProfileCharacterImage'
@@ -10,15 +9,14 @@ import type { ReactNode } from 'react'
 
 /**
  * A character, or anything else in `fallback`, inside a thin ring. For a stat with a natural
- * maximum the ring fills to it; for a plain count it is a quiet full ring. `square` keeps a
- * square icon (a workspace logo) square instead of cropping it to a circle.
+ * maximum the ring fills to it; for a plain count it is a quiet full ring. What sits inside
+ * is cropped to a circle, so a square logo or photo fills the ring with no corners showing.
  */
 export function CharacterRing({
   size,
   stroke,
   character,
   fallback,
-  square = false,
   fraction,
   looping = false,
   plays = 0,
@@ -26,7 +24,6 @@ export function CharacterRing({
   size: number
   stroke: number
   character?: ProfileCharacter
-  square?: boolean
   fallback: ReactNode
   /** Ring fill 0 to 1, or null for a quiet full ring that is not progress. */
   fraction: number | null
@@ -77,10 +74,7 @@ export function CharacterRing({
         />
       </svg>
       <span
-        className={clsx(
-          'absolute flex items-center justify-center overflow-hidden',
-          square ? 'rounded-[5px]' : 'rounded-full',
-        )}
+        className="absolute flex items-center justify-center overflow-hidden rounded-full"
         style={{ inset }}
       >
         {character ? (

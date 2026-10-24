@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Avatar } from '../../components/Avatar'
 import { BadgeStatPicker } from '../../components/sidebar/BadgeStatPicker'
 import { CharacterRing } from '../../components/sidebar/CharacterRing'
+import { CircleFill } from '../../components/sidebar/WorkspaceBadge'
 import { agentSessionsCacheKey } from '../../components/sidebar/state'
 import { useBadgeReading, useBadgeStat } from '../../hooks/useBadgeStat'
 import { readSwrCache } from '../../lib/swrCache'
@@ -55,9 +56,8 @@ export function SidebarBadgeSection({
               <CharacterRing
                 size={52}
                 stroke={3}
-                fallback={icon}
+                fallback={<CircleFill>{icon}</CircleFill>}
                 fraction={reading.fraction}
-                square
               />
             )}
             {stat !== 'none' && reading.badge && (

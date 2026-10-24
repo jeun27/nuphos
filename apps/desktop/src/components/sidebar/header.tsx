@@ -140,6 +140,7 @@ function TeamSwitcherMenu({
             <WorkspaceBadge
               user={character.user}
               icon={tile}
+              ringIcon={teamSegment.icon}
               teamId={badgeData?.teamId}
               sessions={badgeData?.sessions}
               onUserUpdated={character.onUserUpdated}

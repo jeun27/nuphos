@@ -7,14 +7,25 @@ import type { AgentConversation } from '../../api'
 import type { UserInfo } from '../../types'
 import type { ReactNode } from 'react'
 
+/** Stretches an icon (a logo image or initials tile) to fill a circle, centred and cropped. */
+export function CircleFill({ children }: { children: ReactNode }) {
+  return (
+    <span className="flex h-full w-full items-center justify-center [&>*]:!h-full [&>*]:!w-full [&>*]:!rounded-none [&_img]:object-cover [&>svg]:!h-full [&>svg]:!w-full">
+      {children}
+    </span>
+  )
+}
+
 /**
  * The workspace icon in the sidebar's workspace row, in a thin ring with a badge for the
- * one stat the person picked in Team settings › General. It only displays: clicking it
- * opens the workspace menu. With no stat picked to show, it is the plain icon.
+ * one stat the person picked in Team settings › General, cropped to a circle to match the
+ * ring. It only displays: clicking it opens the workspace menu. With no stat picked to
+ * show, it is the plain square icon, as before.
  */
 export function WorkspaceBadge({
   user,
   icon,
+  ringIcon,
   teamId,
   sessions = [],
   onUserUpdated,
@@ -22,6 +33,8 @@ export function WorkspaceBadge({
   user: UserInfo
   /** The workspace icon exactly as the switcher shows it: a logo or initials. */
   icon: ReactNode
+  /** The same icon unsized, to fill the ring as a circle. */
+  ringIcon: ReactNode
   teamId?: string
   /** This workspace's sessions, as the sidebar lists them. */
   sessions?: readonly AgentConversation[]
@@ -38,7 +51,12 @@ export function WorkspaceBadge({
 
   return (
     <span className="relative flex-none" title={reading.summary}>
-      <CharacterRing size={26} stroke={2} fallback={icon} fraction={reading.fraction} square />
+      <CharacterRing
+        size={26}
+        stroke={2}
+        fallback={<CircleFill>{ringIcon}</CircleFill>}
+        fraction={reading.fraction}
+      />
       {reading.badge && (
         <span
           aria-hidden
