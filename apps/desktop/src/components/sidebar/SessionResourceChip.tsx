@@ -3,6 +3,7 @@ import { Terminal, X } from 'lucide-react'
 import { ResourcePreview } from '../ui/resource-preview'
 
 import { ResourceListMenu } from './ResourceListMenu'
+import { ResourceMark } from './ResourceMark'
 import { chipNames, resourceLabel, resourceStatus } from './sessionResourcePresentation'
 import { menuChipClass, resourceStyle, titlebarChip } from './sessionResourceStyle'
 
@@ -129,6 +130,7 @@ function ResourceBadge({
       >
         <span className="inline-flex shrink-0">{icon}</span>
         <span className="truncate">{label}</span>
+        <ResourceMark resource={resource} />
       </Label>
       {!github && unlinkButton}
     </span>

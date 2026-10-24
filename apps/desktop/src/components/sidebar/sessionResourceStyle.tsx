@@ -2,6 +2,8 @@ import { faDiscord } from '@fortawesome/free-brands-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { GitMerge, GitPullRequest, GitPullRequestClosed } from 'lucide-react'
 
+import { pullStateColor } from './sessionResourcePresentation'
+
 import type { SessionResource } from '../../api/session-resource-types'
 import type { ReactNode } from 'react'
 
@@ -69,13 +71,6 @@ const linearStates: Partial<Record<string, { glyph: ReactNode; color: string }>>
   duplicate: { glyph: cutout('M5 5l4 4M9 5l-4 4'), color: 'text-tertiary' },
 }
 
-const openColor = {
-  none: 'session-resource-open',
-  checks_failed: 'session-resource-failing',
-  changes_requested: 'session-resource-blocked',
-  conflict: 'session-resource-blocked',
-} as const
-
 export function resourceStyle(resource: SessionResource): { icon: ReactNode; color: string } {
   if (resource.provider === 'linear') {
     const state = linearStates[resource.stateType ?? '']
@@ -106,17 +101,11 @@ export function resourceStyle(resource: SessionResource): { icon: ReactNode; col
       icon: <FontAwesomeIcon icon={faDiscord} className={`${iconClass} text-[#5865f2]`} />,
       color: 'text-secondary',
     }
-  if (resource.state === 'merged')
-    return { icon: <GitMerge className={iconClass} />, color: 'session-resource-merged' }
-  if (resource.state === 'closed')
-    return {
-      icon: <GitPullRequestClosed className={iconClass} />,
-      color: 'session-resource-closed',
-    }
+  const color = pullStateColor(resource)
 
-  // Open: green, unless something holds it up. Red needs a fix; yellow waits on a person.
-  return {
-    icon: <GitPullRequest className={iconClass} />,
-    color: openColor[resource.health ?? 'none'],
-  }
+  if (resource.state === 'merged') return { icon: <GitMerge className={iconClass} />, color }
+  if (resource.state === 'closed')
+    return { icon: <GitPullRequestClosed className={iconClass} />, color }
+
+  return { icon: <GitPullRequest className={iconClass} />, color }
 }
