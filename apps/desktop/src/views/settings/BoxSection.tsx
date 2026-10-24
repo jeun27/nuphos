@@ -8,6 +8,7 @@ import { RUNTIME_INSTANCES_CHANGED } from '../../hooks/useRuntimeInstances'
 import { useThisComputer } from '../../hooks/useThisComputer'
 import { useWorkspaceTab } from '../../hooks/useWorkspaceTab'
 
+import { DeskShelf } from './BoxDeskShelf'
 import { BOX_METRICS_POLL_MS, boxAgents, boxPollMs, vanishedBoxes } from './boxPresentation'
 import { boxRestartEnded } from './boxRestartPresentation'
 import { boxRestarts } from './boxRestartStore'
@@ -146,10 +147,8 @@ export function BoxSection({
           </div>
         )}
         <div className="t-skel-content">
-          {/* Computers wrap onto new lines rather than scroll, so none is cut off at the edge. A
-              single one wider than a narrow pane still scrolls. */}
           {owned.length > 0 && (
-            <ul className="flex flex-wrap gap-x-10 gap-y-8 overflow-x-auto">
+            <DeskShelf>
               {owned.map((device) => (
                 <BoxRow
                   thisComputer={thisComputer?.deviceId === device.deviceId}
@@ -168,7 +167,7 @@ export function BoxSection({
                   }}
                 />
               ))}
-            </ul>
+            </DeskShelf>
           )}
           {ownComputer && thisComputer && (
             <div className="mt-3">
