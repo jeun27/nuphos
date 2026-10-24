@@ -18,6 +18,7 @@ import { deskModel } from './boxDeskModel'
 import { openBoxDesktop } from './boxDesktop'
 import { BoxHostUpdate } from './BoxHostUpdate'
 import { AccessHint, LiveDot, MachineLine } from './BoxParts'
+import { copyUid } from './boxCopyUid'
 import { openBoxPaywall } from './boxPaywallStore'
 import {
   BOX_BADGE,
@@ -130,11 +131,6 @@ export function BoxRow({
     })
 
   const model = deskModel(device)
-  const copyUid = () =>
-    navigator.clipboard.writeText(device.deviceId).then(
-      () => toast.success('UID copied'),
-      () => toast.error('Could not copy the UID'),
-    )
 
   return (
     <li className="flex w-[300px] shrink-0 flex-col">
@@ -199,7 +195,7 @@ export function BoxRow({
                 </MenuItem>
               )}
               <MenuItem onClick={() => setRenaming(true)}>Rename</MenuItem>
-              <MenuItem onClick={() => void copyUid()}>Copy UID</MenuItem>
+              <MenuItem onClick={() => void copyUid(device)}>Copy UID</MenuItem>
               {canShareBox(device) && (
                 <MenuItem onClick={() => setSharing(true)}>Manage access…</MenuItem>
               )}
