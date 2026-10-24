@@ -39,12 +39,15 @@ export function BoxSection({
   instances,
   onSelect,
   canCreate,
+  onOpenSettingsSection,
 }: {
   teamId: string
   /** Only the team's administrators make Boxes; the backend enforces it. */
   canCreate: boolean
   instances: RuntimeInstance[]
   onSelect: (runtimeId: string) => void
+  /** Opens a Settings section: here, Local runtime, where this computer's agent signs in. */
+  onOpenSettingsSection?: (section: string) => void
 }) {
   const thisComputer = useThisComputer()
   const [creating, setCreating] = useState(false)
@@ -94,6 +97,8 @@ export function BoxSection({
   const ownComputer = owned.find(
     (device) => device.box === undefined && device.deviceId === thisComputer?.deviceId,
   )
+  const setUpLocalAgent =
+    onOpenSettingsSection && (() => onOpenSettingsSection('device.localRuntime'))
 
   return (
     <section aria-label="Computers" className="min-w-0">
@@ -132,20 +137,19 @@ export function BoxSection({
           </div>
         ) : (
           <div className="t-skel-skeleton is-pulsing" aria-hidden="true">
-            <div className="flex h-[240px] w-[248px] flex-col gap-3 rounded-xl border border-zGray-800/70 p-3">
-              <div className="h-5 w-32 rounded bg-zGray-800/40" />
-              <div className="h-3 w-44 rounded bg-zGray-800/30" />
-              <div className="h-10 rounded bg-zGray-800/30" />
-              <div className="mt-auto flex gap-2">
-                <div className="h-10 w-10 rounded-lg bg-zGray-800/40" />
-                <div className="h-10 w-10 rounded-lg bg-zGray-800/40" />
-              </div>
+            <div className="flex w-[300px] flex-col">
+              <div className="mx-[10px] mb-[42px] mt-[44px] h-[184px] rounded-xl bg-zGray-800/40" />
+              <div className="h-px bg-zGray-800/70" />
+              <div className="mt-3 h-4 w-40 rounded bg-zGray-800/40" />
+              <div className="mt-2 h-3 w-52 rounded bg-zGray-800/30" />
             </div>
           </div>
         )}
         <div className="t-skel-content">
+          {/* Computers wrap onto new lines rather than scroll, so none is cut off at the edge. A
+              single one wider than a narrow pane still scrolls. */}
           {owned.length > 0 && (
-            <ul className="flex gap-3 overflow-x-auto pb-2">
+            <ul className="flex flex-wrap gap-x-10 gap-y-8 overflow-x-auto">
               {owned.map((device) => (
                 <BoxRow
                   thisComputer={thisComputer?.deviceId === device.deviceId}
@@ -154,6 +158,7 @@ export function BoxSection({
                   device={device}
                   agents={boxAgents(device.deviceId, instances)}
                   onSelect={onSelect}
+                  onSetUpLocalAgent={setUpLocalAgent}
                   {...(device === ownComputer && shareable
                     ? { onShare: () => setSharing(true) }
                     : {})}
