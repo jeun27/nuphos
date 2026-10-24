@@ -19,6 +19,7 @@ export const integrationsApi = {
   },
   setSessionShortcutsActive: (active: boolean) =>
     ipcRenderer.send('app:sessionShortcutsActive', active),
+  setDockActivity: (active: boolean) => ipcRenderer.send('app:dockActivity', active),
   k8sStartPortForward: (
     ctx: string,
     ns: string,

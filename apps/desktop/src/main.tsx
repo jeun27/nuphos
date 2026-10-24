@@ -11,6 +11,7 @@ import { AppErrorBoundary } from './components/AppErrorBoundary'
 import { ToastProvider } from './components/ui/ToastProvider'
 import { ThemeProvider } from './hooks/ThemeProvider'
 import { initAnalytics, track } from './lib/analytics'
+import { startDockActivity } from './lib/dockActivity'
 import { showFirstLaunchIntro } from './lib/firstLaunchIntro'
 import { isMac } from './lib/platform'
 
@@ -44,7 +45,15 @@ const offFullScreen = window.api.onWindowFullScreenChanged?.((fullScreen) => {
   document.documentElement.classList.toggle('window-fullscreen', fullScreen)
 })
 
-if (import.meta.hot) import.meta.hot.dispose(() => offFullScreen?.())
+const offDockActivity =
+  window.api.setDockActivity && startDockActivity((active) => window.api.setDockActivity?.(active))
+
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    offFullScreen?.()
+    offDockActivity?.()
+  })
+}
 
 onZoomOrResize()
 window.addEventListener('resize', onZoomOrResize)

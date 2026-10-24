@@ -8,6 +8,7 @@ import { archiveChat as archiveChatRequest } from '../../lib/archiveChat'
 import { announceChatArchived } from '../../lib/chatArchiveEvents'
 import { onChatTitleChanged } from '../../lib/chatTitleEvents'
 import { customResourceNavigationKey } from '../../lib/customResourceNavigation'
+import { setDockSessions } from '../../lib/dockActivity'
 import { cssDurationMs } from '../../lib/motion'
 import { readSwrCache, writeSwrCache } from '../../lib/swrCache'
 import { toast } from '../ui/toast'
@@ -185,6 +186,11 @@ export function useSidebarChats({
       clearInterval(interval)
     }
   }, [refreshSessions, agentSessionId, teamId])
+
+  // The Dock animates only for these: my chats in this team, refreshed by the poll above.
+  useEffect(() => {
+    if (teamId) setDockSessions(agentSessions.map((session) => session.sessionId))
+  }, [teamId, agentSessions])
 
   const [archivingIds, setArchivingIds] = useState<ReadonlySet<string>>(() => new Set())
 

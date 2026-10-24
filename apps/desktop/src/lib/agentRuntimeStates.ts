@@ -62,6 +62,11 @@ export function runtimeStateOf(sessionId: string | null | undefined): RuntimeExe
   return sessionId ? snapshot.get(sessionId) : undefined
 }
 
+/** Calls `listener` after every change, outside React. */
+export function onRuntimeStatesChange(listener: () => void): () => void {
+  return subscribe(listener)
+}
+
 export function useAgentRuntimeStates(): ReadonlyMap<string, RuntimeExecution> {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
 }

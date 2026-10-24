@@ -84,6 +84,8 @@ export type WindowShellApi = {
   onAppShortcut(cb: (action: AppShortcutAction) => void): () => void
   /** A visible chat owns the session shortcuts, so the main process may swallow them. */
   setSessionShortcutsActive(active: boolean): void
+  /** macOS: animates the Dock icon while any session runs. */
+  setDockActivity?(active: boolean): void
   k8sStartPortForward(
     context: string,
     ns: string,

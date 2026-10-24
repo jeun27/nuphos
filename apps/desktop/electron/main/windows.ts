@@ -10,6 +10,7 @@ import * as terminal from '../terminal'
 import { raiseWindow } from '../window-raise'
 
 import { flushPendingDeepLinks } from './deep-links'
+import './dock-animation-electron'
 import { APP_NAME, isDev } from './env'
 import { openExternal } from './open-external'
 import { liveSessionShortcut } from './session-shortcuts'
