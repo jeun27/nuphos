@@ -18,3 +18,12 @@ export function agentSlots(
 
   return thisComputer ? 'noLocalAgent' : 'agents'
 }
+
+/**
+ * Whether + (New runtime) shows: on any running machine, whatever the viewer's access. The backend
+ * lets a teammate a machine is shared with ('use') add their own agent there, so it is not kept
+ * to its managers.
+ */
+export function canAddAgent(state: MachineState): boolean {
+  return state === 'running'
+}

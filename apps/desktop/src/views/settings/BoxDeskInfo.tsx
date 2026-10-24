@@ -88,7 +88,7 @@ export function DeskAgents({
   onAdd: (provider: LocalAgentProvider) => void
   /** Opens User settings at Local runtime, where this computer's agent signs in. */
   onSetUp?: () => void
-  /** Whether the viewer may add an agent; without one and without agents the row stays empty. */
+  /** Whether + shows (see canAddAgent); without it and without agents the row stays empty. */
   canAdd: boolean
 }) {
   if (slots === 'noLocalAgent')
