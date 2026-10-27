@@ -6,6 +6,7 @@ import { claimComposerDrafts, clearComposerDrafts } from './components/agent/pan
 import { CurrentUserContext } from './hooks/useCurrentUser'
 import { forgetMacAccounts } from './hooks/useMacSignIn'
 import { identifyUser, resetAnalytics, track } from './lib/analytics'
+import { resetKeptPyramid } from './lib/facePile/keptPyramid'
 import { LoginView } from './views/LoginView'
 import { BoxPaywallHost } from './views/settings/BoxPaywall'
 
@@ -75,6 +76,8 @@ export default function App() {
           forgetMacAccounts()
           track('logout')
           resetAnalytics()
+          // The next sign-in starts with a standing face pyramid, not this session's pile.
+          resetKeptPyramid()
           setAuth({ status: 'anonymous' })
         }}
       />
