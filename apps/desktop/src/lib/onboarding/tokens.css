@@ -1,0 +1,206 @@
+/* One layout for every onboarding step, measured from the welcome step (the
+   baseline). UI is never scaled: only scene art may scale to fit .ob-scene.
+   Used through OnboardingShell.tsx; the variables are public for step CSS. */
+
+:root {
+  /* Sizes are true sizes, never a transform. The height-fitted ones live on
+     .ob-scroll below; widths follow the window width. */
+  --ob-pad-left: clamp(32px, 9vw, 120px);
+  --ob-pad-right: 32px;
+  --ob-col: 360px;
+  --ob-headline-lh: 0.92;
+  --ob-body-lh: 1.625;
+  --ob-helper: 12px;
+  --ob-label: 12px;
+  --ob-control-font: 14px;
+  --ob-small-button-h: 32px;
+  --ob-border: 2.5px;
+  --ob-radius: 12px;
+  --ob-shadow: 3px 3px 0 rgb(var(--color-text-base));
+  --ob-left-bg: rgb(var(--color-appBg));
+  /* The strip Log out sits in: 20 px from the bottom, a 16 px link and 20 px of air. */
+  --ob-logout-band: 56px;
+  /* The scene's floor band, set on the shell by a scene that has a floor (the face
+     pyramid). The column scrolls above it and never runs into the floor line. */
+  --ob-floor-band: 0px;
+  /* The scene takes what's right of the column, between 40% and 50% of the window
+     (more would run into WELCOME TO NUPHOS at 1180 px wide). */
+  --ob-scene-gap: 48px;
+  --ob-scene-w: clamp(
+    40vw,
+    calc(100vw - var(--ob-pad-left) - var(--ob-col) - var(--ob-scene-gap)),
+    50vw
+  );
+  /* Headlines may run past the column (WELCOME TO NUPHOS does) but wrap before the scene. */
+  --ob-headline-max: min(560px, calc(100vw - var(--ob-pad-left) - var(--ob-scene-w)));
+}
+
+.ob-shell {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  background: var(--ob-left-bg);
+  font-family: 'Space Mono', ui-monospace, monospace;
+}
+
+/* The column scrolls on its own when a step is taller than the window; the scene
+   and Log out stay put. Steps that fit never scroll and look exactly the same. */
+.ob-scroll {
+  /* Height-fitted sizes, each level from 1 (full size) to 0 (a readable floor), set
+     by OnboardingShell. --ob-fit-top sizes the headline and the space above it, one
+     level per window so the headline sits the same on every screen. --ob-fit sizes
+     the spacing and controls below it, fitted per screen. Every size is a whole
+     pixel, so the 2.5 px borders and shadows stay sharp on 1x screens. */
+  --ob-fit-top: 1;
+  --ob-fit: 1;
+  --ob-top: round(44px + 18px * var(--ob-fit-top), 1px);
+  --ob-headline-size: round(30px + (min(6.4vw, 72px) - 30px) * var(--ob-fit-top), 1px);
+  /* Logo, Back or stepper: a fixed slot so every headline starts at the same height. */
+  --ob-top-slot: round(32px + 24px * var(--ob-fit-top), 1px);
+  --ob-gap-top-slot: round(8px + 12px * var(--ob-fit-top), 1px);
+  --ob-gap-headline: round(6px + 6px * var(--ob-fit), 1px);
+  --ob-gap-lead: round(12px + 20px * var(--ob-fit), 1px);
+  --ob-gap-form: round(4px + 6px * var(--ob-fit), 1px);
+  --ob-gap-section: round(8px + 12px * var(--ob-fit), 1px);
+  --ob-body: round(12px + 1.5px * var(--ob-fit), 0.5px);
+  --ob-control-h: round(32px + 12px * var(--ob-fit), 1px);
+  --ob-card-pad: round(8px + 6px * var(--ob-fit), 1px);
+
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  bottom: var(--ob-floor-band);
+  overscroll-behavior: contain;
+}
+
+/* The tallest screens' top and headline, laid out but never seen (OnboardingShell). */
+.ob-probe {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.ob-shell[data-scene] .ob-scroll {
+  right: var(--ob-scene-w);
+}
+
+/* With Log out shown the column ends above its band, so nothing ever sits under it. */
+.ob-shell[data-logout] .ob-scroll {
+  bottom: max(var(--ob-logout-band), var(--ob-floor-band));
+}
+
+/* Window dragging lives in the title strip only, so it never swallows scrolling. */
+.ob-drag {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 44px;
+}
+
+.ob-main {
+  position: relative;
+  width: var(--ob-col);
+  max-width: calc(100vw - var(--ob-pad-left) - var(--ob-pad-right));
+  margin-left: var(--ob-pad-left);
+  padding-top: var(--ob-top);
+  /* A little air below the last control when the column scrolls. */
+  padding-bottom: 24px;
+}
+
+.ob-top {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: var(--ob-top-slot);
+  margin-bottom: var(--ob-gap-top-slot);
+}
+
+.ob-headline {
+  width: max-content;
+  max-width: var(--ob-headline-max);
+  margin: 0 0 var(--ob-gap-headline);
+  color: rgb(var(--color-text-base));
+  font-family: 'Bebas Neue', 'Space Mono', sans-serif;
+  font-size: var(--ob-headline-size);
+  font-weight: 400;
+  line-height: var(--ob-headline-lh);
+  letter-spacing: 0.005em;
+  text-transform: uppercase;
+}
+
+.ob-lead {
+  margin: 0 0 var(--ob-gap-lead);
+  color: rgb(var(--color-text-secondary));
+  font-size: var(--ob-body);
+  line-height: var(--ob-body-lh);
+}
+
+.ob-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ob-gap-form);
+}
+
+.ob-helper {
+  color: rgb(var(--color-text-tertiary));
+  font-size: var(--ob-helper);
+  line-height: var(--ob-body-lh);
+}
+
+.ob-label {
+  color: rgb(var(--color-text-secondary));
+  font-size: var(--ob-label);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Scene: decorative art in its own region with its own background. */
+.ob-scene {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: var(--ob-scene-w);
+  overflow: hidden;
+}
+
+/* Log out: bottom-left, lined up with the column. */
+.ob-logout {
+  position: absolute;
+  z-index: 2;
+  bottom: 20px;
+  left: var(--ob-pad-left);
+}
+
+/* The logo fills the top slot, so it shrinks with it on short windows. */
+.ob-logo {
+  width: var(--ob-top-slot);
+  height: var(--ob-top-slot);
+}
+
+/* Too narrow for art beside the form (the minimum window at a high zoom): below
+   720 px the column no longer fits left of a 40% scene, so the scene steps aside
+   and the column takes the width. */
+@media (max-width: 719px) {
+  :root {
+    --ob-scene-w: 0px;
+  }
+
+  .ob-shell {
+    --ob-floor-band: 0px !important;
+  }
+
+  .ob-scene {
+    display: none;
+  }
+}

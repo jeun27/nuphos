@@ -1,0 +1,117 @@
+/* Onboarding controls, the welcome step's chunky frame on every step. Put the
+   class on the shared Button or a native input; behaviour and focus rings stay
+   theirs. The element+class selectors win over Button's size utilities. */
+
+button.ob-primary,
+button.ob-outline {
+  height: var(--ob-control-h);
+  border: var(--ob-border) solid rgb(var(--color-text-base));
+  border-radius: var(--ob-radius);
+  box-shadow: var(--ob-shadow);
+  font-size: var(--ob-control-font);
+  font-weight: 700;
+}
+
+button.ob-primary {
+  justify-content: space-between;
+}
+
+button.ob-outline {
+  background: rgb(var(--color-background-surface));
+  color: rgb(var(--color-text-base));
+}
+
+html.light button.ob-outline {
+  background: #fff;
+}
+
+/* Small actions inside a card (Join, Sign in): same frame, shorter. */
+button.ob-small {
+  height: var(--ob-small-button-h);
+  padding: 0 14px;
+  border: 2px solid rgb(var(--color-text-base));
+  border-radius: 9px;
+  font-size: var(--ob-helper);
+  font-weight: 700;
+}
+
+button.ob-primary:disabled,
+button.ob-outline:disabled,
+button.ob-small:disabled {
+  opacity: 0.45;
+}
+
+/* Back, Log out, Resend: text links. */
+button.ob-link {
+  height: auto;
+  padding: 2px 0;
+  gap: 6px;
+  background: transparent;
+  color: rgb(var(--color-text-base));
+  font-size: var(--ob-helper);
+  font-weight: 700;
+}
+
+button.ob-link:hover {
+  background: transparent;
+  color: rgb(var(--color-zViolet-accent));
+}
+
+input.ob-input,
+textarea.ob-input {
+  width: 100%;
+  min-height: var(--ob-control-h);
+  padding: var(--ob-gap-form) 12px;
+  border: var(--ob-border) solid rgb(var(--color-text-base));
+  border-radius: var(--ob-radius);
+  background: rgb(var(--color-background-surface));
+  box-shadow: var(--ob-shadow);
+  color: rgb(var(--color-text-base));
+  font-size: var(--ob-control-font);
+  outline: none;
+}
+
+/* A whole-pixel box like the buttons beside it, not one sized by its text. */
+input.ob-input {
+  height: var(--ob-control-h);
+}
+
+html.light input.ob-input,
+html.light textarea.ob-input {
+  background: #fff;
+}
+
+input.ob-input:focus,
+textarea.ob-input:focus {
+  border-color: rgb(var(--color-zViolet-accent));
+}
+
+/* A list row: invitation, team, runtime. */
+.ob-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: var(--ob-card-pad);
+  border: var(--ob-border) solid rgb(var(--color-text-base));
+  border-radius: var(--ob-radius);
+  background: rgb(var(--color-background-surface));
+  box-shadow: var(--ob-shadow);
+  font-size: var(--ob-body);
+}
+
+html.light .ob-card {
+  background: #fff;
+}
+
+/* A card whose content stacks: a runtime with its sign-in, a comparison column. */
+.ob-card-stack {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* The radio card the user picked (Base UI sets data-checked). */
+.ob-card[data-checked],
+html.light .ob-card[data-checked] {
+  border-color: rgb(var(--color-zViolet-accent));
+  background: rgba(var(--color-zViolet-accent), 0.12);
+}
