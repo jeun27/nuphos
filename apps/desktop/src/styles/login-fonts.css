@@ -1,0 +1,39 @@
+/* Sign-in type, bundled with the app (SIL OFL 1.1, licences next to the files).
+   Never load these from a CDN: the sign-in screen must render offline. */
+
+@font-face {
+  font-family: 'Bebas Neue';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../assets/fonts/bebas-neue-latin-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Space Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../assets/fonts/space-mono-latin-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Space Mono';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('../assets/fonts/space-mono-latin-700-normal.woff2') format('woff2');
+}
+
+.login-type {
+  font-family: 'Space Mono', ui-monospace, monospace;
+}
+
+.login-headline {
+  font-family: 'Bebas Neue', 'Space Mono', sans-serif;
+  font-size: clamp(44px, 6.4vw, 72px);
+  font-weight: 400;
+  line-height: 0.92;
+  letter-spacing: 0.005em;
+  text-transform: uppercase;
+}
