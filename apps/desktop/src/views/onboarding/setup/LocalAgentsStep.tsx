@@ -21,7 +21,7 @@ function InlineSignIn({ provider }: { provider: CliLoginProvider }) {
 
   if (!busy)
     return (
-      <Button size="sm" onClick={() => void start()}>
+      <Button size="sm" onClick={() => void start()} className="ob-small self-start">
         {retry ? 'Try again' : 'Sign in'}
       </Button>
     )
@@ -69,12 +69,7 @@ function LocalAgentSetupCard({ provider }: { provider: CliLoginProvider }) {
   const Icon = ICON[provider]
 
   return (
-    <div
-      className={clsx(
-        'space-y-3 rounded-xl border border-zGray-800 bg-zGray-900 px-4 py-3.5',
-        status === 'missing' && 'opacity-60',
-      )}
-    >
+    <div className={clsx('ob-card ob-card-stack', status === 'missing' && 'opacity-60')}>
       <div className="flex items-center gap-3">
         <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-zGray-800 text-main">
           <Icon className="h-5 w-5" />
@@ -108,7 +103,11 @@ export function LocalAgentsStep({ onContinue }: { onContinue: () => void }) {
       title={`Connect runtimes on ${computer}`}
       subtitle={`Nuphos runs these runtimes with the subscriptions you already have. Here’s what we found on ${computer}.`}
       hint="You can change this later in Settings › Runtimes."
-      actions={<Button onClick={onContinue}>Continue</Button>}
+      actions={
+        <Button size="lg" onClick={onContinue} className="ob-primary w-full">
+          Continue
+        </Button>
+      }
     >
       <div className="space-y-3">
         {LOCAL_SETUP_PROVIDERS.map((provider) => (

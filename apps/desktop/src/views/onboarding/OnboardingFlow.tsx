@@ -1,10 +1,13 @@
-import { useReducedMotion } from 'framer-motion'
-import { ArrowLeft, LogOut } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { AgentPanelStage } from './flow/AgentPanelStage'
-import { deriveDefaultWorkspaceName } from './flow/shared'
+import { OnboardingLogo } from '../../lib/onboarding/OnboardingLogo'
+import { OnboardingShell } from '../../lib/onboarding/OnboardingShell'
+import { FacePyramid } from '../login/FacePyramid'
+
+import { deriveDefaultWorkspaceName, deriveFirstName } from './flow/shared'
 import { useJoinOptionsSync, useWorkspaceActions } from './flow/use-join-options'
+import { workspaceCopy } from './flow/workspaceCopy'
+import { WorkspaceStep } from './flow/WorkspaceStep'
 import { AgentSetupFlow } from './setup/AgentSetupFlow'
 
 import type { ChatStep, OnboardingFlowProps } from './flow/shared'
@@ -57,7 +60,10 @@ export function OnboardingFlow({
   const [selectedTeamIds, setSelectedTeamIds] = useState<ReadonlySet<string>>(() => new Set())
   const [committing, setCommitting] = useState(false)
   const [joinedTeams, setJoinedTeams] = useState<{ id: string; name: string }[]>([])
-  const reduce = useReducedMotion() ?? false
+  // The face pyramid keeps clear of the column and the headline.
+  const columnRef = useRef<HTMLDivElement>(null)
+  const headlineRef = useRef<HTMLHeadingElement>(null)
+  const [keepOut] = useState(() => [columnRef, headlineRef])
 
   useJoinOptionsSync({
     onJoinDiscoverableTeam,
@@ -121,17 +127,31 @@ export function OnboardingFlow({
 
   if (setupTeam) return <AgentSetupFlow team={setupTeam} onFinish={() => onFinish(setupTeam.id)} />
 
+  const { headline, lead } = workspaceCopy({
+    chatStep,
+    workspaceMode: effectiveWorkspaceMode,
+    hasJoinOptions,
+    firstName: deriveFirstName(user),
+    workspaceName,
+  })
+
   return (
-    // The overlay stays transparent so the window's native vibrancy/blur shows
-    // through the (translucent) sidebar-surface, like the real docked sidebar.
-    // `titlebar-drag` makes the whole page a window-drag region; interactive
-    // controls opt out with `titlebar-no-drag`.
-    <div className="titlebar-drag fixed inset-0 z-40 flex flex-col text-main">
-      <div className="relative flex-1 min-h-0">
-        <AgentPanelStage
+    // Full-window, above the app. The shell's title strip drags the window.
+    <div className="fixed inset-0 z-40 text-main">
+      <OnboardingShell
+        headline={headline}
+        lead={lead}
+        top={<OnboardingLogo />}
+        // Back returns from the create form to the team list, the only screen to go back to.
+        onBack={canGoBack ? handleShowPickTeams : undefined}
+        onLogOut={onLogout}
+        scene={<FacePyramid keepOut={keepOut} />}
+        columnRef={columnRef}
+        headlineRef={headlineRef}
+      >
+        <WorkspaceStep
           chatStep={chatStep}
-          user={user}
-          reduce={reduce}
+          workspaceMode={effectiveWorkspaceMode}
           workspaceName={workspaceName}
           onWorkspaceNameChange={setWorkspaceName}
           creating={creating}
@@ -145,35 +165,11 @@ export function OnboardingFlow({
           committing={committing}
           onToggleInvitation={toggleInvitationSelected}
           onToggleTeam={toggleTeamSelected}
-          workspaceMode={effectiveWorkspaceMode}
           onShowCreateWorkspace={handleShowCreateWorkspace}
           joinedTeams={joinedTeams}
           onContinueJoined={() => void handleContinueSelected()}
         />
-        {/* Back — top-left, directly mirroring Log out at the bottom-left. It
-            sits BELOW the 42px titlebar row rather than inside it, so it never
-            crowds the macOS traffic lights. */}
-        {canGoBack && (
-          <button
-            type="button"
-            onClick={handleShowPickTeams}
-            className="titlebar-no-drag absolute top-12 left-3 z-10 flex items-center gap-1.5 rounded-md px-2 py-1 text-[12px] text-tertiary transition-colors hover:bg-zGray-800/60 hover:text-secondary"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" strokeWidth={1.8} />
-            Back
-          </button>
-        )}
-        {onLogout && (
-          <button
-            type="button"
-            onClick={onLogout}
-            className="titlebar-no-drag absolute bottom-3 left-3 z-10 flex items-center gap-1.5 rounded-md px-2 py-1 text-[12px] text-tertiary transition-colors hover:bg-zGray-800/60 hover:text-secondary"
-          >
-            <LogOut className="h-3.5 w-3.5" strokeWidth={1.8} />
-            Log out
-          </button>
-        )}
-      </div>
+      </OnboardingShell>
     </div>
   )
 }

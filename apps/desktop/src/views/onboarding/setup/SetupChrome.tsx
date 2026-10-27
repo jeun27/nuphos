@@ -1,6 +1,13 @@
 import { Radio } from '@base-ui/react/radio'
 import clsx from 'clsx'
 import { Check, ChevronRight } from 'lucide-react'
+import { useContext, useRef, useState } from 'react'
+
+import { OnboardingLogo } from '../../../lib/onboarding/OnboardingLogo'
+import { OnboardingShell } from '../../../lib/onboarding/OnboardingShell'
+import { FacePyramid } from '../../login/FacePyramid'
+
+import { SetupStepContext } from './agentSetup'
 
 import type { LocalAgentStatus } from './agentSetup'
 import type { ReactNode } from 'react'
@@ -40,7 +47,10 @@ export function SetupStepper({ step }: { step: 1 | 2 }) {
   )
 }
 
-/** The centered column every setup screen uses: breadcrumb, heading, body, then its actions. */
+/**
+ * Every setup screen in the onboarding layout: the stepper (or the logo) on top,
+ * the heading and body in the column, its actions below, and the face pyramid.
+ */
 export function SetupScreen({
   breadcrumb,
   title,
@@ -56,11 +66,23 @@ export function SetupScreen({
   hint?: ReactNode
   actions: ReactNode
 }) {
+  const step = useContext(SetupStepContext)
+  const columnRef = useRef<HTMLDivElement>(null)
+  const headlineRef = useRef<HTMLHeadingElement>(null)
+  const [keepOut] = useState(() => [columnRef, headlineRef])
+
   return (
-    <section className="mx-auto w-full max-w-[720px] space-y-6">
-      <header className="space-y-2">
+    <OnboardingShell
+      headline={title}
+      lead={subtitle}
+      top={step ? <SetupStepper step={step} /> : <OnboardingLogo />}
+      scene={<FacePyramid keepOut={keepOut} />}
+      columnRef={columnRef}
+      headlineRef={headlineRef}
+    >
+      <div className="ob-form">
         {breadcrumb && (
-          <p className="flex items-center gap-1 text-[12px] text-tertiary">
+          <p className="ob-label flex items-center gap-1">
             {breadcrumb.split(' › ').map((part, index) => (
               <span key={part} className="flex items-center gap-1">
                 {index > 0 && <ChevronRight className="h-3 w-3" />}
@@ -69,15 +91,11 @@ export function SetupScreen({
             ))}
           </p>
         )}
-        <h1 className="text-[22px] font-semibold text-main">{title}</h1>
-        {subtitle && <p className="text-[13.5px] leading-6 text-secondary">{subtitle}</p>}
-      </header>
-      {children}
-      <footer className="flex items-center gap-3 border-t border-zGray-800/70 pt-4">
-        <span className="min-w-0 flex-1 text-[12px] text-tertiary">{hint}</span>
-        {actions}
-      </footer>
-    </section>
+        {children}
+        {hint && <p className="ob-helper">{hint}</p>}
+        <div className="flex items-center gap-3">{actions}</div>
+      </div>
+    </OnboardingShell>
   )
 }
 
@@ -123,12 +141,8 @@ export function RadioCard({
   return (
     <Radio.Root
       value={value}
-      className={clsx(
-        'flex w-full items-start gap-3 rounded-xl border px-4 py-3.5 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-zViolet-accent',
-        selected
-          ? 'border-zViolet-accent bg-zViolet-accent/10'
-          : 'border-zGray-800 bg-zGray-900 hover:border-zGray-700',
-      )}
+      // Base UI marks the chosen card data-checked; controls.css lights it violet.
+      className="ob-card w-full items-start text-left outline-none focus-visible:ring-2 focus-visible:ring-zViolet-accent"
     >
       {icon && <span className="mt-0.5 text-secondary">{icon}</span>}
       <span className="min-w-0 flex-1">

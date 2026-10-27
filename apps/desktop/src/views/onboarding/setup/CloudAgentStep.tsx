@@ -1,51 +1,14 @@
 import { RadioGroup } from '@base-ui/react/radio-group'
-import { Box, Cloud, Laptop, Server } from 'lucide-react'
+import { Box, Server } from 'lucide-react'
 import { useState } from 'react'
 
 import { Button } from '../../../components/ui/button'
+import { CLOUD_HEADLINE } from '../../../lib/onboarding/tallScreens'
 import { useBoxAvailable } from '../../settings/useAgentDevices'
 
 import { RadioCard, SetupScreen } from './SetupChrome'
 
 export type CloudChoice = 'box' | 'self-hosted'
-
-function Comparison() {
-  const columns = [
-    {
-      icon: <Laptop className="h-4 w-4" />,
-      title: 'On this computer',
-      points: ['Stops when your computer sleeps', 'Only reachable from this computer'],
-      tone: 'text-tertiary',
-    },
-    {
-      icon: <Cloud className="h-4 w-4" />,
-      title: 'In the cloud',
-      points: ['Always on, even with the lid closed', 'Continue from your phone'],
-      tone: 'text-success',
-    },
-  ]
-
-  return (
-    <div className="grid grid-cols-2 gap-3">
-      {columns.map((column) => (
-        <div
-          key={column.title}
-          className="space-y-2 rounded-xl border border-zGray-800 bg-zGray-900/60 px-4 py-3"
-        >
-          <p className="flex items-center gap-2 text-[13px] font-medium text-main">
-            {column.icon}
-            {column.title}
-          </p>
-          <ul className={`space-y-1 text-[12.5px] ${column.tone}`}>
-            {column.points.map((point) => (
-              <li key={point}>{point}</li>
-            ))}
-          </ul>
-        </div>
-      ))}
-    </div>
-  )
-}
 
 /** Step 2: why a cloud agent, then which kind — or, for non-admins, who adds one. */
 export function CloudAgentStep({
@@ -64,22 +27,28 @@ export function CloudAgentStep({
 
   return (
     <SetupScreen
-      title="Keep working when your computer is closed"
+      // One of the tallest screens: its headline sizes every screen's (tallScreens.ts).
+      title={CLOUD_HEADLINE}
       subtitle="Local runtimes stop when this computer sleeps or Nuphos quits. A cloud runtime keeps running, so you can close your laptop and pick up where your agents left off on your phone."
       actions={
         <>
           {isAdmin && (
-            <Button variant="ghost" onClick={onSkip}>
+            <Button variant="secondary" size="lg" onClick={onSkip} className="ob-outline flex-1">
               Skip for now
             </Button>
           )}
-          <Button onClick={() => (isAdmin ? onChoose(choice) : onSkip())}>Continue</Button>
+          <Button
+            size="lg"
+            onClick={() => (isAdmin ? onChoose(choice) : onSkip())}
+            className="ob-primary flex-1"
+          >
+            Continue
+          </Button>
         </>
       }
     >
-      <Comparison />
       <div className="space-y-3">
-        <h2 className="text-[14px] font-medium text-main">Add a cloud runtime</h2>
+        <h2 className="ob-label">Add a cloud runtime</h2>
         {isAdmin && (
           <RadioGroup
             value={choice}
@@ -107,7 +76,7 @@ export function CloudAgentStep({
           </RadioGroup>
         )}
         {!isAdmin && (
-          <p className="rounded-xl border border-zGray-800 bg-zGray-900/60 px-4 py-3 text-[13px] leading-5 text-secondary">
+          <p className="ob-card leading-5 text-secondary">
             Cloud runtimes are added by workspace admins. Ask an admin of this workspace to add one;
             it shows up for you automatically.
           </p>

@@ -21,7 +21,7 @@ function AgentRow({
   status: 'ready' | 'connected'
 }) {
   return (
-    <li className="flex items-center gap-3 rounded-xl border border-zGray-800 bg-zGray-900 px-4 py-3">
+    <li className="ob-card">
       <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-zGray-800 text-main">
         {icon}
       </span>
@@ -53,7 +53,11 @@ export function SetupComplete({
           ? 'You can add runtimes any time from Settings › Runtimes.'
           : 'These runtimes are ready for your agents.'
       }
-      actions={<Button onClick={onFinish}>Start using Nuphos</Button>}
+      actions={
+        <Button size="lg" onClick={onFinish} className="ob-primary w-full">
+          Start using Nuphos
+        </Button>
+      }
     >
       {!empty && (
         <ul className="space-y-3">

@@ -38,9 +38,15 @@ function SignInPanel({
       hint="You can sign in later from Settings › Runtimes."
       actions={
         <>
-          {state.failed && <Button onClick={state.restart}>Try again</Button>}
+          {state.failed && (
+            <Button size="lg" onClick={state.restart} className="ob-primary flex-1">
+              Try again
+            </Button>
+          )}
           <Button
-            variant="ghost"
+            variant="secondary"
+            size="lg"
+            className="ob-outline flex-1"
             disabled={state.closing}
             onClick={() => void state.cancel().then((left) => left && onBack())}
           >
@@ -59,7 +65,7 @@ function SignInPanel({
           {state.reachable ? 'Your runtime is running' : 'Starting your runtime…'}
         </li>
         {state.reachable && (
-          <li className="space-y-4 rounded-xl border border-zGray-800 bg-zGray-900/60 p-4">
+          <li className="ob-card ob-card-stack">
             <RuntimeLoginBody instance={instance} state={state} />
           </li>
         )}
@@ -107,10 +113,12 @@ export function BoxCloudSetup({
         subtitle="Your computer is running. Pick the runtime to sign in first; you can sign in the others later from Settings › Runtimes."
         actions={
           <>
-            <Button variant="ghost" onClick={onBack}>
+            <Button variant="secondary" size="lg" onClick={onBack} className="ob-outline flex-1">
               Back
             </Button>
-            <Button onClick={() => setInstance(picked)}>Continue</Button>
+            <Button size="lg" onClick={() => setInstance(picked)} className="ob-primary flex-1">
+              Continue
+            </Button>
           </>
         }
       >
@@ -141,11 +149,22 @@ export function BoxCloudSetup({
       subtitle="A computer is a Linux machine in the cloud with Claude Code and Codex on it. Your agents keep working on it while your laptop sleeps, and only you can use it."
       actions={
         <>
-          <Button variant="ghost" disabled={box.creating} onClick={onBack}>
+          <Button
+            variant="secondary"
+            size="lg"
+            disabled={box.creating}
+            onClick={onBack}
+            className="ob-outline flex-1"
+          >
             Back
           </Button>
           {box.phase === 'idle' && (
-            <Button disabled={box.creating} onClick={() => void box.create()}>
+            <Button
+              size="lg"
+              disabled={box.creating}
+              onClick={() => void box.create()}
+              className="ob-primary flex-1"
+            >
               {box.creating ? 'Creating…' : 'Create computer'}
             </Button>
           )}

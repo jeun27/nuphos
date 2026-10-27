@@ -40,8 +40,6 @@ export type OnboardingFlowProps = {
 // straight in the app.
 export type ChatStep = 'workspace' | 'creating'
 
-export const EASE_OUT = [0.22, 1, 0.36, 1] as const
-
 // Display handle for greetings and defaults: the first token of the user's
 // name, with the domain stripped when that name is just an email address —
 // "sam+1@example.com" greets as "sam+1", never the full address.

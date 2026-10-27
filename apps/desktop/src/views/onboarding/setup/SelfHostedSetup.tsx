@@ -6,6 +6,7 @@ import { api } from '../../../api'
 import { Button } from '../../../components/ui/button'
 import { useRuntimeInstances } from '../../../hooks/useRuntimeInstances'
 import { useStableCallback } from '../../../hooks/useStableCallback'
+import { deployHeadline } from '../../../lib/onboarding/tallScreens'
 import { ConnectAgentDialog } from '../../settings/ConnectAgentDialog'
 import { ExternalRuntimeForm } from '../../settings/ExternalRuntimeForm'
 
@@ -25,7 +26,7 @@ export type ConnectedCloudAgent = { provider: AgentProvider; label: string }
 
 function DeployStep({ n, title, children }: { n: number; title: string; children: ReactNode }) {
   return (
-    <li className="flex gap-3 rounded-xl border border-zGray-800 bg-zGray-900/60 px-4 py-3.5">
+    <li className="ob-card">
       <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zGray-800 text-[12px] font-semibold text-secondary">
         {n}
       </span>
@@ -69,9 +70,9 @@ function DeployAndConnect({
   return (
     <SetupScreen
       breadcrumb={BREADCRUMB}
-      title={`Deploy on ${name}`}
+      title={deployHeadline(name)}
       actions={
-        <Button variant="ghost" onClick={onBack}>
+        <Button variant="secondary" size="lg" onClick={onBack} className="ob-outline flex-1">
           Back
         </Button>
       }
@@ -165,10 +166,12 @@ export function SelfHostedSetup({
       title="Where do you want to run it?"
       actions={
         <>
-          <Button variant="ghost" onClick={onBack}>
+          <Button variant="secondary" size="lg" onClick={onBack} className="ob-outline flex-1">
             Back
           </Button>
-          <Button onClick={() => setDeploying(true)}>Continue</Button>
+          <Button size="lg" onClick={() => setDeploying(true)} className="ob-primary flex-1">
+            Continue
+          </Button>
         </>
       }
     >

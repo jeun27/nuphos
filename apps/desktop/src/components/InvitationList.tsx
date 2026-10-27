@@ -37,7 +37,7 @@ type InvitationListProps = {
   onRejectInvitation?: (invitationId: string) => void
   onJoinDiscoverableTeam?: (team: DiscoverableTeam) => void
   selection?: InvitationSelection
-  /** Card surface: 'stage' is the onboarding panel's frosted 2xl card;
+  /** Card surface: 'stage' is the onboarding column's framed ob-card;
    *  'modal' matches the tighter card idiom used inside Modal/popover
    *  surfaces (SidebarInvitations, TeamMembersView). */
   variant?: 'stage' | 'modal'
@@ -52,13 +52,30 @@ function JoinedChip() {
   )
 }
 
+function toggleClass(selected: boolean, onboarding: boolean): string {
+  if (onboarding) {
+    const tone = selected
+      ? 'bg-surface text-main hover:bg-zViolet-500/10'
+      : 'bg-zViolet-500 text-white hover:bg-zViolet-400'
+
+    return `titlebar-no-drag ob-small inline-flex items-center gap-1 transition-colors disabled:cursor-default ${tone}`
+  }
+
+  return selected
+    ? 'titlebar-no-drag inline-flex h-8 items-center gap-1 rounded-md border border-zViolet-500/35 bg-zViolet-500/10 px-2.5 text-[12.5px] font-medium text-zViolet-300 transition-colors hover:bg-zViolet-500/20 disabled:cursor-default disabled:opacity-60'
+    : 'titlebar-no-drag inline-flex h-8 items-center gap-1 rounded-md bg-zViolet-500 px-2.5 text-[12.5px] font-medium text-white transition-colors hover:bg-zViolet-400 disabled:cursor-default disabled:opacity-60'
+}
+
 function SelectToggle({
   selected,
   pending,
   disabled,
+  onboarding,
   onToggle,
 }: {
   selected: boolean
+  /** The onboarding column's framed small button instead of the app's pill. */
+  onboarding: boolean
   /** This card's join is the one currently in flight during the commit. */
   pending: boolean
   disabled: boolean
@@ -69,11 +86,7 @@ function SelectToggle({
       type="button"
       disabled={disabled}
       onClick={onToggle}
-      className={
-        selected
-          ? 'titlebar-no-drag inline-flex h-8 items-center gap-1 rounded-md border border-zViolet-500/35 bg-zViolet-500/10 px-2.5 text-[12.5px] font-medium text-zViolet-300 transition-colors hover:bg-zViolet-500/20 disabled:cursor-default disabled:opacity-60'
-          : 'titlebar-no-drag inline-flex h-8 items-center gap-1 rounded-md bg-zViolet-500 px-2.5 text-[12.5px] font-medium text-white transition-colors hover:bg-zViolet-400 disabled:cursor-default disabled:opacity-60'
-      }
+      className={toggleClass(selected, onboarding)}
     >
       {pending ? (
         <Loader2 className="h-3 w-3 animate-spin" />
@@ -104,7 +117,7 @@ export function InvitationList({
   const cardClass =
     variant === 'modal'
       ? 'flex items-center gap-3 rounded-lg border border-zGray-800 bg-zGray-850 px-3 py-2.5'
-      : 'flex items-center gap-3 rounded-2xl border border-zGray-800/80 bg-zGray-900/60 px-4 py-3 backdrop-blur'
+      : 'ob-card'
 
   return (
     <>
@@ -134,6 +147,7 @@ export function InvitationList({
               <JoinedChip />
             ) : selection ? (
               <SelectToggle
+                onboarding={variant === 'stage'}
                 selected={selection.invitationIds.has(invitation.id)}
                 pending={actingInvitationId === invitation.id}
                 disabled={busy}
@@ -194,6 +208,7 @@ export function InvitationList({
               <JoinedChip />
             ) : selection ? (
               <SelectToggle
+                onboarding={variant === 'stage'}
                 selected={selection.teamIds.has(team.id)}
                 pending={joiningTeamId === team.id}
                 disabled={busy}

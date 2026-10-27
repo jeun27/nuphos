@@ -1,3 +1,5 @@
+import { createContext } from 'react'
+
 import type {
   AgentCliStatus,
   CliLoginProvider,
@@ -57,3 +59,6 @@ export function setupStep(screen: SetupScreen): 1 | 2 | undefined {
 
   return 2
 }
+
+/** Which setup step the stepper in the top slot marks; undefined hides it. Set by AgentSetupFlow. */
+export const SetupStepContext = createContext<1 | 2 | undefined>(undefined)
