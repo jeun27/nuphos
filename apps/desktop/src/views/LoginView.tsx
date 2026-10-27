@@ -12,7 +12,9 @@ import { useTextSwap } from '../hooks/useTextSwap'
 import { signInEmailError } from '../lib/emailDomain'
 import { cssDurationMs, prefersReducedMotion } from '../lib/motion'
 
+import { FacePile } from './login/FacePile'
 import { LoginApiEndpoint } from './LoginApiEndpoint'
+import '../styles/login-fonts.css'
 
 import type { UserInfo } from '../types'
 
@@ -45,6 +47,9 @@ export function LoginView({ onLogin }: Props) {
     busy === 'send' && step === 'code' ? 'Sending…' : 'Resend code',
   )
   const shownStep = useRef(step)
+  const columnRef = useRef<HTMLDivElement>(null)
+  const headlineRef = useRef<HTMLHeadingElement>(null)
+  const [keepOut] = useState(() => [columnRef, headlineRef])
 
   // Both steps stay mounted for the slide, so focus the step's field once the
   // slide has settled instead of relying on autoFocus at mount.
@@ -117,14 +122,20 @@ export function LoginView({ onLogin }: Props) {
   }
 
   return (
-    <div className="titlebar-drag h-full flex flex-col login-surface">
+    <div className="titlebar-drag h-full flex flex-col login-surface login-type relative overflow-hidden">
+      <FacePile keepOut={keepOut} />
       <div className="h-[44px] flex-shrink-0" />
-      <div className="flex-1 flex items-start justify-center px-8 pt-[18vh]">
-        <div className="w-full max-w-[360px] flex flex-col items-start text-left">
+      <div className="flex-1 flex items-start justify-start px-8 pl-[clamp(32px,9vw,120px)] pt-[2vh]">
+        <div
+          ref={columnRef}
+          className="relative w-full max-w-[360px] flex flex-col items-start text-left"
+        >
           <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-sm">
             <NuphosLogo className="h-12 w-12" variant="white-bg" />
           </div>
-          <h1 className="text-[20px] font-semibold text-main mb-1.5">Welcome to Nuphos</h1>
+          <h1 ref={headlineRef} className="login-headline w-max text-main mb-3">
+            Welcome to Nuphos
+          </h1>
           <p className="text-[13.5px] text-secondary leading-relaxed mb-8">
             The agent workspace for your team
           </p>
@@ -245,6 +256,9 @@ export function LoginView({ onLogin }: Props) {
               </form>
             </section>
           </div>
+          <p aria-hidden="true" className="login-hint mt-3 self-end text-[12px] text-tertiary">
+            ↓ go on, grab one
+          </p>
         </div>
       </div>
     </div>

@@ -1,0 +1,132 @@
+/* Sign-in face pile. Positions are written per frame by FacePile.tsx; everything
+   else (hover lift, held state, motion lines) is plain CSS. */
+
+.face-pile {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.face-pile-floor {
+  position: absolute;
+  inset: 0;
+}
+
+.face-pile-floor polygon {
+  fill: rgba(var(--color-text-base), 0.04);
+  stroke: rgb(var(--color-text-base));
+  stroke-width: 3;
+}
+
+.face-tile {
+  position: absolute;
+  top: 0;
+  left: 0;
+  /* Parked above the window until the first frame places it. */
+  transform: translateY(-200px);
+  pointer-events: auto;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  will-change: transform;
+}
+
+.face-tile-card {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border: 2.5px solid rgb(var(--color-text-base));
+  border-radius: 16%;
+  background: rgb(var(--color-background-surface));
+  box-shadow: 3px 3px 0 rgb(var(--color-text-base));
+  transition:
+    translate 120ms ease-out,
+    border-color 120ms ease-out,
+    background-color 120ms ease-out;
+}
+
+html.light .face-tile-card {
+  background: #fff;
+}
+
+/* Crop the full-body avatar to its face. */
+.face-tile-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.55);
+  transform-origin: 50% 30%;
+  pointer-events: none;
+}
+
+/* M2: lift and turn violet under the cursor. */
+.face-tile:hover .face-tile-card {
+  translate: 0 -4px;
+  border-color: rgb(var(--color-zViolet-accent));
+}
+
+.face-tile[data-held='true'] {
+  z-index: 2;
+  cursor: grabbing;
+}
+
+.face-tile[data-held='true'] .face-tile-card {
+  translate: 0 -4px;
+  border-color: rgb(var(--color-zViolet-accent));
+  background: rgba(var(--color-zViolet-accent), 0.22);
+  box-shadow: 4px 4px 0 rgb(var(--color-zViolet-accent));
+}
+
+.face-tile-bubble {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  translate: -50% 0;
+  padding: 4px 10px;
+  border: 2px solid rgb(var(--color-text-base));
+  border-radius: 10px;
+  background: rgb(var(--color-background-surface));
+  color: rgb(var(--color-text-base));
+  font:
+    700 11px/1.4 'Space Mono',
+    ui-monospace,
+    monospace;
+  white-space: nowrap;
+}
+
+/* M1: little speed lines above a falling face. */
+.face-tile-lines {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 25%;
+  width: 50%;
+  height: 18px;
+  opacity: 0;
+  background:
+    linear-gradient(rgb(var(--color-text-base)) 0 0) 0 0 / 2px 70% no-repeat,
+    linear-gradient(rgb(var(--color-text-base)) 0 0) 50% 100% / 2px 70% no-repeat,
+    linear-gradient(rgb(var(--color-text-base)) 0 0) 100% 0 / 2px 70% no-repeat;
+}
+
+.face-tile[data-falling='true'] .face-tile-lines {
+  opacity: 1;
+}
+
+/* M5: a settled, still pile you cannot pick up. */
+.face-pile[data-reduced='true'] .face-tile {
+  cursor: default;
+}
+
+.face-pile[data-reduced='true'] .face-tile-card {
+  transition: none;
+  translate: none;
+  border-color: rgb(var(--color-text-base));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-hint {
+    display: none;
+  }
+}
