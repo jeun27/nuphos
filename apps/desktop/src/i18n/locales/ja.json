@@ -1875,6 +1875,7 @@
   "Waiting for the owner of {computer} to approve. Your message is sent once they do.": "{computer} のオーナーの承認を待っています。承認されるとメッセージが送信されます。",
   "Waiting for the updated runtime to come online.": "アップデートしたランタイムがオンラインになるのを待っています。",
   "Waiting for you": "回答待ち",
+  "Waiting for {name} to sign in": "{name} のサインインを待っています",
   "Watch agent": "エージェントをウォッチ",
   "Web sign-in (nuphos.ai)": "Web サインイン（nuphos.ai）",
   "Weekdays": "平日",

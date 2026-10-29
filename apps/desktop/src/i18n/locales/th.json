@@ -1875,6 +1875,7 @@
   "Waiting for the owner of {computer} to approve. Your message is sent once they do.": "กำลังรอเจ้าของ {computer} อนุมัติ ข้อความของคุณจะถูกส่งเมื่ออนุมัติแล้ว",
   "Waiting for the updated runtime to come online.": "กำลังรอรันไทม์ที่อัปเดตแล้วกลับมาออนไลน์",
   "Waiting for you": "รอคุณอยู่",
+  "Waiting for {name} to sign in": "กำลังรอ {name} ลงชื่อเข้าใช้",
   "Watch agent": "ติดตามเอเจนต์",
   "Web sign-in (nuphos.ai)": "ลงชื่อเข้าใช้ผ่านเว็บ (nuphos.ai)",
   "Weekdays": "วันธรรมดา",

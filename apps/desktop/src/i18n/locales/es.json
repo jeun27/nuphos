@@ -1875,6 +1875,7 @@
   "Waiting for the owner of {computer} to approve. Your message is sent once they do.": "Esperando la aprobación del propietario de {computer}. Tu mensaje se enviará cuando la dé.",
   "Waiting for the updated runtime to come online.": "Esperando a que el entorno de ejecución actualizado se conecte.",
   "Waiting for you": "Esperándote",
+  "Waiting for {name} to sign in": "Esperando a que {name} inicie sesión",
   "Watch agent": "Seguir agente",
   "Web sign-in (nuphos.ai)": "Inicio de sesión web (nuphos.ai)",
   "Weekdays": "Días laborables",

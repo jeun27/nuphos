@@ -1875,6 +1875,7 @@
   "Waiting for the owner of {computer} to approve. Your message is sent once they do.": "正在等待 {computer} 的所有者批准，批准后会发送你的消息。",
   "Waiting for the updated runtime to come online.": "正在等待更新后的运行环境上线。",
   "Waiting for you": "等你回复",
+  "Waiting for {name} to sign in": "正在等待 {name} 登录",
   "Watch agent": "关注 Agent",
   "Web sign-in (nuphos.ai)": "网页登录（nuphos.ai）",
   "Weekdays": "工作日",

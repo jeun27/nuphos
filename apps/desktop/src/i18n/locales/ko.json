@@ -1875,6 +1875,7 @@
   "Waiting for the owner of {computer} to approve. Your message is sent once they do.": "{computer} 소유자의 승인을 기다리는 중입니다. 승인되면 메시지가 전송됩니다.",
   "Waiting for the updated runtime to come online.": "업데이트된 런타임이 온라인 상태가 되기를 기다리는 중입니다.",
   "Waiting for you": "답변 대기 중",
+  "Waiting for {name} to sign in": "{name}님의 로그인을 기다리는 중",
   "Watch agent": "에이전트 구독",
   "Web sign-in (nuphos.ai)": "웹 로그인(nuphos.ai)",
   "Weekdays": "평일",
