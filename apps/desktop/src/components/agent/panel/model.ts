@@ -155,6 +155,10 @@ export type Tab = {
   agentRuntime?: AgentProvider
   runtimeId?: string
   runtimeLabel?: string
+  /** A group: people and agents posting to one channel; no turn of its own runs here. */
+  kind?: AgentConversation['kind']
+  agentSessionIds?: string[]
+  agentTurns?: number
   // Follow-up messages the user submitted while this tab was still streaming.
   // They are dispatched one at a time, in order, once the current turn ends
   // cleanly (no error). Optional so older persisted snapshots keep loading;

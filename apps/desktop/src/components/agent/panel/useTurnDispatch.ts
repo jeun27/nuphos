@@ -5,6 +5,7 @@ import { useCurrentUser } from '../../../hooks/useCurrentUser'
 import { t } from '../../../i18n/index.ts'
 import { runtimeAllows, runtimeStateLabel } from '../../../lib/runtimeExecution'
 import { toast } from '../../ui/toast'
+import { sendToGroup } from '../room/groupSend'
 
 import { makeAttachmentTurn } from './attachments'
 import { awaitListedAgent } from './awaitListedAgent'
@@ -240,6 +241,11 @@ export function useTurnDispatch(acc: Acc) {
 
       if (!tab) return
       if (tab.readOnly) return
+      if (tab.kind === 'group') {
+        await sendToGroup({ currentUser, setTabs, teamId }, tab, trimmed, filePaths)
+
+        return
+      }
       const route = routeSend(tab.runtimeState, turnKind, questionId)
 
       // The backend decides whose turn it is: a refused steer is sent as a
@@ -261,7 +267,7 @@ export function useTurnDispatch(acc: Acc) {
       }
       void dispatchTurn(activeId, trimmed, filePaths, turnKind, route.decisionReplyTo)
     },
-    [activeId, startChatWith, dispatchTurn, sendSteering, teamId, currentUser],
+    [activeId, startChatWith, dispatchTurn, sendSteering, teamId, currentUser, setTabs],
   )
 
   const { steerQueued, removeQueued } = useQueueActions({ tabsRef, setTabs, teamId, sendSteering })

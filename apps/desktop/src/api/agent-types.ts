@@ -75,7 +75,16 @@ export type AgentConversation = {
   pendingDecision?: AgentPendingDecision
   /** Every open question, oldest first; Desktop resolves each by id after a reply or dismissal. */
   inputRequests?: AgentInputRequest[]
+  /** A group: people and agents in one channel, with no agent of its own. */
+  kind?: 'group'
+  /** A group's agents, each one an agent session. */
+  agentSessionIds?: string[]
+  /** Turns a group's agents woke each other for since a person last posted. */
+  agentTurns?: number
 }
+
+/** An agent in a group: its session, as GET /agent/conversations/:id/agents lists it. */
+export type GroupAgent = { sessionId: string; title: string; ownerId: string; avatar?: string }
 
 export type AgentPendingDecision = {
   category: string

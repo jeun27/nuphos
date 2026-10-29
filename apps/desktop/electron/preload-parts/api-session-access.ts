@@ -28,4 +28,14 @@ export const sessionAccessApi = {
   ) => ipcRenderer.invoke('agent:setConversationGeneralAccess', sessionId, teamId, generalAccess),
   agentRemoveConversationParticipant: (sessionId: string, teamId: string, userId: string) =>
     ipcRenderer.invoke('agent:removeConversationParticipant', sessionId, teamId, userId),
+  agentCreateGroup: (teamId: string, title: string) =>
+    ipcRenderer.invoke('agent:createGroup', teamId, title),
+  agentListGroupAgents: (groupId: string, teamId: string) =>
+    ipcRenderer.invoke('agent:listGroupAgents', groupId, teamId),
+  agentAddGroupAgent: (groupId: string, teamId: string, agentSessionId: string) =>
+    ipcRenderer.invoke('agent:addGroupAgent', groupId, teamId, agentSessionId),
+  agentRemoveGroupAgent: (groupId: string, teamId: string, agentSessionId: string) =>
+    ipcRenderer.invoke('agent:removeGroupAgent', groupId, teamId, agentSessionId),
+  agentPostGroupMessage: (groupId: string, teamId: string, text: string, id: string) =>
+    ipcRenderer.invoke('agent:postGroupMessage', groupId, teamId, text, id),
 }

@@ -42,6 +42,25 @@ export const agentReadChannels = {
     teamId: string,
     userId: string,
   ) => agent.removeConversationParticipant(sessionId, teamId, userId),
+  'agent:createGroup': (_e: unknown, teamId: string, title: string) =>
+    agent.createGroup(teamId, title),
+  'agent:listGroupAgents': (_e: unknown, groupId: string, teamId: string) =>
+    agent.listGroupAgents(groupId, teamId),
+  'agent:addGroupAgent': (_e: unknown, groupId: string, teamId: string, agentSessionId: string) =>
+    agent.addGroupAgent(groupId, teamId, agentSessionId),
+  'agent:removeGroupAgent': (
+    _e: unknown,
+    groupId: string,
+    teamId: string,
+    agentSessionId: string,
+  ) => agent.removeGroupAgent(groupId, teamId, agentSessionId),
+  'agent:postGroupMessage': (
+    _e: unknown,
+    groupId: string,
+    teamId: string,
+    text: string,
+    id: string,
+  ) => agent.postGroupMessage(groupId, teamId, text, id),
   'agent:setConversationAvatar': (
     _e: unknown,
     sessionId: string,

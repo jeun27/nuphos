@@ -13,6 +13,7 @@ import { PanelPageLayout } from './panel/panelPageLayout'
 import { usePanelSlashCommands } from './panel/panelSlashCommands'
 import { computePanelRenderState } from './panel/panelRenderState'
 import { PanelConversationPage, PanelHomePage } from './panel/panelViews'
+import { GroupConversationPage } from './room/GroupConversationPage'
 import { useAgentEventStream } from './panel/useAgentEventStream'
 import { useAuthorizationFlows } from './panel/useAuthorizationFlows'
 import { useClientToolFlow } from './panel/useClientToolFlow'
@@ -262,7 +263,13 @@ export const AgentPanel = memo(function AgentPanel({
 
   const slashCommands = usePanelSlashCommands(c)
   const homePage = <PanelHomePage c={c} />
-  const conversationPage = <PanelConversationPage c={c} />
+  // A group posts to people and agents; it runs no agent, so it has its own page.
+  const conversationPage =
+    c.activeTab?.kind === 'group' && !c.switchingConversation ? (
+      <GroupConversationPage c={c} tab={c.activeTab} />
+    ) : (
+      <PanelConversationPage c={c} />
+    )
   const content = (
     <SlashCommandsContext.Provider value={slashCommands}>
       <PanelContent c={c} homePage={homePage} conversationPage={conversationPage} />

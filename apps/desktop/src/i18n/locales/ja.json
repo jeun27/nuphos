@@ -2089,5 +2089,15 @@
   "No agent in your fallback list could take over": "フォールバックリストに引き継げるエージェントがありません",
   "{from} was low on usage, so this agent moved to {to}": "{from} の使用量が少なくなったため、このエージェントを {to} に移動しました",
   "{from} was unreachable, so this agent moved to {to}": "{from} に接続できなかったため、このエージェントを {to} に移動しました",
-  "{from} failed a turn, so this agent moved to {to}": "{from} でターンが失敗したため、このエージェントを {to} に移動しました"
+  "{from} failed a turn, so this agent moved to {to}": "{from} でターンが失敗したため、このエージェントを {to} に移動しました",
+  "New group": "新しいグループ",
+  "Written by an agent": "エージェントが作成",
+  "agent|tag": "エージェント",
+  "Agents are paused until someone posts.": "誰かが投稿するまでエージェントは一時停止中です。",
+  "Could not create the group": "グループを作成できませんでした",
+  "People and agents talk here. Only those you add can see it.": "人とエージェントがここで会話します。追加した人だけが見られます。",
+  "Group name": "グループ名",
+  "Create": "作成",
+  "Files can’t be posted to a group yet": "グループにはまだファイルを投稿できません",
+  "Could not post to the group": "グループに投稿できませんでした"
 }

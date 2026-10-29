@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo, useState } from 'react'
+import { memo, useCallback, useContext, useMemo, useState } from 'react'
 
 import { t } from '../../../i18n'
 import { parseAtlasLink } from '../../../lib/atlasLinkMention'
@@ -6,6 +6,10 @@ import { trustedAvatarURL } from '../../../lib/avatarUrl'
 import { Avatar } from '../../Avatar'
 import { MessageResponse } from '../MessageResponse'
 import { PlanCard } from '../PlanTool'
+import { AgentTag } from '../room/AgentTag'
+import { GroupAgentMessage } from '../room/GroupAgentMessage'
+import { GroupMessagesContext } from '../room/groupMessages'
+import { isAgentPost } from '../room/roomModel'
 
 import { AgentEventMessage } from './AgentEventMessage'
 import { EditMessageForm } from './EditMessageForm'
@@ -74,6 +78,7 @@ export const UserMessage = memo(
     const sendMotionRef = useSentMessageMotion(message.id)
     const [preview, setPreview] = useState<number | null>(null)
     const [editing, setEditing] = useState(false)
+    const group = useContext(GroupMessagesContext)
     const renderLink = useCallback(
       (href: string, children: ReactNode) =>
         renderAtlasMentionLink(href, children, onOpenNuphosLink),
@@ -102,6 +107,18 @@ export const UserMessage = memo(
       Boolean(onEdit && copyableText) && !images.length && !files.length && !uploads.length
     const source = message.metadata?.source
 
+    // In a group an agent's post is a message of the group, not a session event.
+    if (group && message.metadata && isAgentPost(message.metadata))
+      return (
+        <GroupAgentMessage
+          metadata={message.metadata}
+          text={copyableText}
+          createdAt={message.createdAt}
+          group={group}
+          onOpenNuphosLink={onOpenNuphosLink}
+          renderLink={renderLink}
+        />
+      )
     if (message.metadata && (source === 'agent.thread' || source === 'agent.resource'))
       return (
         <AgentEventMessage
@@ -125,6 +142,7 @@ export const UserMessage = memo(
                 >
                   {senderLabel(message.metadata.sender)}
                 </span>
+                {message.metadata.sender.type === 'agent' && <AgentTag />}
                 {message.metadata.source === 'slack' && (
                   <span className="shrink-0 rounded bg-surface-hover px-1.5 py-0.5 text-[10px] text-tertiary">
                     Slack

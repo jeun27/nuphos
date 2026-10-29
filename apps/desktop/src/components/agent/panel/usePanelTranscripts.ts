@@ -58,6 +58,8 @@ export function usePanelTranscripts(acc: Acc) {
       // a Slack-side exchange would delete those messages if it synced its own
       // view here (the PUT has delete-absent semantics).
       if (tab.slackThread) return
+      // A group's messages are each posted on their own; the server holds the log.
+      if (tab.kind === 'group') return
       if (tab.messages.length === 0) return
       // Runtime-owned turns are persisted by the backend after their terminal
       // frame. A live renderer snapshot is necessarily partial and used to

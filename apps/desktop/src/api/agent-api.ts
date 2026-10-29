@@ -69,6 +69,15 @@ export const agentApi = {
   ) => window.api.agentSetConversationGeneralAccess(sessionId, teamId, generalAccess),
   agentRemoveConversationParticipant: (sessionId: string, teamId: string, userId: string) =>
     window.api.agentRemoveConversationParticipant(sessionId, teamId, userId),
+  agentCreateGroup: (teamId: string, title: string) => window.api.agentCreateGroup(teamId, title),
+  agentListGroupAgents: (groupId: string, teamId: string) =>
+    window.api.agentListGroupAgents(groupId, teamId),
+  agentAddGroupAgent: (groupId: string, teamId: string, agentSessionId: string) =>
+    window.api.agentAddGroupAgent(groupId, teamId, agentSessionId),
+  agentRemoveGroupAgent: (groupId: string, teamId: string, agentSessionId: string) =>
+    window.api.agentRemoveGroupAgent(groupId, teamId, agentSessionId),
+  agentPostGroupMessage: (groupId: string, teamId: string, text: string, id: string) =>
+    window.api.agentPostGroupMessage(groupId, teamId, text, id),
   agentSetSessionConfig: (
     sessionId: string,
     teamId: string,

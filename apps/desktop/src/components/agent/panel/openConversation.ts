@@ -6,6 +6,8 @@ import { trackError } from '../../../lib/analytics'
 import { rememberOpenedConversation } from '../../../lib/openedConversation'
 import { toast } from '../../ui/toast'
 
+import { groupFields } from '../room/roomModel'
+
 import { finalizeIncompleteTools } from './clientTools'
 import { reconcileStoredCredentialAccess, credentialSelectionSignature } from './credentialAccess'
 import { CONVERSATION_TAIL_LIMIT } from './model'
@@ -149,7 +151,7 @@ export async function runOpenConversation(
       streamId: activeRun?.streamId ?? null,
       streamStartedAt: activeRun ? streamStartedAt : null,
       error:
-        !activeRun && replayBaseMessages.length === 0
+        !activeRun && replayBaseMessages.length === 0 && detail.kind !== 'group'
           ? t('This agent has no saved messages yet.')
           : null,
       autoResumeAttempts: 0,
@@ -168,6 +170,7 @@ export async function runOpenConversation(
       agentRuntime: detail.agentRuntime,
       runtimeId: detail.runtimeId,
       runtimeLabel: detail.runtimeLabel,
+      ...groupFields(detail),
       timelineEvents: detail.timelineEvents,
       promptSuggestion: detail.promptSuggestion,
       openedAt: Date.now(),

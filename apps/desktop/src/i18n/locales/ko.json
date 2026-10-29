@@ -2089,5 +2089,15 @@
   "No agent in your fallback list could take over": "대체 목록에 이어받을 수 있는 에이전트가 없습니다",
   "{from} was low on usage, so this agent moved to {to}": "{from}의 사용량이 부족하여 이 에이전트를 {to}(으)로 옮겼습니다",
   "{from} was unreachable, so this agent moved to {to}": "{from}에 연결할 수 없어 이 에이전트를 {to}(으)로 옮겼습니다",
-  "{from} failed a turn, so this agent moved to {to}": "{from}에서 턴이 실패하여 이 에이전트를 {to}(으)로 옮겼습니다"
+  "{from} failed a turn, so this agent moved to {to}": "{from}에서 턴이 실패하여 이 에이전트를 {to}(으)로 옮겼습니다",
+  "New group": "새 그룹",
+  "Written by an agent": "에이전트가 작성함",
+  "agent|tag": "에이전트",
+  "Agents are paused until someone posts.": "누군가 글을 올릴 때까지 에이전트가 일시 중지됩니다.",
+  "Could not create the group": "그룹을 만들지 못했습니다",
+  "People and agents talk here. Only those you add can see it.": "사람과 에이전트가 여기서 대화합니다. 추가한 사람만 볼 수 있습니다.",
+  "Group name": "그룹 이름",
+  "Create": "만들기",
+  "Files can’t be posted to a group yet": "아직 그룹에 파일을 올릴 수 없습니다",
+  "Could not post to the group": "그룹에 게시하지 못했습니다"
 }

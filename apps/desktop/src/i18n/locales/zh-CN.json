@@ -2089,5 +2089,15 @@
   "No agent in your fallback list could take over": "备用列表中没有能接手的 Agent",
   "{from} was low on usage, so this agent moved to {to}": "{from} 用量不足，此 Agent 已移至 {to}",
   "{from} was unreachable, so this agent moved to {to}": "{from} 无法连接，此 Agent 已移至 {to}",
-  "{from} failed a turn, so this agent moved to {to}": "{from} 有一轮执行失败，此 Agent 已移至 {to}"
+  "{from} failed a turn, so this agent moved to {to}": "{from} 有一轮执行失败，此 Agent 已移至 {to}",
+  "New group": "新群组",
+  "Written by an agent": "由代理撰写",
+  "agent|tag": "代理",
+  "Agents are paused until someone posts.": "代理已暂停，直到有人发言。",
+  "Could not create the group": "无法创建群组",
+  "People and agents talk here. Only those you add can see it.": "成员与代理在这里交谈。只有你添加的人看得到。",
+  "Group name": "群组名称",
+  "Create": "创建",
+  "Files can’t be posted to a group yet": "目前还无法在群组中发送文件",
+  "Could not post to the group": "无法发送到群组"
 }

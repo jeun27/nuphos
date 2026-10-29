@@ -11,6 +11,7 @@ import { SidebarHeaderBar, SidebarTeamSwitcher, SidebarUserEntry } from './heade
 import { SidebarHelpMenu } from './help-menu'
 import { SidebarItemContextMenu } from './item-context-menu'
 import { SidebarBackControl, SidebarNavStack } from './nav-stack'
+import { withNewGroup } from './new-group'
 import { SidebarIdentitySelector, SidebarInvitations } from './parts'
 import { SidebarSectionList } from './sections-list'
 import { teamSections } from './sections-services'
@@ -123,7 +124,7 @@ export const Sidebar = memo(function Sidebar({
   const [itemMenu, setItemMenu] = useState<{ x: number; y: number; item: Item } | null>(null)
 
   const renderSections = teamView
-    ? withChatSections(sections, pinnedChatItems, favoriteMatch)
+    ? withChatSections(withNewGroup(sections, teamId, onSelect), pinnedChatItems, favoriteMatch)
     : [...sections]
 
   if (dynamicNavigation && teamView && favoriteItems.length > 0) {

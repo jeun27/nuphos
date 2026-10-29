@@ -2089,5 +2089,15 @@
   "No agent in your fallback list could take over": "ไม่มีเอเจนต์ในรายการสำรองที่รับต่อได้",
   "{from} was low on usage, so this agent moved to {to}": "{from} ใกล้หมดโควตา จึงย้ายเอเจนต์นี้ไปยัง {to}",
   "{from} was unreachable, so this agent moved to {to}": "ติดต่อ {from} ไม่ได้ จึงย้ายเอเจนต์นี้ไปยัง {to}",
-  "{from} failed a turn, so this agent moved to {to}": "{from} ทำงานล้มเหลวหนึ่งรอบ จึงย้ายเอเจนต์นี้ไปยัง {to}"
+  "{from} failed a turn, so this agent moved to {to}": "{from} ทำงานล้มเหลวหนึ่งรอบ จึงย้ายเอเจนต์นี้ไปยัง {to}",
+  "New group": "กลุ่มใหม่",
+  "Written by an agent": "เขียนโดยเอเจนต์",
+  "agent|tag": "เอเจนต์",
+  "Agents are paused until someone posts.": "เอเจนต์หยุดชั่วคราวจนกว่าจะมีคนโพสต์",
+  "Could not create the group": "ไม่สามารถสร้างกลุ่มได้",
+  "People and agents talk here. Only those you add can see it.": "ผู้คนและเอเจนต์คุยกันที่นี่ เฉพาะคนที่คุณเพิ่มเท่านั้นที่เห็น",
+  "Group name": "ชื่อกลุ่ม",
+  "Create": "สร้าง",
+  "Files can’t be posted to a group yet": "ยังโพสต์ไฟล์ในกลุ่มไม่ได้",
+  "Could not post to the group": "ไม่สามารถโพสต์ในกลุ่มได้"
 }

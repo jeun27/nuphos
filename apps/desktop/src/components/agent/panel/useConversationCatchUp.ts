@@ -6,6 +6,8 @@ import { publishRuntimeStates } from '../../../lib/agentRuntimeStates'
 import { trackError } from '../../../lib/analytics'
 import { shouldResumeRuntimeWakeup, wakeupTranscriptTail } from '../../../lib/runtimeWakeup'
 
+import { groupFields } from '../room/roomModel'
+
 import { fetchWakeupTranscriptTail, shouldDeferTranscriptCatchUp } from './conversationCatchUp'
 import { CONVERSATION_TAIL_LIMIT } from './model'
 import { fromPersistedMessages, transcriptSignature } from './persistence'
@@ -54,6 +56,7 @@ export function useConversationCatchUp(acc: Acc): void {
     // tab is starting creates the session itself, and its first runtime frame
     // attaches the tab. Probing earlier reads "disconnected" ("Connection lost").
     if (
+      activeTab.kind !== 'group' &&
       !activeTab.claudeCodeRuntimeAttached &&
       (activeTab.messages.length === 0 || activeTab.streaming)
     )
@@ -87,6 +90,7 @@ export function useConversationCatchUp(acc: Acc): void {
                   ...tab,
                   timelineEvents: probe.timelineEvents,
                   promptSuggestion: probe.promptSuggestion,
+                  ...groupFields(probe),
                 }
               : tab,
           ),
@@ -244,6 +248,7 @@ export function useConversationCatchUp(acc: Acc): void {
   }, [
     activeTab?.sessionId,
     activeTab?.claudeCodeRuntimeAttached,
+    activeTab?.kind,
     activeTab?.messages.length,
     activeTab?.streaming,
     kubeContextRef,

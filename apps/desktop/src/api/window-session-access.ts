@@ -1,4 +1,9 @@
-import type { ConversationAccessState, GeneralAccess, ParticipantRole } from './agent-types.ts'
+import type {
+  ConversationAccessState,
+  GeneralAccess,
+  GroupAgent,
+  ParticipantRole,
+} from './agent-types.ts'
 import type { SessionResourcesResponse } from './session-resource-types'
 
 /** Who may open a session and what they may do there. */
@@ -47,4 +52,19 @@ export type WindowSessionAccessApi = {
     avatar: string | null,
     teamId?: string,
   ): Promise<{ avatar: string | null }>
+  /** A group: a conversation of people and agents that runs no agent itself. */
+  agentCreateGroup(teamId: string, title: string): Promise<{ sessionId: string }>
+  agentListGroupAgents(groupId: string, teamId: string): Promise<{ agents: GroupAgent[] }>
+  agentAddGroupAgent(
+    groupId: string,
+    teamId: string,
+    agentSessionId: string,
+  ): Promise<{ agents: GroupAgent[] }>
+  agentRemoveGroupAgent(groupId: string, teamId: string, agentSessionId: string): Promise<void>
+  agentPostGroupMessage(
+    groupId: string,
+    teamId: string,
+    text: string,
+    id: string,
+  ): Promise<{ id: string }>
 }

@@ -97,6 +97,8 @@ function failedTurnExplainedInline(
 
 export function computeStatus(tab: Tab, lastMsg: Message | undefined): AgentStatus | null {
   if (!tab.sessionId || (!tab.claudeCodeRuntimeAttached && tab.messages.length === 0)) return null
+  // A group runs no turn; its agents answer in their own sessions, or stay quiet.
+  if (tab.kind === 'group') return null
 
   if (!tab.claudeCodeRuntimeAttached && !tab.runtimeState) return { label: t('Connecting…') }
   const snapshot = tab.runtimeState

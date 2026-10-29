@@ -2089,5 +2089,15 @@
   "No agent in your fallback list could take over": "Ningún agente de tu lista de respaldo pudo tomar el relevo",
   "{from} was low on usage, so this agent moved to {to}": "A {from} le quedaba poco uso, así que este agente se movió a {to}",
   "{from} was unreachable, so this agent moved to {to}": "{from} no estaba accesible, así que este agente se movió a {to}",
-  "{from} failed a turn, so this agent moved to {to}": "{from} falló un turno, así que este agente se movió a {to}"
+  "{from} failed a turn, so this agent moved to {to}": "{from} falló un turno, así que este agente se movió a {to}",
+  "New group": "Nuevo grupo",
+  "Written by an agent": "Escrito por un agente",
+  "agent|tag": "agente",
+  "Agents are paused until someone posts.": "Los agentes están en pausa hasta que alguien publique.",
+  "Could not create the group": "No se pudo crear el grupo",
+  "People and agents talk here. Only those you add can see it.": "Personas y agentes hablan aquí. Solo quienes añadas pueden verlo.",
+  "Group name": "Nombre del grupo",
+  "Create": "Crear",
+  "Files can’t be posted to a group yet": "Aún no se pueden publicar archivos en un grupo",
+  "Could not post to the group": "No se pudo publicar en el grupo"
 }
