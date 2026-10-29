@@ -6,9 +6,12 @@ import { t } from '../../../i18n'
 import { AGENT_PROVIDER } from '../../../types/runtime'
 import { Avatar } from '../../Avatar'
 import { AgentAvatar } from '../AgentAvatar'
+import { ResourceMark } from '../../sidebar/ResourceMark'
+import { resourceLabel } from '../../sidebar/sessionResourcePresentation'
 import { AgentProviderIcon } from '../panel/icons'
 
-import { agentsBroughtBy, possessiveRuntime, roleLabel } from './roomModel'
+import { agentsBroughtBy, possessiveRuntime, roleLabel, roomSendRule } from './roomModel'
+import { RoomSendNotice } from './RoomSendNotice'
 
 import type { RoomAgent, RoomTab } from './roomModel'
 import type { Room } from './useRoom'
@@ -21,10 +24,12 @@ function PersonRow({
   person,
   agents,
   isYou,
+  ownerOnly,
 }: {
   person: AgentConversationParticipant
   agents: RoomAgent[]
   isYou: boolean
+  ownerOnly: boolean
 }) {
   const brought = agentsBroughtBy(person, agents)
 
@@ -56,12 +61,22 @@ function PersonRow({
           )}
         </div>
       </div>
-      <span className="shrink-0 text-[12px] text-tertiary">{roleLabel(person.role)}</span>
+      <span className="shrink-0 text-[12px] text-tertiary">
+        {roleLabel(person.role, ownerOnly)}
+      </span>
     </div>
   )
 }
 
-function AgentRow({ agent, onOpen }: { agent: RoomAgent; onOpen?: (sessionId: string) => void }) {
+function AgentRow({
+  agent,
+  here,
+  onOpen,
+}: {
+  agent: RoomAgent
+  here: boolean
+  onOpen?: (sessionId: string) => void
+}) {
   const detail = [AGENT_PROVIDER[agent.provider].label, agent.runtimeLabel].filter(Boolean)
 
   return (
@@ -78,8 +93,29 @@ function AgentRow({ agent, onOpen }: { agent: RoomAgent; onOpen?: (sessionId: st
         size={28}
       />
       <div className="min-w-0 flex-1">
-        <div className="truncate text-[13px] font-medium text-main">{agent.title}</div>
+        <div className="flex min-w-0 items-center gap-1.5">
+          <span className="truncate text-[13px] font-medium text-main">{agent.title}</span>
+          {here && (
+            <span className="shrink-0 rounded bg-zGray-800/60 px-1.5 py-0.5 text-[10px] text-tertiary">
+              {t('Open here')}
+            </span>
+          )}
+        </div>
         <div className="truncate text-[11.5px] text-tertiary">{detail.join(' · ')}</div>
+        {agent.changes.length > 0 && (
+          <div className="mt-1 flex flex-wrap gap-1">
+            {agent.changes.slice(0, 3).map((change) => (
+              <span
+                key={change.id}
+                className="flex h-5 items-center gap-1 rounded border border-zGray-800/80 px-1.5 text-[11px] text-secondary"
+                title={change.title}
+              >
+                <ResourceMark resource={change} />
+                {resourceLabel(change)}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
       <span
         className={clsx(
@@ -113,16 +149,23 @@ export function RoomMembers({
   onOpenAgent?: (sessionId: string) => void
 }) {
   const [tab, setTab] = useState<RoomTab>('all')
+  const { ownerOnly, owner } = roomSendRule(room)
   const people = room.people.map((person) => (
     <PersonRow
       key={person.id}
       person={person}
       agents={room.agents}
       isYou={person.id === currentUserId}
+      ownerOnly={ownerOnly}
     />
   ))
   const agents = room.agents.map((agent) => (
-    <AgentRow key={agent.sessionId} agent={agent} onOpen={onOpenAgent} />
+    <AgentRow
+      key={agent.sessionId}
+      agent={agent}
+      here={agent.sessionId === room.here}
+      onOpen={onOpenAgent}
+    />
   ))
 
   return (
@@ -131,6 +174,13 @@ export function RoomMembers({
       onValueChange={(value: RoomTab) => setTab(value)}
       className="flex flex-col"
     >
+      {ownerOnly && (
+        <RoomSendNotice
+          sessionId={room.here}
+          ownerName={owner?.name}
+          viewerIsOwner={owner?.id === currentUserId}
+        />
+      )}
       <Tabs.List className="flex items-center gap-1 border-b border-zGray-800/60 p-2">
         <Tabs.Tab value="all" className={TAB}>
           {t('All {count}', { count: room.people.length + room.agents.length })}

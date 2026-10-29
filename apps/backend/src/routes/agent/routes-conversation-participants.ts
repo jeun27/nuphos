@@ -8,13 +8,13 @@ import {
   participantRole,
 } from '@/lib/agent/db/access'
 import { inviteExceedsParent, widerThanParent } from '@/lib/agent/db/access-tree'
+import { markOwnAccess, syncDescendantAccess } from '@/lib/agent/db/access-tree-sync'
 import {
   conversationParticipantIds,
   inviteConversationParticipants,
   removeConversationParticipant,
   setGeneralAccess,
   setParticipantRole,
-  syncDescendantAccess,
 } from '@/lib/agent/db/participants'
 import { AppError } from '@/lib/errors'
 import { getTeamMembership } from '@/lib/identity'
@@ -62,8 +62,10 @@ async function serializeAccess(
   }
 }
 
-// Every change reaches the sub-agents below, so the whole tree stays shared alike.
+// Every change reaches the sub-agents below. A sub-agent changed here keeps its
+// own sharing from now on, so a later change on its parent only narrows it.
 async function afterShareChange(conversation: AgentConversation, teamId: string) {
+  if (conversation.parentSessionId) await markOwnAccess(conversation.sessionId)
   await syncDescendantAccess(conversation)
 
   return await serializeAccess(conversation, teamId)

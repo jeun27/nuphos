@@ -9,6 +9,7 @@ import { track } from '../../../lib/analytics'
 import { runtimeIsExecuting, runtimeAllows } from '../../../lib/runtimeExecution'
 import { toast } from '../../ui/toast'
 import { PermissionResumeContext } from '../permissionResumeContext'
+import { LocalRuntimeHint } from '../room/LocalRuntimeHint'
 import { RoomQueue } from '../room/RoomQueue'
 
 import { Composer } from './Composer'
@@ -190,6 +191,9 @@ export function PanelConversationPage({ c }: { c: PanelViewCtx }) {
               </ConnectCardContext.Provider>
             </div>
             <div className="col-start-1 row-start-2 z-10">
+              {teamId && (
+                <LocalRuntimeHint tab={activeTab} teamId={teamId} sidebar={isSidebarMode} />
+              )}
               {teamId && serverHasConversation(activeTab) && (
                 <RoomQueue
                   sessionId={activeTab.sessionId}

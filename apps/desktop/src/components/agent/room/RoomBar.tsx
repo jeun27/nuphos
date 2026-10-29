@@ -1,5 +1,6 @@
 import { Popover } from '@base-ui/react/popover'
 import clsx from 'clsx'
+import { Lock } from 'lucide-react'
 
 import { t } from '../../../i18n'
 import { AGENT_PROVIDER } from '../../../types/runtime'
@@ -9,7 +10,7 @@ import { AgentProviderIcon } from '../panel/icons'
 import { TitlebarDragSuspender } from '../ShareCard'
 
 import { RoomMembers } from './RoomMembers'
-import { roomHeadline, roomIsShared, roomProviders } from './roomModel'
+import { firstName, roomHeadline, roomIsShared, roomProviders, roomSendRule } from './roomModel'
 import { useRoom } from './useRoom'
 
 import type { Room } from './useRoom'
@@ -61,6 +62,22 @@ function Faces({ room }: { room: Room }) {
   )
 }
 
+/** On its owner's computer only the owner can send; say so where everyone looks. */
+function SendRuleChip({ room, currentUserId }: { room: Room; currentUserId: string }) {
+  const { ownerOnly, owner } = roomSendRule(room)
+
+  if (!ownerOnly) return null
+
+  return (
+    <span className="ml-auto flex h-6 shrink-0 items-center gap-1.5 rounded-md bg-zGray-800/50 px-2 text-[12px] text-secondary">
+      <Lock className="h-3 w-3" aria-hidden />
+      {owner && owner.id !== currentUserId
+        ? t('Only {name} can send', { name: firstName(owner.name) })
+        : t('Only you can send')}
+    </span>
+  )
+}
+
 /**
  * The row under a chat's header that says who shares it: people and agents,
  * and the agents they run on. It opens the members panel.
@@ -101,6 +118,7 @@ export function RoomBar({
             </span>
           ))}
         </span>
+        <SendRuleChip room={room} currentUserId={currentUserId} />
       </Popover.Trigger>
       <Popover.Portal>
         <TitlebarDragSuspender />

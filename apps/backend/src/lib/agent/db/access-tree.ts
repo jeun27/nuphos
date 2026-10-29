@@ -1,4 +1,4 @@
-import { conversationAccess, generalAccessOf } from './access'
+import { generalAccessOf, participantRole } from './access'
 
 import type { GeneralAccess, ParticipantRole } from './access'
 
@@ -8,6 +8,7 @@ type GrantFields = {
   viewOnlyIds?: string[]
   managerIds?: string[]
 }
+type ParentFields = GrantFields & { userId: string }
 
 /** Who may open a conversation, spelled out so a sub-agent can carry a copy. */
 export type Grant = {
@@ -18,11 +19,12 @@ export type Grant = {
 }
 
 const GENERAL_RANK: Record<GeneralAccess, number> = { none: 0, view: 1, reply: 2 }
-const ROLE_RANK: Record<ParticipantRole, number> = { view: 0, reply: 1, manage: 2 }
+const ROLES: readonly ParticipantRole[] = ['view', 'reply', 'manage']
+const lower = <T>(order: readonly T[], a: T, b: T) => (order.indexOf(a) <= order.indexOf(b) ? a : b)
 
 /**
- * A sub-agent is shared exactly like the conversation that runs it, so a
- * teammate who can follow the manager can follow its workers too.
+ * A sub-agent an agent opens is shared exactly like the conversation that runs
+ * it, so a teammate who can follow the manager can follow its workers too.
  */
 export function inheritedGrant(parent: GrantFields): Grant {
   return {
@@ -33,24 +35,63 @@ export function inheritedGrant(parent: GrantFields): Grant {
   }
 }
 
+/** The most the parent lets one person do, or null when they cannot open it. */
+function parentCeiling(parent: ParentFields, userId: string): ParticipantRole | null {
+  if (parent.userId === userId) return 'manage'
+  const own = participantRole(parent, userId)
+  const general = generalAccessOf(parent)
+  const fromTeam = general === 'none' ? null : general
+
+  if (!own) return fromTeam
+  if (!fromTeam) return own
+
+  return ROLES.indexOf(own) >= ROLES.indexOf(fromTeam) ? own : fromTeam
+}
+
+/**
+ * The child's own grant, cut down to what the parent allows: never wider team
+ * access, nobody the parent shuts out, and no role above the parent's. Used for
+ * a sub-agent shared on its own, and for any thread nested later.
+ */
+export function narrowToParent(child: GrantFields, parent: ParentFields): Grant {
+  const grant: Grant = {
+    generalAccess: lower(
+      ['none', 'view', 'reply'] as const,
+      generalAccessOf(child),
+      generalAccessOf(parent),
+    ),
+    participantIds: [],
+    viewOnlyIds: [],
+    managerIds: [],
+  }
+
+  for (const id of child.participantIds ?? []) {
+    const own = participantRole(child, id)
+    const ceiling = parentCeiling(parent, id)
+
+    if (!own || !ceiling) continue
+    const role = lower(ROLES, own, ceiling)
+
+    grant.participantIds.push(id)
+    if (role === 'view') grant.viewOnlyIds.push(id)
+    if (role === 'manage') grant.managerIds.push(id)
+  }
+
+  return grant
+}
+
 /** Whether a sub-agent's team-wide grant would reach further than its parent's. */
 export function widerThanParent(requested: GeneralAccess, parent: GrantFields): boolean {
   return GENERAL_RANK[requested] > GENERAL_RANK[generalAccessOf(parent)]
 }
 
-/**
- * Whether inviting `userId` to a sub-agent with `role` would give them more
- * than the parent already does. The parent's owner counts as a manager there.
- */
+/** Whether inviting `userId` to a sub-agent with `role` gives more than the parent does. */
 export function inviteExceedsParent(
-  parent: GrantFields & { userId: string; teamId?: string },
+  parent: ParentFields,
   userId: string,
   role: ParticipantRole,
 ): boolean {
-  const access = conversationAccess(parent, userId)
+  const ceiling = parentCeiling(parent, userId)
 
-  if (!access) return true
-  const ceiling: ParticipantRole = access === 'owner' ? 'manage' : access
-
-  return ROLE_RANK[role] > ROLE_RANK[ceiling]
+  return !ceiling || ROLES.indexOf(role) > ROLES.indexOf(ceiling)
 }

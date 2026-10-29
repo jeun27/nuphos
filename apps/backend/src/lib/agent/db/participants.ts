@@ -1,30 +1,7 @@
-import { inheritedGrant } from './access-tree'
-import { descendantSessionIds } from './archive'
 import { agentConversations } from './shared'
 
 import type { GeneralAccess, ParticipantRole } from './access'
 import type { AgentConversation, ConversationTimelineEvent } from './shared'
-
-/**
- * Give every sub-agent below `parent` the parent's sharing, so a change to who
- * may follow the manager reaches its whole tree. Only the same owner's threads:
- * nesting never crosses owners.
- */
-export async function syncDescendantAccess(
-  parent: Pick<
-    AgentConversation,
-    'sessionId' | 'userId' | 'generalAccess' | 'participantIds' | 'viewOnlyIds' | 'managerIds'
-  >,
-): Promise<void> {
-  const scope = { userId: parent.userId }
-  const ids = await descendantSessionIds(parent.sessionId, scope)
-
-  if (ids.length === 0) return
-  await agentConversations().updateMany(
-    { ...scope, sessionId: { $in: ids } },
-    { $set: inheritedGrant(parent) },
-  )
-}
 
 /**
  * Append teammates to a conversation's participant list and answer with the

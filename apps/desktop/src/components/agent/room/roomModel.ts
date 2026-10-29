@@ -1,4 +1,5 @@
 import { t } from '../../../i18n/index.ts'
+import { isLocalAgentRuntime } from '../../../lib/localAgentSharing.ts'
 import { AGENT_PROVIDER } from '../../../types/runtime.ts'
 
 import type {
@@ -7,6 +8,7 @@ import type {
   AgentMessageMetadata,
   QueuedOnServer,
 } from '../../../api/agent-types.ts'
+import type { SessionResource } from '../../../api/session-resource-types.ts'
 import type { AgentProvider } from '../../../types/runtime.ts'
 
 /** One agent in the room: the chat's own, or a sub-agent anywhere below it. */
@@ -19,6 +21,10 @@ export type RoomAgent = {
   runtimeLabel?: string
   /** Whose runtime and subscription it runs on. */
   ownerId?: string
+  /** On its owner's own computer, where only the owner can send. */
+  local: boolean
+  /** The pull requests and issues it opened or linked, newest first. */
+  changes: SessionResource[]
   /** 0 for the chat itself, 1 for its sub-agents, and so on. */
   depth: number
   working: boolean
@@ -60,9 +66,37 @@ function toRoomAgent(conversation: AgentConversation, depth: number, working: bo
     provider: conversation.agentRuntime ?? 'claude-code',
     runtimeLabel: conversation.runtimeLabel,
     ownerId: conversation.owner?.id,
+    local: isLocalAgentRuntime(conversation.runtimeId),
+    changes: (conversation.linkedResources ?? []).filter(
+      (resource) => resource.provider === 'github' || resource.provider === 'linear',
+    ),
     depth,
     working,
   }
+}
+
+/**
+ * The chat a room is about: the top of the tree `sessionId` sits in, so a
+ * sub-agent shows the same room as its manager. Stops at a gap or a loop.
+ */
+export function roomRootOf(
+  sessionId: string,
+  conversations: readonly AgentConversation[],
+  opened?: AgentConversation,
+): AgentConversation | undefined {
+  const byId = new Map(conversations.map((conversation) => [conversation.sessionId, conversation]))
+  let root = byId.get(sessionId) ?? (opened?.sessionId === sessionId ? opened : undefined)
+  const seen = new Set<string>()
+
+  while (root?.parentSessionId && !seen.has(root.sessionId)) {
+    seen.add(root.sessionId)
+    const parent = byId.get(root.parentSessionId)
+
+    if (!parent) break
+    root = parent
+  }
+
+  return root
 }
 
 /** Each provider once, in the order the room first uses it. */
@@ -98,15 +132,30 @@ export function agentsBroughtBy(
   return roomProviders(own)
 }
 
+export const firstName = (name: string) => name.trim().split(/\s+/)[0] || name
+
 /** "Bryan's Claude Code": whose subscription an agent spends. */
 export function possessiveRuntime(name: string, provider: AgentProvider): string {
-  const first = name.trim().split(/\s+/)[0] || name
-
-  return t('{name}’s {agent}', { name: first, agent: AGENT_PROVIDER[provider].label })
+  return t('{name}’s {agent}', { name: firstName(name), agent: AGENT_PROVIDER[provider].label })
 }
 
-export function roleLabel(role: AgentConversationParticipant['role']): string {
+/**
+ * Who may send in the room. A chat on its owner's own computer, and so every
+ * sub-agent it opened, takes messages from the owner alone.
+ */
+export function roomSendRule(room: {
+  people: readonly AgentConversationParticipant[]
+  agents: readonly RoomAgent[]
+}): { ownerOnly: boolean; owner?: AgentConversationParticipant } {
+  return {
+    ownerOnly: room.agents.at(0)?.local ?? false,
+    owner: room.people.find((person) => person.isOwner),
+  }
+}
+
+export function roleLabel(role: AgentConversationParticipant['role'], ownerOnly = false): string {
   if (role === 'owner') return t('Owner')
+  if (ownerOnly) return t('Can view')
   if (role === 'manage') return t('Can manage')
   if (role === 'reply') return t('Can reply')
 

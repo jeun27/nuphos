@@ -40,17 +40,26 @@ describe('setConversationParent', () => {
     expect(parentOf('worker')).toBe('manager')
   })
 
-  test('nesting shares the thread and everything below it like the new parent', async () => {
+  test('nesting narrows the thread and everything below it to the new parent', async () => {
     await setConversationParent('worker', 'u', 't', 'manager')
 
     for (const id of ['worker', 'nested']) {
       expect(doc(id)).toMatchObject({
         generalAccess: 'view',
-        participantIds: ['ann'],
+        participantIds: [],
         viewOnlyIds: [],
-        managerIds: ['ann'],
+        managerIds: [],
       })
     }
+    expect(doc('worker')?.ownAccess).toBe(true)
+  })
+
+  test('nesting a private thread under a shared chat never shares it', async () => {
+    doc('worker')!.generalAccess = 'none'
+    await setConversationParent('worker', 'u', 't', 'manager')
+
+    expect(doc('worker')?.generalAccess).toBe('none')
+    expect(doc('nested')?.generalAccess).toBe('none')
   })
 
   test('null unlinks and leaves the sharing as it was', async () => {

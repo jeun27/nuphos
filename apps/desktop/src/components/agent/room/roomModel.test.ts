@@ -9,6 +9,9 @@ import {
   roomHeadline,
   roomIsShared,
   roomProviders,
+  roomRootOf,
+  roomSendRule,
+  roleLabel,
   runningRequester,
 } from './roomModel.ts'
 
@@ -116,4 +119,46 @@ test("teammates' queued messages keep their order and say who sent them", () => 
     { id: '1', text: 'Add SSO row', senderName: 'Mira' },
     { id: '3', text: 'From a removed teammate', senderName: 'A teammate' },
   ])
+})
+
+test('a room on its owner’s computer takes messages from the owner alone', () => {
+  const local = [
+    chat('manager', { runtimeId: 'local_bryan_mac' }),
+    chat('builder', { parentSessionId: 'manager', runtimeId: 'local_bryan_mac' }),
+  ]
+  const people = [person('bryan', true), person('mira', false)]
+  const rule = roomSendRule({ people, agents: roomAgents(local[0], local, () => false) })
+
+  assert.equal(rule.ownerOnly, true)
+  assert.equal(rule.owner?.id, 'bryan')
+  assert.equal(roleLabel('reply', rule.ownerOnly), 'Can view')
+  assert.equal(roleLabel('owner', rule.ownerOnly), 'Owner')
+  assert.equal(
+    roomSendRule({ people, agents: roomAgents(tree[0], tree, () => false) }).ownerOnly,
+    false,
+  )
+})
+
+test('an agent row carries the pull requests and issues it linked, not chat threads', () => {
+  const resource = (provider: string, id: string) =>
+    ({ id, provider, title: id, url: '', state: 'open', linkedAt: '' }) as never
+  const [agent] = roomAgents(
+    chat('manager', { linkedResources: [resource('github', 'pr'), resource('slack', 'thread')] }),
+    [],
+    () => false,
+  )
+
+  assert.deepEqual(
+    agent?.changes.map((change) => change.id),
+    ['pr'],
+  )
+})
+
+test('a sub-agent opens the same room as its manager, from the top of the tree', () => {
+  assert.equal(roomRootOf('reviewer', tree)?.sessionId, 'manager')
+  assert.equal(roomRootOf('manager', tree)?.sessionId, 'manager')
+  assert.equal(roomRootOf('a', [chat('a', { parentSessionId: 'gone' })])?.sessionId, 'a')
+  const loop = [chat('a', { parentSessionId: 'b' }), chat('b', { parentSessionId: 'a' })]
+
+  assert.ok(roomRootOf('a', loop))
 })

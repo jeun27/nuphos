@@ -108,6 +108,20 @@ describe('a sub-agent is never shared wider than its parent', () => {
     expect((await send('PATCH', `worker/participants/${ANN}`, { role: 'manage' })).status).toBe(409)
   })
 
+  test('a sub-agent narrowed by hand stays narrow when its parent changes', async () => {
+    await send('PATCH', 'manager/access', { generalAccess: 'reply' })
+    await send('PATCH', 'worker/access', { generalAccess: 'none' })
+    await send('POST', 'manager/participants', { userIds: [ANN] })
+
+    expect(row('worker')).toMatchObject({ generalAccess: 'none', ownAccess: true })
+    expect(row('nested')?.generalAccess).toBe('none')
+
+    await send('POST', 'worker/participants', { userIds: [ANN] })
+    await send('DELETE', `manager/participants/${ANN}`)
+    await send('PATCH', 'manager/access', { generalAccess: 'none' })
+    expect(row('worker')?.participantIds).toEqual([])
+  })
+
   test('narrowing a sub-agent below its parent is allowed', async () => {
     await send('PATCH', 'manager/access', { generalAccess: 'reply' })
 

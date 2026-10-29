@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 
 import { conversationAccess } from './access'
-import { inheritedGrant, inviteExceedsParent, widerThanParent } from './access-tree'
+import { inheritedGrant, inviteExceedsParent, narrowToParent, widerThanParent } from './access-tree'
 
 const parent = {
   userId: 'owner',
@@ -55,5 +55,34 @@ describe('inviteExceedsParent', () => {
 
   test("the parent's owner may be given anything", () => {
     expect(inviteExceedsParent(parent, 'owner', 'manage')).toBe(false)
+  })
+})
+
+describe('narrowToParent', () => {
+  test('keeps the child no wider than its parent, for the team and for each person', () => {
+    const child = {
+      generalAccess: 'reply' as const,
+      participantIds: ['ann', 'bo', 'carl'],
+      viewOnlyIds: [],
+      managerIds: ['ann', 'bo'],
+    }
+
+    expect(narrowToParent(child, parent)).toEqual({
+      generalAccess: 'view',
+      participantIds: ['ann', 'bo', 'carl'],
+      viewOnlyIds: ['bo', 'carl'],
+      managerIds: ['ann'],
+    })
+  })
+
+  test('drops whoever the parent shuts out and never widens a private child', () => {
+    const closed = { ...parent, generalAccess: 'none' as const }
+
+    expect(narrowToParent({ generalAccess: 'none', participantIds: ['carl'] }, closed)).toEqual({
+      generalAccess: 'none',
+      participantIds: [],
+      viewOnlyIds: [],
+      managerIds: [],
+    })
   })
 })

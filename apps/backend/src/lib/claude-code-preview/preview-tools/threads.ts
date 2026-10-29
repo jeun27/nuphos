@@ -145,7 +145,8 @@ export function threadToolModule(
           'Nest an existing Nuphos thread under another conversation in the sidebar, e.g. your own ' +
           'session_id to group threads you manage, or pass parentThreadId null to stop nesting it. ' +
           'Both must be conversations you own in this team, and the parent must not already be nested ' +
-          'below the thread. Changes only the sidebar grouping, not runtime, credentials or messages.',
+          'below the thread. Changes the sidebar grouping, not runtime, credentials or messages. ' +
+          'Nesting can narrow who may open the thread to what the parent allows; it never shares it wider.',
         inputSchema: toolInputJsonSchema(setParent),
       },
     ],

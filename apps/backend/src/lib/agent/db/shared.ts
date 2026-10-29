@@ -97,6 +97,7 @@ export type AgentConversation = {
   managerIds?: string[]
   /** What the rest of the team may do; see access.ts. Absent = 'reply'. */
   generalAccess?: GeneralAccess
+  ownAccess?: boolean // A sub-agent shared on its own: its parent's changes only narrow it.
   /** Who joined, left or moved this session, shown between its messages. */
   timelineEvents?: ConversationTimelineEvent[]
   /** Incremented at every assistant turn boundary. Absent means zero. */

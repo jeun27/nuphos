@@ -4,8 +4,8 @@ import { logError } from '@/lib/observability'
 
 import { purgeConversationTraces } from '../trace-store/store'
 
-import { inheritedGrant } from './access-tree'
-import { syncDescendantAccess } from './participants'
+import { narrowToParent } from './access-tree'
+import { syncDescendantAccess } from './access-tree-sync'
 import { agentConversations, agentMessages, withTeamScope } from './shared'
 
 // Refuses to blank a title. The conversation already carries a usable one from
@@ -76,17 +76,22 @@ export async function setConversationParent(
 
     return result.matchedCount > 0 ? 'ok' : 'not_found'
   }
-  const conversation = await agentConversations().findOne(filter, { projection: { teamId: 1 } })
+  const conversation = await agentConversations().findOne(filter)
 
   if (!conversation) return 'not_found'
   if (!(await isValidParent(sessionId, userId, conversation.teamId, parentSessionId))) {
     return 'invalid_parent'
   }
-  // Nesting shares the thread, and everything below it, like its new parent.
-  const parent = await agentConversations().findOne({ sessionId: parentSessionId })
+  const parent = await agentConversations().findOne(
+    withTeamScope({ sessionId: parentSessionId, userId }, conversation.teamId),
+  )
+
+  if (!parent) return 'invalid_parent'
+  // Nesting groups; it never widens. The thread keeps its own sharing, cut down
+  // to the new parent's, and so does everything below it.
   const updated = await agentConversations().findOneAndUpdate(
     filter,
-    { $set: { parentSessionId, ...inheritedGrant(parent ?? {}) } },
+    { $set: { parentSessionId, ownAccess: true, ...narrowToParent(conversation, parent) } },
     { returnDocument: 'after' },
   )
 

@@ -10,6 +10,7 @@ import { AGENT_PROVIDER } from '../../../types/runtime'
 import { useAgentDevices } from '../../../views/settings/useAgentDevices'
 import { ConfirmDialog } from '../../ConfirmDialog'
 import { Menu, MenuContent, MenuItem, MenuSeparator, MenuTrigger } from '../../ui/menu'
+import { useRuntimeMenuRequest } from '../room/runtimeMenuRequest'
 
 import { AgentProviderIcon } from './icons'
 import { selectedAgentReachability } from './runtimeControlSignOut'
@@ -66,6 +67,7 @@ export function RuntimeSelector({
   menuOpen,
   onMenuOpenChange,
   teamId,
+  sessionId,
   canUpdateTeamAgents,
   value,
   options = [],
@@ -95,6 +97,8 @@ export function RuntimeSelector({
     setInternalOpen(next)
     onMenuOpenChange?.(next)
   }
+
+  useRuntimeMenuRequest(onSelect ? sessionId : undefined, () => setOpen(true))
   const devices = useAgentDevices(() => 5_000, teamId, {
     metrics: true,
     enabled: open && Boolean(teamId),
