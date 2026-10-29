@@ -10,14 +10,7 @@ import { AgentProviderIcon } from '../panel/icons'
 import { TitlebarDragSuspender } from '../ShareCard'
 
 import { RoomMembers } from './RoomMembers'
-import {
-  firstName,
-  guestName,
-  roomHeadline,
-  roomIsShared,
-  roomProviders,
-  roomSteering,
-} from './roomModel'
+import { firstName, roomHeadline, roomIsShared, roomProviders, roomSteering } from './roomModel'
 import { useRoom } from './useRoom'
 
 import type { Room } from './useRoom'
@@ -26,7 +19,7 @@ const FACE = 22
 const RING = 'shrink-0 !rounded-full border-2 border-agentCanvas !shadow-none'
 const VISIBLE_FACES = 7
 
-/** Everyone in the room, people then guests then agents, as one overlapping row of discs. */
+/** Everyone in the room, people first, as one overlapping row of discs. */
 function Faces({ room }: { room: Room }) {
   const faces = [
     ...room.people.map((person) => (
@@ -36,15 +29,6 @@ function Faces({ room }: { room: Room }) {
         name={person.name}
         size={FACE}
         className={clsx(RING, person.deactivated && 'opacity-50')}
-      />
-    )),
-    ...room.guests.map((guest) => (
-      <Avatar
-        key={guest.key}
-        src={guest.avatarURL}
-        name={guestName(guest)}
-        size={FACE}
-        className={clsx(RING, guest.pending && 'opacity-50')}
       />
     )),
     ...room.agents.map((agent) => (
@@ -115,7 +99,7 @@ export function RoomBar({
   currentUserId: string
   onOpenAgent?: (sessionId: string) => void
 }) {
-  if (!roomIsShared(room.people.length, room.agents.length, room.guests.length)) return null
+  if (!roomIsShared(room.people.length, room.agents.length)) return null
 
   return (
     <Popover.Root>
@@ -129,7 +113,7 @@ export function RoomBar({
       >
         <Faces room={room} />
         <span className="shrink-0 whitespace-nowrap">
-          {roomHeadline(room.people.length, room.agents.length, room.guests.length)}
+          {roomHeadline(room.people.length, room.agents.length)}
         </span>
         <span className="flex min-w-0 items-center gap-1.5 overflow-hidden">
           {roomProviders(room.agents).map((provider) => (

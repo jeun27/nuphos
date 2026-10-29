@@ -4,17 +4,16 @@ import { useLayoutEffect, useRef, useState } from 'react'
 
 import { t } from '../../i18n'
 import { Avatar } from '../Avatar'
+import { Button } from '../ui/button'
 import { InputGroup, InputGroupInput } from '../ui/input-group'
 
-import { Button } from '../ui/button'
-
-import { NewcomerInvites } from './NewcomerInvites'
-import { emailToInvite } from './room/pendingInviteRows'
+import { InviteByEmail } from './InviteByEmail'
 import { RoleMenu } from './ShareAccess'
 import { CheckBadge } from './ShareCard'
+import { pickerNotice } from './shareInvite'
 
-import type { EmailInviteContext } from './InviteByEmail'
-import type { GuestInviteContext } from './NewcomerInvites'
+import type { PickerNotice } from './shareInvite'
+import type { EmailInviteContext } from './useInviteToChat'
 import type { ParticipantRole } from '../../api/agent-types'
 import type { TeamMember } from '../../types'
 
@@ -43,8 +42,8 @@ export function TeammatePicker({
   disabled,
   onToggle,
   teamName,
+  adminName,
   emailInvite,
-  guestInvite,
 }: {
   members: TeamMember[] | null
   invitable: TeamMember[]
@@ -52,22 +51,22 @@ export function TeammatePicker({
   disabled: boolean
   onToggle: (member: TeamMember) => void
   teamName: string
+  /** The team admin a non-admin is told to ask, when known. */
+  adminName: string | null
   /** Set for a team admin: an email that names nobody in the team can be invited to it. */
   emailInvite?: EmailInviteContext
-  /** Set for the owner: such an email can be let in to view this chat as a guest. */
-  guestInvite?: GuestInviteContext
 }) {
   const [query, setQuery] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
   const pickedIds = new Set(picked.map((member) => member.id))
   const shown = invitable.filter((member) => matches(member, query))
-  const email = emailToInvite(query, members)
-  const newcomer = email && (
-    <NewcomerInvites
-      email={email}
-      teamName={teamName}
+  const notice = (
+    <Notice
+      notice={pickerNotice(query, members, invitable.length, shown.length)}
+      team={teamName}
+      adminName={adminName}
       emailInvite={emailInvite}
-      guestInvite={guestInvite}
+      onInvited={() => setQuery('')}
     />
   )
 
@@ -127,17 +126,7 @@ export function TeammatePicker({
           className="min-w-[96px] px-1 text-[12px] text-main placeholder:text-tertiary"
         />
       </InputGroup>
-      {!members && (
-        <div className="flex items-center gap-2 px-1 text-[12px] text-tertiary">
-          <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2} />
-          {t('Loading members…')}
-        </div>
-      )}
-      {members &&
-        invitable.length === 0 &&
-        (newcomer || (
-          <EveryoneHere team={teamName} canInvite={Boolean(emailInvite ?? guestInvite)} />
-        ))}
+      {invitable.length === 0 && notice}
       {/* Sized by the whole team, not by the matches, so typing never resizes the card. */}
       {invitable.length > 0 && (
         <div
@@ -146,11 +135,7 @@ export function TeammatePicker({
             invitable.length > 5 ? 'h-[156px]' : 'h-[68px]',
           )}
         >
-          {shown.length === 0 && (
-            <div className="col-span-5 px-1 text-[12px] text-tertiary">
-              {newcomer || t('No teammates match.')}
-            </div>
-          )}
+          {shown.length === 0 && <div className="col-span-5">{notice}</div>}
           {shown.map((member) => {
             const selected = pickedIds.has(member.id)
 
@@ -193,15 +178,63 @@ export function TeammatePicker({
   )
 }
 
-/** Nobody left to add: say so, and how to add someone new when the viewer can. */
-function EveryoneHere({ team, canInvite }: { team: string; canInvite: boolean }) {
-  return (
-    <div className="px-1 text-[12px] text-tertiary">
-      {canInvite
-        ? t('Everyone in {team} is here. To add someone new, type their email.', { team })
-        : t('Everyone in {team} is already here.', { team })}
-    </div>
-  )
+const HINT = 'px-1 text-[12px] text-tertiary'
+
+/** The line under the search: loading, an email to invite, or a hint. Never a dead end. */
+function Notice({
+  notice,
+  team,
+  adminName,
+  emailInvite,
+  onInvited,
+}: {
+  notice: PickerNotice
+  team: string
+  adminName: string | null
+  emailInvite?: EmailInviteContext
+  onInvited: () => void
+}) {
+  if (!notice) return null
+  if (notice.kind === 'loading') {
+    return (
+      <div className={clsx(HINT, 'flex items-center gap-2')}>
+        <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2} />
+        {t('Loading members…')}
+      </div>
+    )
+  }
+  if (notice.kind === 'no-match') return <div className={HINT}>{t('No teammates match.')}</div>
+  if (notice.kind === 'invite' && emailInvite) {
+    return <InviteByEmail email={notice.email} context={emailInvite} onInvited={onInvited} />
+  }
+  if (notice.kind === 'invite') {
+    const email = notice.email
+
+    return (
+      <div className={HINT}>
+        {adminName
+          ? t('{email} isn’t in {team}. Ask {admin} to invite them.', {
+              email,
+              team,
+              admin: adminName,
+            })
+          : t('{email} isn’t in {team}. Ask a team admin to invite them.', { email, team })}
+      </div>
+    )
+  }
+
+  let hint = t('Everyone in {team} is here. Ask a team admin to invite someone new.', { team })
+
+  if (emailInvite) {
+    hint = t('Everyone in {team} is here. Type an email to invite someone new.', { team })
+  } else if (adminName) {
+    hint = t('Everyone in {team} is here. Ask {admin} to invite someone new.', {
+      team,
+      admin: adminName,
+    })
+  }
+
+  return <div className={HINT}>{hint}</div>
 }
 
 /** The role the picks join with, and the button that adds them. */

@@ -81,7 +81,9 @@ export type AgentConversation = {
   // Archive marker, set by the owner or a manager. Archived conversations stay fully intact and
   // readable; list endpoints only hide them when asked (archived=exclude).
   archivedAt?: Date
-  archiveRestoredAt?: Date // Last un-archived by hand; the idle sweep also counts from here.
+  // When it was last un-archived by hand. The idle sweep counts from here as
+  // well as lastActiveAt, so a restored conversation is not filed away again.
+  archiveRestoredAt?: Date
   // Teammates who joined this conversation beside its owner. Speaking in a
   // session and being invited from Share are the same fact — "this person is
   // part of this conversation" — so both append here instead of splitting into
@@ -92,7 +94,6 @@ export type AgentConversation = {
   viewOnlyIds?: string[]
   /** Participants who may also change the runtime and credentials. Disjoint from viewOnlyIds. */
   managerIds?: string[]
-  guestIds?: string[] // People outside the team who may only read this chat and its tree.
   /** What the rest of the team may do; see access.ts. Absent = 'reply'. */
   generalAccess?: GeneralAccess
   ownAccess?: boolean // A sub-agent shared on its own: its parent's changes only narrow it.

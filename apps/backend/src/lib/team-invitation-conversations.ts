@@ -4,7 +4,6 @@ import { getConversationBySessionId } from '@/lib/agent/db'
 import { managesConversation } from '@/lib/agent/db/access'
 import { inviteExceedsParent } from '@/lib/agent/db/access-tree'
 import { markOwnAccess, syncDescendantAccess } from '@/lib/agent/db/access-tree-sync'
-import { removeGuest } from '@/lib/agent/db/guests'
 import { inviteConversationParticipants } from '@/lib/agent/db/participants'
 import { AppError } from '@/lib/errors'
 
@@ -65,9 +64,6 @@ async function grantOne(invitation: TeamInvitation, entry: InvitationConversatio
   )
 
   if (!updated) return false
-  // A guest who joins the team becomes a full member of the room: no longer a guest.
-  if (updated.guestIds?.includes(userId))
-    await removeGuest(updated, userId, actorId, 'agent.conversation.guest_upgraded')
   if (conversation.parentSessionId) await markOwnAccess(conversation.sessionId)
   await syncDescendantAccess(entry.sessionId, {
     userId: conversation.userId,

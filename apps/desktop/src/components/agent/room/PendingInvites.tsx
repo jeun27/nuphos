@@ -1,47 +1,18 @@
 import { ChevronDown, Link2, Mail } from 'lucide-react'
-import { useEffect, useState } from 'react'
 
-import { api } from '../../../api'
 import { t } from '../../../i18n'
 import { Avatar } from '../../Avatar'
-import { Menu, MenuContent, MenuItem, MenuTrigger } from '../../ui/menu'
+import { Menu, MenuContent, MenuItem, MenuSeparator, MenuTrigger } from '../../ui/menu'
 import { toast } from '../../ui/toast'
 import { agentSessionUrl } from '../sessionUrl'
 
-import { TEAM_INVITATIONS_CHANGED_EVENT, pendingInvitesFor } from './pendingInviteRows'
+import { carriedConversation, pendingInvitesFor } from './pendingInviteRows'
+import { cancelInvitation, resendInvitation, useTeamInvitations } from './useTeamInvitations'
 
 import type { Room } from './useRoom'
 import type { TeamInvitation } from '../../../types'
 
 const ROW = 'flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left'
-
-function useTeamInvitations(teamId: string) {
-  const [invitations, setInvitations] = useState<TeamInvitation[]>([])
-
-  useEffect(() => {
-    let cancelled = false
-    const load = () =>
-      api
-        .atlasListTeamInvitations(teamId)
-        .then((next) => {
-          if (!cancelled) setInvitations(next)
-        })
-        .catch((err: unknown) => toast.apiError(t('Failed to load invitations'), err))
-    const reloadIfThisTeam = (event: Event) => {
-      if ((event as CustomEvent<string>).detail === teamId) void load()
-    }
-
-    void load()
-    window.addEventListener(TEAM_INVITATIONS_CHANGED_EVENT, reloadIfThisTeam)
-
-    return () => {
-      cancelled = true
-      window.removeEventListener(TEAM_INVITATIONS_CHANGED_EVENT, reloadIfThisTeam)
-    }
-  }, [teamId])
-
-  return invitations
-}
 
 function PendingFace({ invitation }: { invitation: TeamInvitation }) {
   return (
@@ -59,7 +30,7 @@ function PendingFace({ invitation }: { invitation: TeamInvitation }) {
 
 /**
  * People invited into this room by email who have not joined the team yet. A
- * team admin can send the invitation again or copy the chat's link; anyone else
+ * team admin can send it again, copy the chat's link, or cancel it; anyone else
  * sees the row as it is.
  */
 export function PendingInvites({ room }: { room: Room }) {
@@ -68,22 +39,13 @@ export function PendingInvites({ room }: { room: Room }) {
   const pending = pendingInvitesFor(invitations, sessionIds)
   const teamName = room.team?.name ?? t('the team')
 
-  const carried = (invitation: TeamInvitation) =>
-    invitation.conversations?.find((entry) => sessionIds.includes(entry.sessionId)) ?? {
-      sessionId: room.here,
-      role: 'reply' as const,
-    }
-  const resend = (invitation: TeamInvitation) => {
-    const email = invitation.inviteeEmail
-
-    api
-      .atlasInviteTeamMember(room.teamId, email, carried(invitation))
-      .then(() => toast.success(t('Sent the invite to {email} again', { email })))
-      .catch((err: unknown) => toast.apiError(t('Failed to invite {email}', { email }), err))
-  }
+  const resend = (invitation: TeamInvitation) =>
+    void resendInvitation(room.teamId, invitation, sessionIds)
   const copyLink = (invitation: TeamInvitation) => {
     navigator.clipboard
-      .writeText(agentSessionUrl(room.teamId, carried(invitation).sessionId))
+      .writeText(
+        agentSessionUrl(room.teamId, carriedConversation(invitation, sessionIds).sessionId),
+      )
       .then(() => toast.success(t('Link copied')))
       .catch(() => toast.error(t('Could not copy the link')))
   }
@@ -110,6 +72,10 @@ export function PendingInvites({ room }: { room: Room }) {
             onClick={() => copyLink(invitation)}
           >
             {t('Copy link to this chat')}
+          </MenuItem>
+          <MenuSeparator />
+          <MenuItem destructive onClick={() => void cancelInvitation(room.teamId, invitation)}>
+            {t('Cancel invite')}
           </MenuItem>
         </MenuContent>
       </Menu>

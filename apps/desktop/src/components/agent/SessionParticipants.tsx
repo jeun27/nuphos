@@ -8,12 +8,10 @@ import { t } from '../../i18n'
 import { LOCAL_AGENT_SHARING_NOTE } from '../../lib/localAgentSharing'
 import { toast } from '../ui/toast'
 
-import { announceTimelineChange } from './panel/timelineEvents'
+import { linkAudience } from './linkAudience'
 import { publishRoomTeam } from './room/useRoom'
 import { agentSessionUrl } from './sessionUrl'
-import { linkAudience } from './linkAudience'
 import { GeneralAccessRow } from './ShareAccess'
-import { ShareGuests } from './ShareGuests'
 import {
   AddedReceipt,
   ParticipantList,
@@ -21,22 +19,19 @@ import {
   ShareLink,
   TitlebarDragSuspender,
 } from './ShareCard'
+import { firstAdminName } from './shareInvite'
+import { SharePendingRows } from './SharePendingRows'
+import { ShareWorkspace } from './ShareWorkspace'
 import { AddPickedRow, TeammatePicker } from './TeammatePicker'
 import { useShareAccess } from './useShareAccess'
-import { useShareGuests } from './useShareGuests'
 
-import type {
-  AgentConversationParticipant,
-  GeneralAccess,
-  ParticipantRole,
-} from '../../api/agent-types'
+import type { ParticipantRole } from '../../api/agent-types'
 import type { AtlasTeam, TeamMember } from '../../types'
 
 /**
  * The session's people, and the Share card that decides who else may open it:
  * a team-wide general access plus a role for each invited person, resolved the
- * way Notion does — the broader grant wins. Only the owner changes any of it;
- * everyone else sees who is here and what they may do.
+ * way Notion does — the broader grant wins. Only the owner changes any of it.
  */
 export function SessionParticipants({
   sessionId,
@@ -47,6 +42,7 @@ export function SessionParticipants({
   canManage,
   warnLocalAgent,
   compact,
+  onOpenTeamSettings,
 }: {
   sessionId: string
   teamId: string
@@ -59,21 +55,20 @@ export function SessionParticipants({
   warnLocalAgent: boolean
   /** A narrow pane header: one avatar and no "Share" label. */
   compact?: boolean
+  /** Opens Settings → Members; offered to team admins. */
+  onOpenTeamSettings?: () => void
 }) {
-  const { participants, generalAccess, guests, apply } = useShareAccess(sessionId, teamId)
+  const access = useShareAccess(sessionId, teamId)
+  const { participants, generalAccess, pending } = access
   const [inviteRole, setInviteRole] = useState<ParticipantRole>('reply')
   const [members, setMembers] = useState<TeamMember[] | null>(null)
   const [picked, setPicked] = useState<TeamMember[]>([])
-  // Set once an invite lands: the card shows its receipt instead of the picker.
+  // Set once people are added: the card shows its receipt instead of the picker.
   const [added, setAdded] = useState<TeamMember[] | null>(null)
-  // 'invite', 'undo', 'access', or the id of the participant being changed.
-  const [pending, setPending] = useState<string | null>(null)
   const teamName = team?.name ?? t('the team')
   const isAdmin = team?.role === 'ADMINISTRATOR'
 
   useEffect(() => publishRoomTeam(teamId, { name: teamName, isAdmin }), [teamId, teamName, isAdmin])
-
-  const guestActions = useShareGuests(sessionId, teamId, guests, apply)
 
   const onOpenChange = (open: boolean) => {
     if (!open) return
@@ -93,73 +88,34 @@ export function SessionParticipants({
         : [...current, member],
     )
 
-  const invite = () => {
-    setPending('invite')
-    api
-      .agentInviteConversationParticipants(
-        sessionId,
-        teamId,
-        picked.map((member) => member.id),
+  const addMembers = (people: TeamMember[]) =>
+    void access
+      .add(
+        people.map((member) => member.id),
         inviteRole,
       )
-      .then((result) => {
-        apply(result)
-        setAdded(picked)
+      .then((ok) => {
+        if (!ok) return
+        setAdded(people)
         setPicked([])
-        announceTimelineChange(sessionId)
       })
-      .catch((err: unknown) => toast.apiError(t('Failed to add teammates'), err))
-      .finally(() => setPending(null))
-  }
-
-  const removeIds = async (ids: string[]) => {
-    for (const id of ids) {
-      apply(await api.agentRemoveConversationParticipant(sessionId, teamId, id))
-    }
-    announceTimelineChange(sessionId)
-  }
-
-  const remove = ({ id, name }: AgentConversationParticipant) => {
-    setPending(id)
-    removeIds([id])
-      .catch((err: unknown) => toast.apiError(t('Failed to remove {name}', { name }), err))
-      .finally(() => setPending(null))
-  }
-
-  const changeRole = ({ id, name }: AgentConversationParticipant, role: ParticipantRole) => {
-    setPending(id)
-    api
-      .agentSetConversationParticipantRole(sessionId, teamId, id, role)
-      .then(apply)
-      .catch((err: unknown) => toast.apiError(t('Failed to change {name}', { name }), err))
-      .finally(() => setPending(null))
-  }
-
-  const changeGeneralAccess = (value: GeneralAccess) => {
-    setPending('access')
-    api
-      .agentSetConversationGeneralAccess(sessionId, teamId, value)
-      .then(apply)
-      .catch((err: unknown) => toast.apiError(t('Failed to change general access'), err))
-      .finally(() => setPending(null))
-  }
 
   // Undo takes the people back out and returns them to the picker, so a wrong
   // pick is one click from fixed.
   const undo = () => {
     if (!added) return
-    setPending('undo')
-    removeIds(added.map((member) => member.id))
-      .then(() => {
-        setPicked(added)
-        setAdded(null)
-      })
-      .catch((err: unknown) => toast.apiError(t('Failed to undo'), err))
-      .finally(() => setPending(null))
+    void access.undo(added.map((member) => member.id)).then((ok) => {
+      if (!ok) return
+      setPicked(added)
+      setAdded(null)
+    })
   }
 
   const joined = new Set(participants.map((participant) => participant.id))
   const invitable = (members ?? []).filter((member) => !joined.has(member.id))
+  const adminName = firstAdminName(members, currentUserId)
+  const emailInvite =
+    isAdmin && canManage ? { teamId, teamName, sessionId, role: inviteRole } : undefined
 
   return (
     <Popover.Root onOpenChange={onOpenChange}>
@@ -210,6 +166,17 @@ export function SessionParticipants({
                     <X className="h-3.5 w-3.5" strokeWidth={2} />
                   </Popover.Close>
                 </div>
+                {(emailInvite !== undefined || !isAdmin) && (
+                  <ShareWorkspace
+                    context={emailInvite}
+                    teamName={teamName}
+                    adminName={adminName}
+                    members={members}
+                    participantIds={joined}
+                    onAddMember={(member) => addMembers([member])}
+                    onOpenTeamSettings={isAdmin ? onOpenTeamSettings : undefined}
+                  />
+                )}
                 <ShareLink
                   url={agentSessionUrl(teamId, sessionId)}
                   note={linkAudience(generalAccess, teamName)}
@@ -217,7 +184,7 @@ export function SessionParticipants({
                   <GeneralAccessRow
                     value={generalAccess}
                     canManage={canManage && pending === null}
-                    onChange={changeGeneralAccess}
+                    onChange={access.changeGeneralAccess}
                   />
                 </ShareLink>
                 {warnLocalAgent && (
@@ -232,15 +199,11 @@ export function SessionParticipants({
                   generalAccess={generalAccess}
                   canManage={canManage}
                   pending={pending}
-                  onRoleChange={changeRole}
-                  onRemove={remove}
-                />
-                <ShareGuests
-                  guests={guests}
-                  canManage={canManage}
-                  removing={guestActions.removing}
-                  onRemove={guestActions.remove}
-                />
+                  onRoleChange={access.changeRole}
+                  onRemove={access.remove}
+                >
+                  <SharePendingRows sessionId={sessionId} teamId={teamId} isAdmin={isAdmin} />
+                </ParticipantList>
                 {canManage ? (
                   <>
                     <TeammatePicker
@@ -250,17 +213,15 @@ export function SessionParticipants({
                       disabled={pending !== null}
                       onToggle={togglePicked}
                       teamName={teamName}
-                      emailInvite={
-                        isAdmin ? { teamId, teamName, sessionId, role: inviteRole } : undefined
-                      }
-                      guestInvite={guestActions.invite}
+                      adminName={adminName}
+                      emailInvite={emailInvite}
                     />
                     <AddPickedRow
                       role={inviteRole}
                       onRoleChange={setInviteRole}
                       count={picked.length}
                       pending={pending}
-                      onAdd={invite}
+                      onAdd={() => addMembers(picked)}
                     />
                   </>
                 ) : (

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
-import { emailToInvite, pendingInvitesFor } from './pendingInviteRows.ts'
+import { carriedConversation, emailToInvite, pendingInvitesFor } from './pendingInviteRows.ts'
 
 import type { TeamInvitation, TeamMember } from '../../../types'
 
@@ -38,4 +38,19 @@ test('only pending invitations carrying a chat in this room are listed', () => {
     pendingInvitesFor(invitations, ['chat-1', 'sub-agent']).map((entry) => entry.id),
     ['shant', 'sub'],
   )
+})
+
+test('an invitation names the chat in this room it carries, or falls back to the room', () => {
+  const sub = invite('sub', 'sub-agent', {
+    conversations: [{ sessionId: 'sub-agent', role: 'view' }],
+  })
+
+  assert.deepEqual(carriedConversation(sub, ['chat-1', 'sub-agent']), {
+    sessionId: 'sub-agent',
+    role: 'view',
+  })
+  assert.deepEqual(carriedConversation({ id: 'plain' } as TeamInvitation, ['chat-1']), {
+    sessionId: 'chat-1',
+    role: 'reply',
+  })
 })

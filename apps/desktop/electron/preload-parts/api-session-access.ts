@@ -30,10 +30,4 @@ export const sessionAccessApi = {
     ipcRenderer.invoke('agent:setConversationTeamSteer', sessionId, teamId, enabled),
   agentRemoveConversationParticipant: (sessionId: string, teamId: string, userId: string) =>
     ipcRenderer.invoke('agent:removeConversationParticipant', sessionId, teamId, userId),
-  agentGuestConversation: (sessionId: string) =>
-    ipcRenderer.invoke('agent:guestConversation', sessionId),
-  agentInviteGuest: (sessionId: string, teamId: string, email: string) =>
-    ipcRenderer.invoke('agent:inviteGuest', sessionId, teamId, email),
-  agentRemoveGuest: (sessionId: string, teamId: string, guestKey: string) =>
-    ipcRenderer.invoke('agent:removeGuest', sessionId, teamId, guestKey),
 }

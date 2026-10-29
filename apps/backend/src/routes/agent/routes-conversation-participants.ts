@@ -19,7 +19,7 @@ import {
 import { AppError } from '@/lib/errors'
 import { getTeamMembership } from '@/lib/identity'
 
-import { serializeAccess } from './conversation-access-view'
+import { buildConversationOwnerMap } from './conversation-view'
 import {
   assertConversationWritable,
   readTeamIdCandidate,
@@ -37,6 +37,31 @@ import type { AuthVariables } from '@/middleware/auth'
 export const conversationParticipantsRoutes = new Hono<{ Variables: AuthVariables }>()
 
 const MAX_INVITES_PER_REQUEST = 20
+
+async function serializeAccess(
+  conversation: Pick<
+    AgentConversation,
+    'userId' | 'participantIds' | 'viewOnlyIds' | 'managerIds' | 'generalAccess'
+  >,
+  teamId: string | undefined,
+) {
+  const ids = conversationParticipantIds(conversation)
+  const byId = await buildConversationOwnerMap(teamId, ids)
+
+  return {
+    generalAccess: generalAccessOf(conversation),
+    participants: ids.map((id) => {
+      const resolved = byId.get(id)
+      const isOwner = id === conversation.userId
+
+      return {
+        ...(resolved ?? { id, name: 'Unknown user', email: '', avatarURL: '' }),
+        isOwner,
+        role: isOwner ? 'owner' : participantRole(conversation, id),
+      }
+    }),
+  }
+}
 
 const treeScope = (conversation: AgentConversation) => ({
   userId: conversation.userId,

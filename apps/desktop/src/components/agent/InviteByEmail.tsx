@@ -1,52 +1,26 @@
-import { Check, Loader2, UserPlus } from 'lucide-react'
-import { useState } from 'react'
+import { Loader2, UserPlus } from 'lucide-react'
 
-import { api } from '../../api'
 import { t } from '../../i18n'
 import { Button } from '../ui/button'
-import { toast } from '../ui/toast'
 
-import { announceTeamInvitationsChanged } from './room/pendingInviteRows'
+import { useInviteToChat } from './useInviteToChat'
 
-import type { ParticipantRole } from '../../api/agent-types'
-
-export type EmailInviteContext = {
-  teamId: string
-  teamName: string
-  sessionId: string
-  role: ParticipantRole
-}
+import type { EmailInviteContext } from './useInviteToChat'
 
 /**
  * Someone who is not in the team yet: a team admin invites them by email, and
  * the invitation carries this chat, so accepting opens it for them.
  */
-export function InviteByEmail({ email, context }: { email: string; context: EmailInviteContext }) {
-  const [sending, setSending] = useState(false)
-  const [sent, setSent] = useState<string | null>(null)
-  const { teamId, teamName, sessionId, role } = context
-
-  const invite = () => {
-    setSending(true)
-    api
-      .atlasInviteTeamMember(teamId, email, { sessionId, role })
-      .then(() => {
-        setSent(email)
-        announceTeamInvitationsChanged(teamId)
-        toast.success(t('Invited {email} to {team}', { email, team: teamName }))
-      })
-      .catch((err: unknown) => toast.apiError(t('Failed to invite {email}', { email }), err))
-      .finally(() => setSending(false))
-  }
-
-  if (sent === email) {
-    return (
-      <div className="flex items-center gap-2 px-1 text-[12px] text-secondary">
-        <Check className="h-3.5 w-3.5 shrink-0 text-success" strokeWidth={2.5} />
-        {t('Invited. They’ll join {team} and this chat when they accept.', { team: teamName })}
-      </div>
-    )
-  }
+export function InviteByEmail({
+  email,
+  context,
+  onInvited,
+}: {
+  email: string
+  context: EmailInviteContext
+  onInvited: () => void
+}) {
+  const { invite, sending } = useInviteToChat(context)
 
   return (
     <Button
@@ -55,7 +29,7 @@ export function InviteByEmail({ email, context }: { email: string; context: Emai
       className="h-auto w-full min-w-0 justify-start gap-2 py-1.5 text-left"
       disabled={sending}
       onMouseDown={(event) => event.preventDefault()}
-      onClick={invite}
+      onClick={() => void invite(email).then((sent) => sent && onInvited())}
     >
       {sending ? (
         <Loader2 className="h-4 w-4 shrink-0 animate-spin" strokeWidth={2} />
@@ -64,7 +38,7 @@ export function InviteByEmail({ email, context }: { email: string; context: Emai
       )}
       <span className="min-w-0 flex-1 leading-tight">
         <span className="block truncate text-[12px] text-main">
-          {t('Invite {email} to {team}', { email, team: teamName })}
+          {t('Invite {email} to {team}', { email, team: context.teamName })}
         </span>
         <span className="block whitespace-normal text-[11px] font-normal text-tertiary">
           {t('They join the team and this chat when they accept.')}

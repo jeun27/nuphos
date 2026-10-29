@@ -33,11 +33,6 @@ export async function setupAgentIndexes(): Promise<void> {
       { background: true, partialFilterExpression: { archivedAt: { $exists: true } } },
     )
     await c.createIndex({ 'linkedResources.key': 1 }, { background: true })
-    // A guest's chats: the guest view walks a room by parent and guest.
-    await c.createIndex({ parentSessionId: 1, guestIds: 1 }, { background: true })
-    await db()
-      .collection('agent_guest_invitations')
-      .createIndex({ sessionId: 1, email: 1 }, { unique: true, background: true })
     await c.createIndex({ sessionId: 1 }, { unique: true, background: true })
     await c.createIndex({ teamId: 1, 'claudeCodePreview.runtimeUrl': 1 }, { background: true })
     await c.createIndex({ teamId: 1, previousRuntimeUrls: 1 }, { background: true })

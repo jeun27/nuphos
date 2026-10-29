@@ -16,7 +16,7 @@ import { useChatSummaryOpen } from '../../lib/chatSummaryPanel'
 import { hasCloudOnboardingBinding } from '../../lib/connectorCategories'
 import { isLocalAgentRuntime } from '../../lib/localAgentSharing'
 
-import { ChatLinkGatePane } from './ChatLinkGatePane'
+import { ChatLinkGateScreen } from './ChatLinkGateScreen'
 import { PaneGrip } from './PaneGrip'
 import { PaneMenu } from './PaneMenu'
 import { SessionFindBar } from './SessionFindBar'
@@ -112,6 +112,10 @@ export function WorkspaceAgentPane({
     () => openSettingsSection('workspace.agent'),
     [openSettingsSection],
   )
+  const handleOpenTeamMembers = useCallback(
+    () => openSettingsSection('workspace.members'),
+    [openSettingsSection],
+  )
   const handleImportConsumed = useCallback(
     () => setAgentSidebarPendingImport(null),
     [setAgentSidebarPendingImport],
@@ -136,10 +140,7 @@ export function WorkspaceAgentPane({
       )}
     >
       {ws.chatLinkGate && (
-        <ChatLinkGatePane
-          key={ws.chatLinkGate.sessionId}
-          gate={ws.chatLinkGate}
-          currentUserId={user.id}
+        <ChatLinkGateScreen
           invitation={ws.chatLinkInvitation}
           onAccept={ws.acceptChatLinkInvitation}
           onDismiss={ws.dismissChatLinkGate}
@@ -204,6 +205,7 @@ export function WorkspaceAgentPane({
               canManage={mayRename}
               warnLocalAgent={mayRename && isLocalAgentRuntime(currentHeading.runtimeId)}
               compact={compact}
+              onOpenTeamSettings={handleOpenTeamMembers}
             />
           )}
           {savedSessionId && (

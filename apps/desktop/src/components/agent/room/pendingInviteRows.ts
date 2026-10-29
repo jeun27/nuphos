@@ -1,4 +1,4 @@
-import type { TeamInvitation, TeamMember } from '../../../types'
+import type { InvitationConversation, TeamInvitation, TeamMember } from '../../../types'
 
 /** Fired with the team id when an invitation is sent from a chat, so the room's list reloads. */
 export const TEAM_INVITATIONS_CHANGED_EVENT = 'nuphos:team-invitations-changed'
@@ -7,7 +7,8 @@ export function announceTeamInvitationsChanged(teamId: string) {
   window.dispatchEvent(new CustomEvent(TEAM_INVITATIONS_CHANGED_EVENT, { detail: teamId }))
 }
 
-function looksLikeEmail(value: string) {
+/** A plain `name@host.tld` check: one @, no spaces, a dot inside the domain. */
+export function looksLikeEmail(value: string) {
   const parts = value.split('@')
   const [local, domain] = parts
 
@@ -37,5 +38,18 @@ export function pendingInvitesFor(
       !invitation.acceptedAt &&
       !invitation.rejectedAt &&
       invitation.conversations?.some((entry) => here.has(entry.sessionId)),
+  )
+}
+
+/** The chat in this room an invitation carries, with its role; the room's own chat when it names none. */
+export function carriedConversation(
+  invitation: TeamInvitation,
+  sessionIds: readonly string[],
+): InvitationConversation {
+  return (
+    invitation.conversations?.find((entry) => sessionIds.includes(entry.sessionId)) ?? {
+      sessionId: sessionIds[0],
+      role: 'reply',
+    }
   )
 }

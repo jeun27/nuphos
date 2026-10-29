@@ -107,23 +107,17 @@ export function roomProviders(agents: readonly RoomAgent[]): AgentProvider[] {
   return [...new Set(agents.map((agent) => agent.provider))]
 }
 
-/** "2 people, 1 guest, 5 agents on", ahead of the provider chips; guests only once there are some. */
-export function roomHeadline(people: number, agents: number, guests = 0): string {
-  const peopleText = people === 1 ? t('1 person') : t('{count} people', { count: people })
-  const agentsText = agents === 1 ? t('1 agent') : t('{count} agents', { count: agents })
-
-  if (guests === 0) return t('{people}, {agents} on', { people: peopleText, agents: agentsText })
-
-  return t('{people}, {guests}, {agents} on', {
-    people: peopleText,
-    guests: guests === 1 ? t('1 guest') : t('{count} guests', { count: guests }),
-    agents: agentsText,
+/** "2 people, 5 agents on", ahead of the provider chips. */
+export function roomHeadline(people: number, agents: number): string {
+  return t('{people}, {agents} on', {
+    people: people === 1 ? t('1 person') : t('{count} people', { count: people }),
+    agents: agents === 1 ? t('1 agent') : t('{count} agents', { count: agents }),
   })
 }
 
-/** The bar earns its row once there is someone or something to share the room with; guests count as people. */
-export function roomIsShared(people: number, agents: number, guests = 0): boolean {
-  return people + guests > 1 || agents > 1
+/** The bar earns its row once there is someone or something to share the room with. */
+export function roomIsShared(people: number, agents: number): boolean {
+  return people > 1 || agents > 1
 }
 
 /**
@@ -140,9 +134,6 @@ export function agentsBroughtBy(
 
   return roomProviders(own)
 }
-
-/** A guest's name, or the email they were invited at until they join. */
-export const guestName = (guest: { name?: string; email: string }) => guest.name || guest.email
 
 export const firstName = (name: string) => name.trim().split(/\s+/)[0] || name
 

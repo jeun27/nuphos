@@ -48,12 +48,6 @@ export const agentReadChannels = {
     teamId: string,
     userId: string,
   ) => agent.removeConversationParticipant(sessionId, teamId, userId),
-  'agent:guestConversation': (_e: unknown, sessionId: string) =>
-    agent.getGuestConversation(sessionId),
-  'agent:inviteGuest': (_e: unknown, sessionId: string, teamId: string, email: string) =>
-    agent.inviteConversationGuest(sessionId, teamId, email),
-  'agent:removeGuest': (_e: unknown, sessionId: string, teamId: string, guestKey: string) =>
-    agent.removeConversationGuest(sessionId, teamId, guestKey),
   'agent:setConversationAvatar': (
     _e: unknown,
     sessionId: string,

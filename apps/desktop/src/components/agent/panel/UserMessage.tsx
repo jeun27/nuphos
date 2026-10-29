@@ -60,7 +60,6 @@ export const UserMessage = memo(
     onOpenNuphosLink,
     onEdit,
     teamId,
-    showPlans = true,
   }: {
     message: Message
     /** Lets uploaded images and videos preview inline. */
@@ -73,8 +72,6 @@ export const UserMessage = memo(
     onOpenNuphosLink?: (href: string, beside?: boolean) => boolean
     /** Re-runs the message with new text, in a fork of the chat. */
     onEdit?: (messageId: string, text: string) => void
-    /** Plans live in the team; a guest's view leaves their cards out. */
-    showPlans?: boolean
   }) => {
     const sendMotionRef = useSentMessageMotion(message.id)
     const [preview, setPreview] = useState<number | null>(null)
@@ -233,7 +230,7 @@ export const UserMessage = memo(
             </div>
           )}
         </div>
-        {(showPlans ? planMentions : []).map(({ planId, teamId }) => (
+        {planMentions.map(({ planId, teamId }) => (
           <div key={planId} className="w-full">
             <PlanCard
               planId={planId}

@@ -10,7 +10,6 @@ import { ResourceMark } from '../../sidebar/ResourceMark'
 import { resourceLabel } from '../../sidebar/sessionResourcePresentation'
 import { AgentProviderIcon } from '../panel/icons'
 
-import { GuestRows } from './GuestRows'
 import { PendingInvites } from './PendingInvites'
 import { agentsBroughtBy, possessiveRuntime, roleLabel, roomSteering } from './roomModel'
 import { RoomSendNotice } from './RoomSendNotice'
@@ -156,8 +155,6 @@ export function RoomMembers({
       isYou={person.id === currentUserId}
     />
   ))
-  const peopleCount = room.people.length + room.guests.length
-  const guests = <GuestRows room={room} currentUserId={currentUserId} />
   const agents = room.agents.map((agent) => (
     <AgentRow
       key={agent.sessionId}
@@ -185,10 +182,10 @@ export function RoomMembers({
       )}
       <Tabs.List className="flex items-center gap-1 border-b border-zGray-800/60 p-2">
         <Tabs.Tab value="all" className={TAB}>
-          {t('All {count}', { count: peopleCount + room.agents.length })}
+          {t('All {count}', { count: room.people.length + room.agents.length })}
         </Tabs.Tab>
         <Tabs.Tab value="people" className={TAB}>
-          {t('People {count}', { count: peopleCount })}
+          {t('People {count}', { count: room.people.length })}
         </Tabs.Tab>
         <Tabs.Tab value="agents" className={TAB}>
           {t('Agents {count}', { count: room.agents.length })}
@@ -198,14 +195,12 @@ export function RoomMembers({
         <Tabs.Panel value="all">
           <div className={SECTION}>{t('People')}</div>
           {people}
-          {guests}
           <PendingInvites room={room} />
           <div className={SECTION}>{t('Agents')}</div>
           {agents}
         </Tabs.Panel>
         <Tabs.Panel value="people">
           {people}
-          {guests}
           <PendingInvites room={room} />
         </Tabs.Panel>
         <Tabs.Panel value="agents">{agents}</Tabs.Panel>

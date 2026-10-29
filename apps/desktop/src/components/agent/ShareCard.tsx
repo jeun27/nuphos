@@ -107,7 +107,7 @@ export function TitlebarDragSuspender() {
   return null
 }
 
-const SECTION_LABEL = 'px-1 text-[11px] font-medium text-tertiary'
+export const SECTION_LABEL = 'px-1 text-[11px] font-medium text-tertiary'
 
 const CHECK_BADGE =
   't-share-pop absolute flex h-4 w-4 items-center justify-center rounded-full border-2 border-main text-white'
@@ -180,6 +180,7 @@ export function ParticipantList({
   pending,
   onRoleChange,
   onRemove,
+  children,
 }: {
   participants: AgentConversationParticipant[]
   currentUserId: string
@@ -188,6 +189,8 @@ export function ParticipantList({
   pending: string | null
   onRoleChange: (participant: AgentConversationParticipant, role: ParticipantRole) => void
   onRemove: (participant: AgentConversationParticipant) => void
+  /** Rows after the people: who was invited by email and has not joined yet. */
+  children?: React.ReactNode
 }) {
   return (
     <div className="flex flex-col gap-1">
@@ -236,6 +239,7 @@ export function ParticipantList({
           </div>
         )
       })}
+      {children}
     </div>
   )
 }
