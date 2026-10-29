@@ -2,6 +2,7 @@ import { Tabs } from '@base-ui/react/tabs'
 import clsx from 'clsx'
 import { useState } from 'react'
 
+import { t } from '../../../i18n'
 import { AGENT_PROVIDER } from '../../../types/runtime'
 import { Avatar } from '../../Avatar'
 import { AgentAvatar } from '../AgentAvatar'
@@ -33,17 +34,20 @@ function PersonRow({
       <div className="min-w-0 flex-1">
         <div className="truncate text-[13px] font-medium text-main">
           {person.name}
-          {isYou && <span className="font-normal text-tertiary"> (you)</span>}
+          {isYou && <span className="font-normal text-tertiary"> {t('(you)')}</span>}
         </div>
         <div className="mt-0.5 flex flex-wrap items-center gap-1">
           {brought.length === 0 ? (
-            <span className="text-[11.5px] text-tertiary">No agents of their own here</span>
+            <span className="text-[11.5px] text-tertiary">{t('No agents of their own here')}</span>
           ) : (
             brought.map((provider) => (
               <span
                 key={provider}
                 className="flex h-5 items-center gap-1 rounded border border-zGray-800/80 px-1.5 text-[11px] text-secondary"
-                title={`Runs on ${person.name}’s ${AGENT_PROVIDER[provider].account} sign-in`}
+                title={t('Runs on {name}’s {account} sign-in', {
+                  name: person.name,
+                  account: AGENT_PROVIDER[provider].account,
+                })}
               >
                 <AgentProviderIcon provider={provider} className="h-3 w-3" aria-hidden />
                 {possessiveRuntime(person.name, provider)}
@@ -89,7 +93,7 @@ function AgentRow({ agent, onOpen }: { agent: RoomAgent; onOpen?: (sessionId: st
             agent.working ? 'animate-pulse bg-success' : 'bg-zGray-700',
           )}
         />
-        {agent.working ? 'Working' : 'Idle'}
+        {agent.working ? t('Working') : t('Idle')}
       </span>
     </button>
   )
@@ -129,20 +133,20 @@ export function RoomMembers({
     >
       <Tabs.List className="flex items-center gap-1 border-b border-zGray-800/60 p-2">
         <Tabs.Tab value="all" className={TAB}>
-          All {room.people.length + room.agents.length}
+          {t('All {count}', { count: room.people.length + room.agents.length })}
         </Tabs.Tab>
         <Tabs.Tab value="people" className={TAB}>
-          People {room.people.length}
+          {t('People {count}', { count: room.people.length })}
         </Tabs.Tab>
         <Tabs.Tab value="agents" className={TAB}>
-          Agents {room.agents.length}
+          {t('Agents {count}', { count: room.agents.length })}
         </Tabs.Tab>
       </Tabs.List>
       <div className="max-h-[420px] overflow-y-auto p-1.5">
         <Tabs.Panel value="all">
-          <div className={SECTION}>People</div>
+          <div className={SECTION}>{t('People')}</div>
           {people}
-          <div className={SECTION}>Agents</div>
+          <div className={SECTION}>{t('Agents')}</div>
           {agents}
         </Tabs.Panel>
         <Tabs.Panel value="people">{people}</Tabs.Panel>

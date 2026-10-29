@@ -1,3 +1,4 @@
+import { t } from '../../../i18n'
 import { AGENT_PROVIDER } from '../../../types/runtime'
 
 import type { AgentProvider } from '../../../types/runtime'
@@ -8,10 +9,12 @@ export function AgentTag({ provider }: { provider?: AgentProvider }) {
     <span
       className="shrink-0 rounded bg-surface-hover px-1.5 py-0.5 text-[10px] font-medium leading-none text-tertiary"
       title={
-        provider ? `Written by a ${AGENT_PROVIDER[provider].label} agent` : 'Written by an agent'
+        provider
+          ? t('Written by a {agent} agent', { agent: AGENT_PROVIDER[provider].label })
+          : t('Written by an agent')
       }
     >
-      agent
+      {t('agent|tag')}
     </span>
   )
 }

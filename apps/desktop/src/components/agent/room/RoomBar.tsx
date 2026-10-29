@@ -1,6 +1,7 @@
 import { Popover } from '@base-ui/react/popover'
 import clsx from 'clsx'
 
+import { t } from '../../../i18n'
 import { AGENT_PROVIDER } from '../../../types/runtime'
 import { Avatar } from '../../Avatar'
 import { AgentAvatar } from '../AgentAvatar'
@@ -83,7 +84,7 @@ export function RoomBar({
           'text-left text-[12.5px] text-secondary transition-colors',
           'hover:bg-zGray-800/30 data-[popup-open]:bg-zGray-800/40',
         )}
-        title="See who is in this agent room"
+        title={t('See who is in this agent room')}
       >
         <Faces room={room} />
         <span className="shrink-0 whitespace-nowrap">

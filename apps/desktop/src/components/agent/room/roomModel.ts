@@ -1,3 +1,4 @@
+import { t } from '../../../i18n/index.ts'
 import { AGENT_PROVIDER } from '../../../types/runtime.ts'
 
 import type {
@@ -54,7 +55,7 @@ export function roomAgents(
 function toRoomAgent(conversation: AgentConversation, depth: number, working: boolean): RoomAgent {
   return {
     sessionId: conversation.sessionId,
-    title: conversation.title || conversation.firstMessage || 'Untitled agent',
+    title: conversation.title || conversation.firstMessage || t('Untitled agent'),
     avatar: conversation.avatar,
     provider: conversation.agentRuntime ?? 'claude-code',
     runtimeLabel: conversation.runtimeLabel,
@@ -69,13 +70,12 @@ export function roomProviders(agents: readonly RoomAgent[]): AgentProvider[] {
   return [...new Set(agents.map((agent) => agent.provider))]
 }
 
-function count(n: number, one: string, many: string) {
-  return `${String(n)} ${n === 1 ? one : many}`
-}
-
 /** "2 people, 5 agents on", ahead of the provider chips. */
 export function roomHeadline(people: number, agents: number): string {
-  return `${count(people, 'person', 'people')}, ${count(agents, 'agent', 'agents')} on`
+  return t('{people}, {agents} on', {
+    people: people === 1 ? t('1 person') : t('{count} people', { count: people }),
+    agents: agents === 1 ? t('1 agent') : t('{count} agents', { count: agents }),
+  })
 }
 
 /** The bar earns its row once there is someone or something to share the room with. */
@@ -102,13 +102,15 @@ export function agentsBroughtBy(
 export function possessiveRuntime(name: string, provider: AgentProvider): string {
   const first = name.trim().split(/\s+/)[0] || name
 
-  return `${first}’s ${AGENT_PROVIDER[provider].label}`
+  return t('{name}’s {agent}', { name: first, agent: AGENT_PROVIDER[provider].label })
 }
 
-const ROLE_LABEL = { owner: 'Owner', manage: 'Can manage', reply: 'Can reply', view: 'Can view' }
-
 export function roleLabel(role: AgentConversationParticipant['role']): string {
-  return role ? ROLE_LABEL[role] : 'Team access'
+  if (role === 'owner') return t('Owner')
+  if (role === 'manage') return t('Can manage')
+  if (role === 'reply') return t('Can reply')
+
+  return role === 'view' ? t('Can view') : t('Team access')
 }
 
 type Sent = { role: string; metadata?: AgentMessageMetadata }
@@ -154,6 +156,6 @@ export function queuedFromOthers(
     .map((item) => ({
       id: item.id,
       text: item.text,
-      senderName: names.get(item.senderUserId ?? '') ?? 'A teammate',
+      senderName: names.get(item.senderUserId ?? '') ?? t('A teammate'),
     }))
 }

@@ -2,6 +2,7 @@ import { Clock3 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import { api } from '../../../api'
+import { t } from '../../../i18n'
 
 import { queuedFromOthers } from './roomModel'
 import { useRoom } from './useRoom'
@@ -56,7 +57,7 @@ export function RoomQueue({
 
   return (
     <div className={sidebar ? 'w-full' : 'mx-auto w-full max-w-[760px]'}>
-      <div className="px-1 text-xs text-tertiary">Queued from teammates</div>
+      <div className="px-1 text-xs text-tertiary">{t('Queued from teammates')}</div>
       <div className="flex flex-col gap-1.5 px-1 pb-1">
         {items.map((item, index) => (
           <div
@@ -75,7 +76,7 @@ export function RoomQueue({
               {item.text}
             </span>
             <span className="flex-shrink-0 text-[11px] text-tertiary">
-              Runs after the turn ahead
+              {t('Runs after the turn ahead')}
             </span>
           </div>
         ))}

@@ -72,9 +72,8 @@ export function SessionParticipants({
   // 'invite', 'undo', 'access', or the id of the participant being changed.
   const [pending, setPending] = useState<string | null>(null)
 
-  // The pane keys this component by sessionId, so a session switch remounts it
-  // and there is no stale list to clear here. An invite from elsewhere (the
-  // composer's @mention prompt) announces itself, so the header reloads then.
+  // The pane keys this by sessionId, so a switch remounts it with no stale list. An invite
+  // from elsewhere (the composer's @mention prompt) announces itself; the header reloads then.
   useEffect(() => {
     let cancelled = false
     const load = () =>
