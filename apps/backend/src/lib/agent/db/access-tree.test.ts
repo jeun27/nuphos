@@ -78,6 +78,7 @@ describe('narrowToParent', () => {
       participantIds: ['ann', 'bo', 'carl'],
       viewOnlyIds: ['bo', 'carl'],
       managerIds: ['ann'],
+      guestIds: [],
     })
   })
 
@@ -89,6 +90,7 @@ describe('narrowToParent', () => {
       participantIds: [],
       viewOnlyIds: [],
       managerIds: [],
+      guestIds: [],
     })
   })
 })
@@ -100,6 +102,7 @@ describe('applyShareChange', () => {
       participantIds: ['bo'],
       viewOnlyIds: ['bo'],
       managerIds: [],
+      guestIds: [],
     })
     expect(
       applyShareChange(parent, { kind: 'role', userIds: ['bo'], role: 'manage' }),
@@ -122,5 +125,25 @@ describe('applyShareChange', () => {
     expect(applyShareChange(parent, { kind: 'role', userIds: ['zed'], role: 'manage' })).toEqual(
       inheritedGrant(parent),
     )
+  })
+})
+
+describe('guests', () => {
+  const withGuests = { ...parent, guestIds: ['gabi', 'hal'] }
+
+  test('a sub-agent inherits its parent’s guests, and narrowing keeps only the parent’s', () => {
+    expect(inheritedGrant(withGuests).guestIds).toEqual(['gabi', 'hal'])
+    expect(narrowToParent({ guestIds: ['gabi', 'ivy'] }, withGuests).guestIds).toEqual(['gabi'])
+    expect(narrowToParent({ guestIds: ['gabi'] }, parent).guestIds).toEqual([])
+  })
+
+  test('adding and removing a guest touches only the guest list', () => {
+    const added = applyShareChange(parent, { kind: 'guest', userId: 'gabi', present: true })
+
+    expect(added.guestIds).toEqual(['gabi'])
+    expect(added.participantIds).toEqual(parent.participantIds)
+    expect(
+      applyShareChange(withGuests, { kind: 'guest', userId: 'gabi', present: false }).guestIds,
+    ).toEqual(['hal'])
   })
 })

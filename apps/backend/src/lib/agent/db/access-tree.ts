@@ -7,6 +7,7 @@ type GrantFields = {
   participantIds?: string[]
   viewOnlyIds?: string[]
   managerIds?: string[]
+  guestIds?: string[]
 }
 type ParentFields = GrantFields & { userId: string }
 
@@ -16,6 +17,8 @@ export type Grant = {
   participantIds: string[]
   viewOnlyIds: string[]
   managerIds: string[]
+  /** People outside the team who may only read; see guests.ts. */
+  guestIds: string[]
 }
 
 const GENERAL_RANK: Record<GeneralAccess, number> = { none: 0, view: 1, reply: 2 }
@@ -32,6 +35,7 @@ export function inheritedGrant(parent: GrantFields): Grant {
     participantIds: [...(parent.participantIds ?? [])],
     viewOnlyIds: [...(parent.viewOnlyIds ?? [])],
     managerIds: [...(parent.managerIds ?? [])],
+    guestIds: [...(parent.guestIds ?? [])],
   }
 }
 
@@ -63,6 +67,7 @@ export function narrowToParent(child: GrantFields, parent: ParentFields): Grant 
     participantIds: [],
     viewOnlyIds: [],
     managerIds: [],
+    guestIds: (child.guestIds ?? []).filter((id) => parent.guestIds?.includes(id)),
   }
 
   for (const id of child.participantIds ?? []) {
@@ -102,6 +107,7 @@ export const PRIVATE_GRANT: Grant = {
   participantIds: [],
   viewOnlyIds: [],
   managerIds: [],
+  guestIds: [],
 }
 
 export type ShareChange =
@@ -109,6 +115,7 @@ export type ShareChange =
   | { kind: 'invite'; userIds: readonly string[]; role: ParticipantRole }
   | { kind: 'role'; userIds: readonly string[]; role: ParticipantRole }
   | { kind: 'remove'; userId: string }
+  | { kind: 'guest'; userId: string; present: boolean }
 
 /**
  * The grant a share change leaves behind, worked out before it is written, so
@@ -118,11 +125,18 @@ export function applyShareChange(current: GrantFields, change: ShareChange): Gra
   const grant = inheritedGrant(current)
 
   if (change.kind === 'access') return { ...grant, generalAccess: change.generalAccess }
+  if (change.kind === 'guest')
+    return {
+      ...grant,
+      guestIds: change.present
+        ? [...new Set([...grant.guestIds, change.userId])]
+        : grant.guestIds.filter((id) => id !== change.userId),
+    }
   if (change.kind === 'remove') {
     const keep = (ids: string[]) => ids.filter((id) => id !== change.userId)
 
     return {
-      generalAccess: grant.generalAccess,
+      ...grant,
       participantIds: keep(grant.participantIds),
       viewOnlyIds: keep(grant.viewOnlyIds),
       managerIds: keep(grant.managerIds),
@@ -137,7 +151,7 @@ export function applyShareChange(current: GrantFields, change: ShareChange): Gra
   const others = (list: string[]) => list.filter((id) => !ids.has(id))
 
   return {
-    generalAccess: grant.generalAccess,
+    ...grant,
     participantIds,
     viewOnlyIds: [
       ...others(grant.viewOnlyIds),

@@ -8,11 +8,12 @@ import { t } from '../../i18n'
 import { LOCAL_AGENT_SHARING_NOTE } from '../../lib/localAgentSharing'
 import { toast } from '../ui/toast'
 
-import { TIMELINE_CHANGED_EVENT, announceTimelineChange } from './panel/timelineEvents'
-import { publishRoomPeople, publishRoomTeam } from './room/useRoom'
+import { announceTimelineChange } from './panel/timelineEvents'
+import { publishRoomTeam } from './room/useRoom'
 import { agentSessionUrl } from './sessionUrl'
 import { linkAudience } from './linkAudience'
 import { GeneralAccessRow } from './ShareAccess'
+import { ShareGuests } from './ShareGuests'
 import {
   AddedReceipt,
   ParticipantList,
@@ -21,10 +22,11 @@ import {
   TitlebarDragSuspender,
 } from './ShareCard'
 import { AddPickedRow, TeammatePicker } from './TeammatePicker'
+import { useShareAccess } from './useShareAccess'
+import { useShareGuests } from './useShareGuests'
 
 import type {
   AgentConversationParticipant,
-  ConversationAccessState,
   GeneralAccess,
   ParticipantRole,
 } from '../../api/agent-types'
@@ -58,8 +60,7 @@ export function SessionParticipants({
   /** A narrow pane header: one avatar and no "Share" label. */
   compact?: boolean
 }) {
-  const [participants, setParticipants] = useState<AgentConversationParticipant[]>([])
-  const [generalAccess, setGeneralAccess] = useState<GeneralAccess>('none')
+  const { participants, generalAccess, guests, apply } = useShareAccess(sessionId, teamId)
   const [inviteRole, setInviteRole] = useState<ParticipantRole>('reply')
   const [members, setMembers] = useState<TeamMember[] | null>(null)
   const [picked, setPicked] = useState<TeamMember[]>([])
@@ -72,36 +73,7 @@ export function SessionParticipants({
 
   useEffect(() => publishRoomTeam(teamId, { name: teamName, isAdmin }), [teamId, teamName, isAdmin])
 
-  // The pane keys this by sessionId, so a switch remounts it with no stale list. An invite
-  // from elsewhere (the composer's @mention prompt) announces itself; the header reloads then.
-  useEffect(() => {
-    let cancelled = false
-    const load = () =>
-      api
-        .agentGetConversationParticipants(sessionId, teamId)
-        .then((result) => {
-          if (!cancelled) apply(result)
-        })
-        .catch((err: unknown) => toast.apiError(t('Failed to load agent participants'), err))
-    const reloadIfThisSession = (event: Event) => {
-      if ((event as CustomEvent<string>).detail === sessionId) void load()
-    }
-
-    void load()
-    window.addEventListener(TIMELINE_CHANGED_EVENT, reloadIfThisSession)
-
-    return () => {
-      cancelled = true
-      window.removeEventListener(TIMELINE_CHANGED_EVENT, reloadIfThisSession)
-    }
-  }, [sessionId, teamId])
-
-  // Every access call answers with the whole state, so the card never merges.
-  function apply(result: ConversationAccessState) {
-    setParticipants(result.participants)
-    setGeneralAccess(result.generalAccess)
-    publishRoomPeople(sessionId, result.participants)
-  }
+  const guestActions = useShareGuests(sessionId, teamId, guests, apply)
 
   const onOpenChange = (open: boolean) => {
     if (!open) return
@@ -263,6 +235,12 @@ export function SessionParticipants({
                   onRoleChange={changeRole}
                   onRemove={remove}
                 />
+                <ShareGuests
+                  guests={guests}
+                  canManage={canManage}
+                  removing={guestActions.removing}
+                  onRemove={guestActions.remove}
+                />
                 {canManage ? (
                   <>
                     <TeammatePicker
@@ -275,6 +253,7 @@ export function SessionParticipants({
                       emailInvite={
                         isAdmin ? { teamId, teamName, sessionId, role: inviteRole } : undefined
                       }
+                      guestInvite={guestActions.invite}
                     />
                     <AddPickedRow
                       role={inviteRole}

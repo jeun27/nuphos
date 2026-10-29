@@ -1,4 +1,9 @@
-import type { ConversationAccessState, GeneralAccess, ParticipantRole } from './agent-types.ts'
+import type {
+  AgentGuestConversation,
+  ConversationAccessState,
+  GeneralAccess,
+  ParticipantRole,
+} from './agent-types.ts'
 import type { SessionResourcesResponse } from './session-resource-types'
 
 /** Who may open a session and what they may do there. */
@@ -47,6 +52,19 @@ export type WindowSessionAccessApi = {
     teamId: string,
     enabled: boolean,
   ): Promise<{ teamSteer: boolean }>
+  /** Rejects with not_found unless the viewer is a guest of this chat. */
+  agentGuestConversation(sessionId: string): Promise<AgentGuestConversation>
+  agentInviteGuest(
+    sessionId: string,
+    teamId: string,
+    email: string,
+  ): Promise<ConversationAccessState>
+  /** `guestKey` is the guest's user id, or the email of an invite not taken up yet. */
+  agentRemoveGuest(
+    sessionId: string,
+    teamId: string,
+    guestKey: string,
+  ): Promise<ConversationAccessState>
   agentSetConversationAvatar(
     sessionId: string,
     avatar: string | null,

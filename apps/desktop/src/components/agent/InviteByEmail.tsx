@@ -6,7 +6,7 @@ import { t } from '../../i18n'
 import { Button } from '../ui/button'
 import { toast } from '../ui/toast'
 
-import { announceTeamInvitationsChanged } from './room/pendingInvites'
+import { announceTeamInvitationsChanged } from './room/pendingInviteRows'
 
 import type { ParticipantRole } from '../../api/agent-types'
 

@@ -9,9 +9,15 @@ import { agentSessionsCacheKey } from '../../sidebar/state'
 import { roomAgents, roomRootOf } from './roomModel'
 
 import type { RoomAgent } from './roomModel'
-import type { AgentConversation, AgentConversationParticipant } from '../../../api/agent-types'
+import type {
+  AgentConversation,
+  AgentConversationParticipant,
+  ConversationAccessState,
+  ConversationGuest,
+} from '../../../api/agent-types'
 
 const roomPeopleKey = (sessionId: string) => `room-people:${sessionId}`
+const roomGuestsKey = (sessionId: string) => `room-guests:${sessionId}`
 const roomTeamKey = (teamId: string) => `room-team:${teamId}`
 
 /** The room's team as the viewer sees it: its name, and whether they administer it. */
@@ -26,8 +32,16 @@ export function publishRoomPeople(sessionId: string, people: AgentConversationPa
   writeSwrCache(roomPeopleKey(sessionId), people)
 }
 
+/** Every access answer carries the guests too, so the room shows them beside the people. */
+export function publishRoomAccess(sessionId: string, access: ConversationAccessState) {
+  publishRoomPeople(sessionId, access.participants)
+  writeSwrCache(roomGuestsKey(sessionId), access.guests ?? [])
+}
+
 export type Room = {
   people: AgentConversationParticipant[]
+  /** View-only people from outside the team, joined or still invited. */
+  guests: ConversationGuest[]
   agents: RoomAgent[]
   /** The chat this room is open on: the manager, or one of its sub-agents. */
   here: string
@@ -41,6 +55,7 @@ export type Room = {
  */
 export function useRoom(sessionId: string, teamId: string): Room {
   const people = useSwrCache<AgentConversationParticipant[]>(roomPeopleKey(sessionId))
+  const guests = useSwrCache<ConversationGuest[]>(roomGuestsKey(sessionId))
   const team = useSwrCache<RoomTeam>(roomTeamKey(teamId))
   const listed = useSwrCache<AgentConversation[]>(agentSessionsCacheKey(teamId))
   const opened = useOpenedConversation(sessionId)
@@ -54,5 +69,5 @@ export function useRoom(sessionId: string, teamId: string): Room {
     return roomAgents(roomRootOf(sessionId, conversations, opened), conversations, isWorking)
   }, [listed, opened, sessionId, states])
 
-  return { people: people ?? [], agents, here: sessionId, teamId, team }
+  return { people: people ?? [], guests: guests ?? [], agents, here: sessionId, teamId, team }
 }

@@ -6,6 +6,7 @@ import {
   possessiveRuntime,
   queuedFromOthers,
   roomAgents,
+  guestName,
   roomHeadline,
   roomIsShared,
   roomProviders,
@@ -67,6 +68,16 @@ test('the headline counts people and agents in plain words', () => {
   assert.equal(roomIsShared(1, 1), false)
   assert.equal(roomIsShared(2, 1), true)
   assert.equal(roomIsShared(1, 2), true)
+})
+
+test('guests join the headline only once there are some, and share the room', () => {
+  assert.equal(roomHeadline(2, 4, 0), '2 people, 4 agents on')
+  assert.equal(roomHeadline(2, 4, 1), '2 people, 1 guest, 4 agents on')
+  assert.equal(roomHeadline(1, 1, 3), '1 person, 3 guests, 1 agent on')
+  assert.equal(roomIsShared(1, 1, 1), true)
+  assert.equal(roomIsShared(1, 1, 0), false)
+  assert.equal(guestName({ email: 'gabi@example.com' }), 'gabi@example.com')
+  assert.equal(guestName({ name: 'Gabi Guest', email: 'gabi@example.com' }), 'Gabi Guest')
 })
 
 const person = (id: string, isOwner: boolean): AgentConversationParticipant => ({

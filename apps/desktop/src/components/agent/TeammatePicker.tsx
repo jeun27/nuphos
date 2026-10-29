@@ -8,12 +8,13 @@ import { InputGroup, InputGroupInput } from '../ui/input-group'
 
 import { Button } from '../ui/button'
 
-import { InviteByEmail } from './InviteByEmail'
-import { emailToInvite } from './room/pendingInvites'
+import { NewcomerInvites } from './NewcomerInvites'
+import { emailToInvite } from './room/pendingInviteRows'
 import { RoleMenu } from './ShareAccess'
 import { CheckBadge } from './ShareCard'
 
 import type { EmailInviteContext } from './InviteByEmail'
+import type { GuestInviteContext } from './NewcomerInvites'
 import type { ParticipantRole } from '../../api/agent-types'
 import type { TeamMember } from '../../types'
 
@@ -43,6 +44,7 @@ export function TeammatePicker({
   onToggle,
   teamName,
   emailInvite,
+  guestInvite,
 }: {
   members: TeamMember[] | null
   invitable: TeamMember[]
@@ -52,21 +54,22 @@ export function TeammatePicker({
   teamName: string
   /** Set for a team admin: an email that names nobody in the team can be invited to it. */
   emailInvite?: EmailInviteContext
+  /** Set for the owner: such an email can be let in to view this chat as a guest. */
+  guestInvite?: GuestInviteContext
 }) {
   const [query, setQuery] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
   const pickedIds = new Set(picked.map((member) => member.id))
   const shown = invitable.filter((member) => matches(member, query))
   const email = emailToInvite(query, members)
-  const newcomer =
-    email &&
-    (emailInvite ? (
-      <InviteByEmail email={email} context={emailInvite} />
-    ) : (
-      <div className="px-1 text-[12px] text-tertiary">
-        {t('{email} isn’t in {team}. Ask a team admin to invite them.', { email, team: teamName })}
-      </div>
-    ))
+  const newcomer = email && (
+    <NewcomerInvites
+      email={email}
+      teamName={teamName}
+      emailInvite={emailInvite}
+      guestInvite={guestInvite}
+    />
+  )
 
   // Keep the newest chip and the caret in view as the line grows. Scrolling the
   // line itself, not scrollIntoView, which would move every scrolling ancestor.
@@ -132,7 +135,9 @@ export function TeammatePicker({
       )}
       {members &&
         invitable.length === 0 &&
-        (newcomer || <EveryoneHere team={teamName} canInvite={Boolean(emailInvite)} />)}
+        (newcomer || (
+          <EveryoneHere team={teamName} canInvite={Boolean(emailInvite ?? guestInvite)} />
+        ))}
       {/* Sized by the whole team, not by the matches, so typing never resizes the card. */}
       {invitable.length > 0 && (
         <div

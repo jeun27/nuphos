@@ -16,7 +16,7 @@ import { useChatSummaryOpen } from '../../lib/chatSummaryPanel'
 import { hasCloudOnboardingBinding } from '../../lib/connectorCategories'
 import { isLocalAgentRuntime } from '../../lib/localAgentSharing'
 
-import { ChatLinkGateScreen } from './ChatLinkGateScreen'
+import { ChatLinkGatePane } from './ChatLinkGatePane'
 import { PaneGrip } from './PaneGrip'
 import { PaneMenu } from './PaneMenu'
 import { SessionFindBar } from './SessionFindBar'
@@ -136,7 +136,10 @@ export function WorkspaceAgentPane({
       )}
     >
       {ws.chatLinkGate && (
-        <ChatLinkGateScreen
+        <ChatLinkGatePane
+          key={ws.chatLinkGate.sessionId}
+          gate={ws.chatLinkGate}
+          currentUserId={user.id}
           invitation={ws.chatLinkInvitation}
           onAccept={ws.acceptChatLinkInvitation}
           onDismiss={ws.dismissChatLinkGate}

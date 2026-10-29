@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
-import { emailToInvite, pendingInvitesFor } from './pendingInvites.ts'
+import { emailToInvite, pendingInvitesFor } from './pendingInviteRows.ts'
 
 import type { TeamInvitation, TeamMember } from '../../../types'
 

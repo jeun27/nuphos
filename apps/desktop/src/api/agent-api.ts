@@ -65,6 +65,11 @@ export const agentApi = {
     window.api.agentRemoveConversationParticipant(sessionId, teamId, userId),
   agentSetConversationTeamSteer: (sessionId: string, teamId: string, enabled: boolean) =>
     window.api.agentSetConversationTeamSteer(sessionId, teamId, enabled),
+  agentGuestConversation: (sessionId: string) => window.api.agentGuestConversation(sessionId),
+  agentInviteGuest: (sessionId: string, teamId: string, email: string) =>
+    window.api.agentInviteGuest(sessionId, teamId, email),
+  agentRemoveGuest: (sessionId: string, teamId: string, guestKey: string) =>
+    window.api.agentRemoveGuest(sessionId, teamId, guestKey),
   agentSetSessionConfig: (
     sessionId: string,
     teamId: string,

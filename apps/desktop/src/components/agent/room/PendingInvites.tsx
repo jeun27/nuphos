@@ -8,7 +8,7 @@ import { Menu, MenuContent, MenuItem, MenuTrigger } from '../../ui/menu'
 import { toast } from '../../ui/toast'
 import { agentSessionUrl } from '../sessionUrl'
 
-import { TEAM_INVITATIONS_CHANGED_EVENT, pendingInvitesFor } from './pendingInvites'
+import { TEAM_INVITATIONS_CHANGED_EVENT, pendingInvitesFor } from './pendingInviteRows'
 
 import type { Room } from './useRoom'
 import type { TeamInvitation } from '../../../types'

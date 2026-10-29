@@ -23,7 +23,7 @@ export function AgentWorkingRow({
 
   return (
     <span className="flex min-w-0 items-center gap-2">
-      <AgentAvatar agentId={tab.sessionId} provider={tab.agentRuntime} size={20} animated />
+      <AgentAvatar agentId={tab.sessionId} provider={tab.agentRuntime} size={20} />
       <span className="min-w-0 truncate text-secondary">
         {requester
           ? t('{agent} is working for {name}', { agent: name, name: requester.displayName })

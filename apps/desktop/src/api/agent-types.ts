@@ -25,9 +25,52 @@ export type AgentConversationParticipant = AgentConversationPerson & {
   role: ConversationAccess | null
 }
 
+/** Someone outside the team who may only view this chat and its sub-agents. */
+export type ConversationGuest = {
+  /** The user id once they joined; the invited email until then. */
+  key: string
+  email: string
+  id?: string
+  name?: string
+  avatarURL?: string
+  pending: boolean
+}
+
 export type ConversationAccessState = {
   generalAccess: GeneralAccess
   participants: AgentConversationParticipant[]
+  /** Absent from backends that predate guests. */
+  guests?: ConversationGuest[]
+}
+
+export type AgentGuestPerson = {
+  id: string
+  name: string
+  avatarURL?: string
+  isOwner: boolean
+  role: ConversationAccess | 'guest'
+}
+
+/** One chat of the shared tree a guest may open. */
+export type AgentGuestTreeEntry = {
+  sessionId: string
+  title: string
+  agentRuntime?: AgentProvider
+  parentSessionId?: string
+  activeRun?: AgentActiveRun | null
+  linkedResources?: SessionResource[]
+}
+
+/** A chat as its guest sees it: view only, with nothing else of the team. */
+export type AgentGuestConversation = {
+  conversation: AgentGuestTreeEntry & {
+    teamId: string
+    runtimeLabel?: string
+    owner: { id: string; name: string; avatarURL?: string }
+  }
+  messages: AgentPersistedMessage[]
+  tree: AgentGuestTreeEntry[]
+  people: AgentGuestPerson[]
 }
 
 export type AgentConversation = {

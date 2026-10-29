@@ -253,6 +253,7 @@ describe('conversation-scoped thread tools', () => {
       participantIds: ['ann'],
       viewOnlyIds: [],
       managerIds: ['ann'],
+      guestIds: [],
     })
   })
 
