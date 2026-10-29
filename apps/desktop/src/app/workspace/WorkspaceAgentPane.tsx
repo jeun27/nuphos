@@ -6,6 +6,7 @@ import { AgentAvatar } from '../../components/agent/AgentAvatar'
 import { AgentPanel } from '../../components/agent/AgentPanel'
 import { EditableConversationTitle } from '../../components/agent/panel/ConversationTitleEditor'
 import { SessionHeaderMenu } from '../../components/agent/SessionHeaderMenu'
+import { SessionRoomBar } from '../../components/agent/room/RoomBar'
 import { SessionParticipants } from '../../components/agent/SessionParticipants'
 import { SessionTitlebarResources } from '../../components/agent/SessionTitlebarResources'
 import { ChatSummaryPanel } from '../../components/agent/summary/ChatSummaryPanel'
@@ -217,6 +218,15 @@ export function WorkspaceAgentPane({
             no-drag holes in page order, so the grip comes after the drag area it sits over. */}
           <PaneGrip label={currentHeading.title} />
         </div>
+        {savedSessionId && (
+          <SessionRoomBar
+            key={`room-${savedSessionId}`}
+            sessionId={savedSessionId}
+            teamId={teamId}
+            currentUserId={user.id}
+            onOpenAgent={(id) => workspaceActions.selectSession(id, { keepMainPage: true })}
+          />
+        )}
         <SessionFindBar
           key={selectedSessionId ?? 'home'}
           rootRef={transcriptRef}

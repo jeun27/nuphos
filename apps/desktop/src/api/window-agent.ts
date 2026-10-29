@@ -31,6 +31,7 @@ import type {
   AgentPersistedMessage,
   AgentSlackThread,
   AgentStarterSuggestion,
+  QueuedOnServer,
 } from './agent-types.ts'
 import type { LocalSessionImportResult, LocalSessionSource } from './app-types.ts'
 import type { Plan, PlanApprovalRequirement, PlanUpdatePatch, PlansPage } from './plan-types.ts'
@@ -157,10 +158,7 @@ export type WindowAgentApi = {
     groupId?: string,
     queuedId?: string,
   ): Promise<{ ok: boolean; messageId: string; text?: string; upload?: Record<string, unknown> }>
-  agentListQueue(
-    sessionId: string,
-    teamId?: string,
-  ): Promise<{ messages: { id: string; mine: boolean; text: string }[] }>
+  agentListQueue(sessionId: string, teamId?: string): Promise<{ messages: QueuedOnServer[] }>
   agentUnqueueMessage(
     sessionId: string,
     messageId: string,

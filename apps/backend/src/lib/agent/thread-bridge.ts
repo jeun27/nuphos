@@ -11,6 +11,7 @@ import { AppError } from '@/lib/errors'
 import { getTeamMembership } from '@/lib/identity'
 import { logError } from '@/lib/observability'
 
+import { inheritedGrant } from './db/access-tree'
 import {
   getConversationBySessionId,
   recordAgentEvent,
@@ -95,6 +96,7 @@ export async function createAgentThread(actor: ThreadActor, prompt: string, titl
     runtimeId: source.runtimeId,
     runtimeLabel: source.runtimeLabel,
     parentSessionId: actor.sessionId,
+    access: inheritedGrant(source),
   })
   // A thread runs in its parent's permission mode, as a chat opened by hand
   // starts in the mode the user picked.

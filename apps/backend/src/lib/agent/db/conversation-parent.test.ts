@@ -1,49 +1,37 @@
 import { beforeEach, describe, expect, test } from 'bun:test'
 
 import { useDb } from '@/lib/test/doubles/db'
+import { portabilityDb } from '@/lib/test/runtime-portability-db'
 
 import { setConversationParent } from './maintenance'
 
 import type * as dbActual from '@/lib/db'
 
-type Doc = Record<string, unknown>
+let memory = portabilityDb()
 
-class FakeConversations {
-  docs: Doc[] = []
-  private match(filter: Doc) {
-    return this.docs.find((doc) =>
-      Object.entries(filter).every(([key, value]) => key === '$or' || doc[key] === value),
-    )
-  }
-  async findOne(filter: Doc) {
-    return this.match(filter) ?? null
-  }
-  async updateOne(filter: Doc, update: { $set?: Doc; $unset?: Doc }) {
-    const doc = this.match(filter)
+useDb({ db: (() => memory) as unknown as typeof dbActual.db })
 
-    if (!doc) return { matchedCount: 0 }
-    Object.assign(doc, update.$set)
-    for (const key of Object.keys(update.$unset ?? {})) delete doc[key]
-
-    return { matchedCount: 1 }
-  }
-}
-
-const conversations = new FakeConversations()
-
-useDb({ db: (() => ({ collection: () => conversations })) as unknown as typeof dbActual.db })
-
-const parentOf = (sessionId: string) =>
-  conversations.docs.find((doc) => doc.sessionId === sessionId)?.parentSessionId
+const doc = (sessionId: string) =>
+  memory.rows('agent_conversations').find((row) => row.sessionId === sessionId)
+const parentOf = (sessionId: string) => doc(sessionId)?.parentSessionId
 
 beforeEach(() => {
-  conversations.docs = [
-    { sessionId: 'manager', userId: 'u', teamId: 't' },
-    { sessionId: 'worker', userId: 'u', teamId: 't' },
+  memory = portabilityDb()
+  memory.rows('agent_conversations').push(
+    {
+      sessionId: 'manager',
+      userId: 'u',
+      teamId: 't',
+      generalAccess: 'view',
+      participantIds: ['ann'],
+      viewOnlyIds: [],
+      managerIds: ['ann'],
+    },
+    { sessionId: 'worker', userId: 'u', teamId: 't', generalAccess: 'reply' },
     { sessionId: 'nested', userId: 'u', teamId: 't', parentSessionId: 'worker' },
     { sessionId: 'other-team', userId: 'u', teamId: 'x' },
     { sessionId: 'other-user', userId: 'v', teamId: 't' },
-  ]
+  )
 })
 
 describe('setConversationParent', () => {
@@ -52,9 +40,23 @@ describe('setConversationParent', () => {
     expect(parentOf('worker')).toBe('manager')
   })
 
-  test('null unlinks', async () => {
+  test('nesting shares the thread and everything below it like the new parent', async () => {
+    await setConversationParent('worker', 'u', 't', 'manager')
+
+    for (const id of ['worker', 'nested']) {
+      expect(doc(id)).toMatchObject({
+        generalAccess: 'view',
+        participantIds: ['ann'],
+        viewOnlyIds: [],
+        managerIds: ['ann'],
+      })
+    }
+  })
+
+  test('null unlinks and leaves the sharing as it was', async () => {
     expect(await setConversationParent('nested', 'u', 't', null)).toBe('ok')
     expect(parentOf('nested')).toBeUndefined()
+    expect(doc('nested')?.generalAccess).toBeUndefined()
   })
 
   test('rejects itself, a descendant, and conversations outside the owner and team', async () => {
@@ -62,6 +64,7 @@ describe('setConversationParent', () => {
       expect(await setConversationParent('worker', 'u', 't', parent)).toBe('invalid_parent')
     }
     expect(parentOf('worker')).toBeUndefined()
+    expect(doc('worker')?.generalAccess).toBe('reply')
   })
 
   test('reports a conversation the caller does not own', async () => {

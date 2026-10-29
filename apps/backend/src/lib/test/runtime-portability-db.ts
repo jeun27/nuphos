@@ -109,6 +109,13 @@ export function portabilityDb() {
 
       return { matchedCount: doc ? 1 : 0, modifiedCount: doc ? 1 : 0 }
     },
+    updateMany: async (query: Doc, mutation: Doc) => {
+      const docs = rows(name).filter((doc) => matches(doc, query))
+
+      for (const doc of docs) update(doc, query, mutation)
+
+      return { matchedCount: docs.length, modifiedCount: docs.length }
+    },
     deleteMany: async (query: Doc) => {
       const kept = rows(name).filter((doc) => !matches(doc, query))
       const deletedCount = rows(name).length - kept.length

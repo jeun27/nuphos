@@ -7,6 +7,8 @@ import { Avatar } from '../../Avatar'
 import { MessageResponse } from '../MessageResponse'
 import { PlanCard } from '../PlanTool'
 
+import { AgentTag } from '../room/AgentTag'
+
 import { AgentEventMessage } from './AgentEventMessage'
 import { EditMessageForm } from './EditMessageForm'
 import { CopyMessageButton, EditMessageButton } from './messageActions'
@@ -125,6 +127,7 @@ export const UserMessage = memo(
                 >
                   {senderLabel(message.metadata.sender)}
                 </span>
+                {message.metadata.sender.type === 'agent' && <AgentTag />}
                 {message.metadata.source === 'slack' && (
                   <span className="shrink-0 rounded bg-surface-hover px-1.5 py-0.5 text-[10px] text-tertiary">
                     Slack

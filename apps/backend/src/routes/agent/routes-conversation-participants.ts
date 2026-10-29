@@ -1,18 +1,20 @@
 import { Hono } from 'hono'
 
-import { getReadableConversation } from '@/lib/agent/db'
+import { getConversationBySessionId, getReadableConversation } from '@/lib/agent/db'
 import {
   GENERAL_ACCESS_VALUES,
   PARTICIPANT_ROLES,
   generalAccessOf,
   participantRole,
 } from '@/lib/agent/db/access'
+import { inviteExceedsParent, widerThanParent } from '@/lib/agent/db/access-tree'
 import {
   conversationParticipantIds,
   inviteConversationParticipants,
   removeConversationParticipant,
   setGeneralAccess,
   setParticipantRole,
+  syncDescendantAccess,
 } from '@/lib/agent/db/participants'
 import { AppError } from '@/lib/errors'
 import { getTeamMembership } from '@/lib/identity'
@@ -58,6 +60,30 @@ async function serializeAccess(
       }
     }),
   }
+}
+
+// Every change reaches the sub-agents below, so the whole tree stays shared alike.
+async function afterShareChange(conversation: AgentConversation, teamId: string) {
+  await syncDescendantAccess(conversation)
+
+  return await serializeAccess(conversation, teamId)
+}
+
+// A sub-agent is never shared further than the conversation that runs it.
+async function assertWithinParent(
+  conversation: AgentConversation,
+  exceeds: (parent: AgentConversation) => boolean,
+) {
+  const parent = conversation.parentSessionId
+    ? await getConversationBySessionId(conversation.parentSessionId)
+    : null
+
+  if (parent && exceeds(parent))
+    throw new AppError(
+      409,
+      'wider_than_parent',
+      'A sub-agent can’t be shared more widely than the conversation that runs it. Share that one first.',
+    )
 }
 
 function readRole(value: unknown): ParticipantRole {
@@ -138,13 +164,16 @@ conversationParticipantsRoutes.post('/conversations/:sessionId/participants', as
       'Every invitee must be a current member of this conversation’s team',
     )
   }
+  await assertWithinParent(conversation, (parent) =>
+    invitees.some((id) => inviteExceedsParent(parent, id, role)),
+  )
   // Render the post-write document rather than a locally merged copy, so a
   // simultaneous invite from someone else is already reflected in the answer.
   const updated = await inviteConversationParticipants(sessionId, userId, invitees, role)
 
   if (!updated) throw new AppError(404, 'not_found', 'Conversation not found')
 
-  return c.json(await serializeAccess(updated, teamId))
+  return c.json(await afterShareChange(updated, teamId))
 })
 
 // The invite's mirror image: removing revokes the person's own grant. They keep
@@ -165,7 +194,7 @@ conversationParticipantsRoutes.delete(
 
     if (!updated) throw new AppError(404, 'not_found', 'Conversation not found')
 
-    return c.json(await serializeAccess(updated, teamId))
+    return c.json(await afterShareChange(updated, teamId))
   },
 )
 
@@ -183,11 +212,12 @@ conversationParticipantsRoutes.patch(
 
     if (!participantRole(conversation, targetId))
       throw new AppError(404, 'not_found', 'That person is not in this conversation')
+    await assertWithinParent(conversation, (parent) => inviteExceedsParent(parent, targetId, role))
     const updated = await setParticipantRole(sessionId, [targetId], role)
 
     if (!updated) throw new AppError(404, 'not_found', 'Conversation not found')
 
-    return c.json(await serializeAccess(updated, teamId))
+    return c.json(await afterShareChange(updated, teamId))
   },
 )
 
@@ -201,10 +231,12 @@ conversationParticipantsRoutes.patch('/conversations/:sessionId/access', async (
 
   if (!GENERAL_ACCESS_VALUES.includes(generalAccess))
     throw new AppError(400, 'invalid_request', 'generalAccess must be "none", "view" or "reply"')
-  await requireOwnedConversation(sessionId, c.get('userId'), teamId)
+  const conversation = await requireOwnedConversation(sessionId, c.get('userId'), teamId)
+
+  await assertWithinParent(conversation, (parent) => widerThanParent(generalAccess, parent))
   const updated = await setGeneralAccess(sessionId, generalAccess)
 
   if (!updated) throw new AppError(404, 'not_found', 'Conversation not found')
 
-  return c.json(await serializeAccess(updated, teamId))
+  return c.json(await afterShareChange(updated, teamId))
 })

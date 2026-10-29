@@ -5,6 +5,7 @@ import { t } from '../../../i18n'
 import { runtimeAllows, runtimeIsExecuting } from '../../../lib/runtimeExecution'
 import { publishSessionDesktops } from '../../../lib/sessionDesktops'
 import { useReportVisibleError } from '../../VisibleErrorReporter'
+import { AgentWorkingRow } from '../room/AgentWorkingRow'
 import {
   useOpenRequestedArtifact,
   usePublishSessionArtifacts,
@@ -15,7 +16,7 @@ import { AgentSetupRequiredCard } from './AgentSetupRequiredCard'
 import { AssistantMessage } from './AssistantMessage'
 import { toolAnchorIds } from './chatTarget'
 import { AgentHomeAnimation } from './homeAnimation'
-import { CollapsedWorkView, LoadingText } from './partChrome'
+import { CollapsedWorkView } from './partChrome'
 import { collapseRepeatedFailures } from './repeatedFailures'
 import { sessionDesktopsOf } from './shells'
 import { DEFERRED_MESSAGE_STYLE } from './status'
@@ -261,7 +262,7 @@ export function ConversationMessageList({
               {statusLabel}
             </span>
           ) : runtimeIsExecuting(tab.runtimeState) ? (
-            <LoadingText>{statusLabel}</LoadingText>
+            <AgentWorkingRow tab={tab} label={statusLabel} />
           ) : (
             <span role="status">{statusLabel}</span>
           )}

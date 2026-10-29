@@ -10,6 +10,7 @@ import { Button } from '../ui/button'
 import { toast } from '../ui/toast'
 
 import { TIMELINE_CHANGED_EVENT, announceTimelineChange } from './panel/timelineEvents'
+import { publishRoomPeople } from './room/useRoom'
 import { agentSessionUrl } from './sessionUrl'
 import { GeneralAccessRow, RoleMenu } from './ShareAccess'
 import {
@@ -100,6 +101,7 @@ export function SessionParticipants({
   function apply(result: ConversationAccessState) {
     setParticipants(result.participants)
     setGeneralAccess(result.generalAccess)
+    publishRoomPeople(sessionId, result.participants)
   }
 
   const onOpenChange = (open: boolean) => {

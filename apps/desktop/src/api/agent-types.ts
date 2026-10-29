@@ -175,6 +175,9 @@ export type AgentMessageMetadata = {
   unattested?: true
 }
 
+/** A message waiting in a session's queue, as every reader of the session sees it. */
+export type QueuedOnServer = { id: string; mine: boolean; text: string; senderUserId?: string }
+
 export type AgentPersistedMessage = {
   metadata?: AgentMessageMetadata
   id: string

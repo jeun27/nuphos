@@ -7,6 +7,7 @@ import { Avatar } from '../../Avatar'
 import { CloudLogo } from '../../CloudLogo'
 import { AgentAvatar } from '../AgentAvatar'
 import { MessageResponse } from '../MessageResponse'
+import { AgentTag } from '../room/AgentTag'
 
 import { Rule } from './TimelineEventLine'
 
@@ -63,18 +64,20 @@ export function AgentEventMessage({
                 type="button"
                 title={displayName}
                 onClick={() => onOpenNuphosLink(sessionUrl)}
-                className="min-w-0 flex-1 truncate text-left text-[12px] font-medium text-secondary hover:underline"
+                className="min-w-0 truncate text-left text-[12px] font-medium text-secondary hover:underline"
               >
                 {displayName}
               </button>
             ) : (
               <span
-                className="min-w-0 flex-1 truncate text-[12px] font-medium text-secondary"
+                className="min-w-0 truncate text-[12px] font-medium text-secondary"
                 title={displayName}
               >
                 {displayName}
               </span>
             )}
+            <AgentTag provider={metadata.sender.agentRuntime} />
+            <span className="flex-1" />
             <button
               type="button"
               aria-label={

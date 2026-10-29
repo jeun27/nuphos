@@ -244,6 +244,18 @@ describe('conversation-scoped thread tools', () => {
     })
   })
 
+  test('a new sub-agent is shared exactly like the conversation that opened it', async () => {
+    source = { ...source, generalAccess: 'view', participantIds: ['ann'], managerIds: ['ann'] }
+    await createAgentThread(actor, 'Wait for CI', 'CI watcher')
+
+    expect(shells[0]?.access).toEqual({
+      generalAccess: 'view',
+      participantIds: ['ann'],
+      viewOnlyIds: [],
+      managerIds: ['ann'],
+    })
+  })
+
   test('returns without waiting for the turn, like a message typed into a chat', async () => {
     const runs: Parameters<TurnRunner['runAgentForTrigger']>[0][] = []
 

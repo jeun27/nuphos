@@ -11,6 +11,7 @@ import { agentConversations, agentMessages, withTeamScope } from './shared'
 import { initialWatcherIds } from './watch'
 
 import type { ConversationTriggerRun } from '../conversation-trigger-run'
+import type { Grant } from './access-tree'
 import type {
   AgentClientMeta,
   AgentConversation,
@@ -52,6 +53,8 @@ export async function upsertConversationShell(data: {
   runtimeId?: string
   runtimeLabel?: string
   parentSessionId?: string
+  /** A sub-agent's copy of its parent's sharing; replaces the private default. */
+  access?: Grant
 }): Promise<{ isNew: boolean }> {
   const now = new Date()
   const generalAccess = initialGeneralAccess(data.source)
@@ -71,6 +74,7 @@ export async function upsertConversationShell(data: {
     createdAt: now,
     watcherIds: initialWatcherIds(data.userId, data),
     ...(generalAccess ? { generalAccess } : {}),
+    ...data.access,
     ...(data.agentRuntime ? { agentRuntime: data.agentRuntime } : {}),
     ...(data.runtimeId ? { runtimeId: data.runtimeId, runtimeLabel: data.runtimeLabel } : {}),
     ...(data.parentSessionId ? { parentSessionId: data.parentSessionId } : {}),

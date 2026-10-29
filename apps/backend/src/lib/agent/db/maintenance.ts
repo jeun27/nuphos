@@ -4,6 +4,8 @@ import { logError } from '@/lib/observability'
 
 import { purgeConversationTraces } from '../trace-store/store'
 
+import { inheritedGrant } from './access-tree'
+import { syncDescendantAccess } from './participants'
 import { agentConversations, agentMessages, withTeamScope } from './shared'
 
 // Refuses to blank a title. The conversation already carries a usable one from
@@ -80,7 +82,15 @@ export async function setConversationParent(
   if (!(await isValidParent(sessionId, userId, conversation.teamId, parentSessionId))) {
     return 'invalid_parent'
   }
-  await agentConversations().updateOne(filter, { $set: { parentSessionId } })
+  // Nesting shares the thread, and everything below it, like its new parent.
+  const parent = await agentConversations().findOne({ sessionId: parentSessionId })
+  const updated = await agentConversations().findOneAndUpdate(
+    filter,
+    { $set: { parentSessionId, ...inheritedGrant(parent ?? {}) } },
+    { returnDocument: 'after' },
+  )
+
+  if (updated) await syncDescendantAccess(updated)
 
   return 'ok'
 }

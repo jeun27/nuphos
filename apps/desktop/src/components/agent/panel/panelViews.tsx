@@ -9,6 +9,7 @@ import { track } from '../../../lib/analytics'
 import { runtimeIsExecuting, runtimeAllows } from '../../../lib/runtimeExecution'
 import { toast } from '../../ui/toast'
 import { PermissionResumeContext } from '../permissionResumeContext'
+import { RoomQueue } from '../room/RoomQueue'
 
 import { Composer } from './Composer'
 import { composerDraftKey } from './composerDrafts'
@@ -189,6 +190,14 @@ export function PanelConversationPage({ c }: { c: PanelViewCtx }) {
               </ConnectCardContext.Provider>
             </div>
             <div className="col-start-1 row-start-2 z-10">
+              {teamId && serverHasConversation(activeTab) && (
+                <RoomQueue
+                  sessionId={activeTab.sessionId}
+                  teamId={teamId}
+                  streaming={activeTab.streaming}
+                  sidebar={isSidebarMode}
+                />
+              )}
               {waitingMessages(activeTab).length > 0 && (
                 <QueuedStrip
                   items={waitingMessages(activeTab)}

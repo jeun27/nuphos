@@ -1,0 +1,119 @@
+import assert from 'node:assert/strict'
+import { test } from 'node:test'
+
+import {
+  agentsBroughtBy,
+  possessiveRuntime,
+  queuedFromOthers,
+  roomAgents,
+  roomHeadline,
+  roomIsShared,
+  roomProviders,
+  runningRequester,
+} from './roomModel.ts'
+
+import type {
+  AgentConversation,
+  AgentConversationParticipant,
+  AgentMessageMetadata,
+} from '../../../api/agent-types.ts'
+
+const chat = (sessionId: string, extra: Partial<AgentConversation> = {}): AgentConversation => ({
+  sessionId,
+  title: sessionId,
+  firstMessage: '',
+  messageCount: 1,
+  createdAt: '2026-10-29T00:00:00Z',
+  lastActiveAt: '2026-10-29T00:00:00Z',
+  ...extra,
+})
+
+const tree = [
+  chat('manager', { agentRuntime: 'claude-code' }),
+  chat('builder', { parentSessionId: 'manager', agentRuntime: 'codex' }),
+  chat('reviewer', { parentSessionId: 'builder', agentRuntime: 'claude-code' }),
+  chat('unrelated', { agentRuntime: 'grok' }),
+]
+
+test('the room is the chat and every sub-agent below it, parents first', () => {
+  const agents = roomAgents(tree[0], tree, (c) => c.sessionId === 'builder')
+
+  assert.deepEqual(
+    agents.map((a) => [a.sessionId, a.depth, a.working]),
+    [
+      ['manager', 0, false],
+      ['builder', 1, true],
+      ['reviewer', 2, false],
+    ],
+  )
+  assert.deepEqual(roomProviders(agents), ['claude-code', 'codex'])
+})
+
+test('a parent loop in bad data does not hang the room', () => {
+  const loop = [chat('a', { parentSessionId: 'b' }), chat('b', { parentSessionId: 'a' })]
+
+  assert.equal(roomAgents(loop[0], loop, () => false).length, 2)
+  assert.deepEqual(
+    roomAgents(undefined, loop, () => false),
+    [],
+  )
+})
+
+test('the headline counts people and agents in plain words', () => {
+  assert.equal(roomHeadline(2, 5), '2 people, 5 agents on')
+  assert.equal(roomHeadline(1, 1), '1 person, 1 agent on')
+  assert.equal(roomIsShared(1, 1), false)
+  assert.equal(roomIsShared(2, 1), true)
+  assert.equal(roomIsShared(1, 2), true)
+})
+
+const person = (id: string, isOwner: boolean): AgentConversationParticipant => ({
+  id,
+  name: id === 'bryan' ? 'Bryan Yeung' : 'Mira',
+  email: '',
+  isOwner,
+  role: isOwner ? 'owner' : 'reply',
+})
+
+test('each person brings only the runtimes their own agents run on, labelled as theirs', () => {
+  const agents = roomAgents(tree[0], tree, () => false)
+
+  assert.deepEqual(agentsBroughtBy(person('bryan', true), agents), ['claude-code', 'codex'])
+  assert.deepEqual(agentsBroughtBy(person('mira', false), agents), [])
+  assert.equal(possessiveRuntime('Bryan Yeung', 'codex'), 'Bryan’s Codex')
+})
+
+const sent = (type: 'user' | 'agent', displayName: string) => ({
+  role: 'user',
+  metadata: {
+    version: 1,
+    sender: { type, id: displayName, displayName },
+    source: type === 'user' ? 'nuphos' : 'agent.thread',
+    sentAt: '2026-10-29T00:00:00Z',
+  } as AgentMessageMetadata,
+})
+
+test('the running request belongs to the newest person who asked, not an agent report', () => {
+  const messages = [sent('user', 'Bryan'), { role: 'assistant' }, sent('user', 'Mira')]
+
+  assert.equal(runningRequester(messages)?.displayName, 'Mira')
+  assert.equal(runningRequester([...messages, sent('agent', 'Builder')])?.displayName, 'Mira')
+  assert.equal(runningRequester([{ role: 'assistant' }]), undefined)
+})
+
+test('a chat only one person talks in never names whose request it is', () => {
+  assert.equal(runningRequester([sent('user', 'Bryan'), sent('user', 'Bryan')]), undefined)
+})
+
+test("teammates' queued messages keep their order and say who sent them", () => {
+  const queue = [
+    { id: '1', mine: false, text: 'Add SSO row', senderUserId: 'mira' },
+    { id: '2', mine: true, text: 'Mine, editable elsewhere', senderUserId: 'bryan' },
+    { id: '3', mine: false, text: 'From a removed teammate', senderUserId: 'gone' },
+  ]
+
+  assert.deepEqual(queuedFromOthers(queue, [person('bryan', true), person('mira', false)]), [
+    { id: '1', text: 'Add SSO row', senderName: 'Mira' },
+    { id: '3', text: 'From a removed teammate', senderName: 'A teammate' },
+  ])
+})
