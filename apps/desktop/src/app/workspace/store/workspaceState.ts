@@ -29,6 +29,8 @@ export type WorkspaceState = {
   teamScope: TeamScope | null
   /** False until the account's teams arrive; restored tabs may name a team it has left. */
   teamsKnown: boolean
+  /** The account's teams once loaded; a chat link into any other team is not opened. */
+  knownTeamIds: readonly string[] | null
   buckets: Readonly<Record<string, TabBucket>>
   /** Session keys, least- to most-recently touched, for the resident cap. */
   recentSessionKeys: readonly string[]
@@ -138,6 +140,11 @@ export function selectMountedBrowserTabs(
   )
 }
 
+/** False only for a team the loaded team list does not have. */
+export function isKnownTeam(state: Pick<WorkspaceState, 'knownTeamIds'>, teamId: string) {
+  return !state.knownTeamIds || state.knownTeamIds.includes(teamId)
+}
+
 export function teamScopeOf(teamId: string): TeamScope {
   return { kind: 'team', teamId }
 }
@@ -162,6 +169,7 @@ export function createWorkspaceState(
     ...surface,
     newChatRequest: 0,
     teamsKnown: false,
+    knownTeamIds: null,
     buckets,
     recentSessionKeys: Object.keys(buckets),
     surfaceHistory: [{ ...surface, at: Date.now() }],

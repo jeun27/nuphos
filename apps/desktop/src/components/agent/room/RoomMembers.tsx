@@ -10,6 +10,7 @@ import { ResourceMark } from '../../sidebar/ResourceMark'
 import { resourceLabel } from '../../sidebar/sessionResourcePresentation'
 import { AgentProviderIcon } from '../panel/icons'
 
+import { PendingInvites } from './PendingInvites'
 import { agentsBroughtBy, possessiveRuntime, roleLabel, roomSteering } from './roomModel'
 import { RoomSendNotice } from './RoomSendNotice'
 
@@ -194,10 +195,14 @@ export function RoomMembers({
         <Tabs.Panel value="all">
           <div className={SECTION}>{t('People')}</div>
           {people}
+          <PendingInvites room={room} />
           <div className={SECTION}>{t('Agents')}</div>
           {agents}
         </Tabs.Panel>
-        <Tabs.Panel value="people">{people}</Tabs.Panel>
+        <Tabs.Panel value="people">
+          {people}
+          <PendingInvites room={room} />
+        </Tabs.Panel>
         <Tabs.Panel value="agents">{agents}</Tabs.Panel>
       </div>
     </Tabs.Root>

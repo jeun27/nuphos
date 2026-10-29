@@ -1,6 +1,7 @@
 import { finalizeWorkspaceState } from './workspaceNormalize.ts'
 import {
   MAIN_PAGE_BUCKET_KEY,
+  isKnownTeam,
   selectBucket,
   selectTabLocation,
   teamScopeOf,
@@ -62,6 +63,8 @@ function selectSession(
   state: WorkspaceState,
   action: Extract<WorkspaceAction, { type: 'selectSession' }>,
 ): WorkspaceState {
+  // A link into a team this account is not in must not move the workspace there.
+  if (action.teamId && !isKnownTeam(state, action.teamId)) return state
   const teamScope =
     action.teamId && action.teamId !== state.teamScope?.teamId
       ? teamScopeOf(action.teamId)
@@ -124,7 +127,7 @@ function retainTeams(
     retainTeamsIn(bucket, (teamId) => known.has(teamId)),
   )
   const next = retainSurfaces(
-    retained.teamsKnown ? retained : { ...retained, teamsKnown: true },
+    { ...retained, teamsKnown: true, knownTeamIds: teamIds },
     (surface) => !surface.teamScope || known.has(surface.teamScope.teamId),
   )
 
@@ -151,6 +154,7 @@ const WORKSPACE_LEVEL_ACTIONS = new Set<WorkspaceAction['type']>([
   'setSessionReadOnly',
   'switchTeam',
   'retainTeams',
+  'knowTeams',
   'removeTeam',
 ])
 
@@ -166,6 +170,7 @@ type WorkspaceLevelAction = Extract<
       | 'setSessionReadOnly'
       | 'switchTeam'
       | 'retainTeams'
+      | 'knowTeams'
       | 'removeTeam'
   }
 >
@@ -263,6 +268,10 @@ function applyAction(
     }
     case 'retainTeams':
       return retainTeams(state, action.teamIds, action.preferredTeamId)
+    case 'knowTeams':
+      return state.knownTeamIds?.join() === action.teamIds.join()
+        ? state
+        : { ...state, knownTeamIds: action.teamIds }
     case 'removeTeam':
       return removeTeam(state, action.teamId)
   }

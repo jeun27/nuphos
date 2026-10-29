@@ -59,6 +59,8 @@ export type WorkspaceActions = {
   updateTab: (tabId: string, updater: TabUpdater, options?: { history?: TabHistoryMode }) => void
   updateActiveTab: (updater: TabUpdater, options?: { history?: TabHistoryMode }) => void
   retainTeams: (teamIds: readonly string[], preferredTeamId: string | null) => void
+  /** Keeps the team list current after joining or leaving, without dropping any tab. */
+  knowTeams: (teamIds: readonly string[]) => void
   removeTeam: (teamId: string) => void
 }
 
@@ -157,6 +159,7 @@ export function createWorkspaceStore(
     },
     retainTeams: (teamIds, preferredTeamId) =>
       dispatch({ type: 'retainTeams', teamIds, preferredTeamId }),
+    knowTeams: (teamIds) => dispatch({ type: 'knowTeams', teamIds }),
     removeTeam: (teamId) => dispatch({ type: 'removeTeam', teamId }),
   }
 

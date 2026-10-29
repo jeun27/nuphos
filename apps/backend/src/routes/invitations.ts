@@ -3,6 +3,7 @@ import { ObjectId } from 'mongodb'
 
 import { AppError } from '@/lib/errors'
 import { addUserToTeam, getTeamsByIds } from '@/lib/identity'
+import { grantCarriedConversations } from '@/lib/team-invitation-conversations'
 import { normalizeInviteeEmail, serializeTeamInvitation } from '@/lib/team-invitations'
 import { requireAuth } from '@/middleware/auth'
 import { teamInvitations } from '@/models'
@@ -92,9 +93,12 @@ invitationsRoutes.post('/:invitationId/accept', async (c) => {
     await rollbackAcceptedAtOrThrow()
     throw new AppError(404, 'team_not_found', 'Team not found')
   }
+  // The chats it carried open for them; the app opens the first one.
+  const sessionId = await grantCarriedConversations(invitation, c.get('userId'))
 
   return c.json({
     invitation: serializeTeamInvitation(invitation),
+    ...(sessionId ? { sessionId } : {}),
   })
 })
 

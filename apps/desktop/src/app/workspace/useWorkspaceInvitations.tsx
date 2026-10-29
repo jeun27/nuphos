@@ -33,6 +33,7 @@ export function useWorkspaceInvitations(a: Args) {
     bootstrapTeams,
     invitationsFetchTokenRef,
     applyPendingInvitations,
+    setChatToOpen,
   } = a
 
   // Workspace discovery by email domain: joining a discoverable workspace is
@@ -73,6 +74,9 @@ export function useWorkspaceInvitations(a: Args) {
       if (token === invitationsFetchTokenRef.current) applyPendingInvitations(nextInvitations)
       // Same celebration as creating a workspace — the member's side of it.
       setLandingCelebration(true)
+      // An invitation sent from a chat's Share card opens that chat.
+      if (accepted.sessionId)
+        setChatToOpen({ teamId: accepted.teamId, sessionId: accepted.sessionId })
 
       return accepted.teamId
     },
@@ -80,6 +84,7 @@ export function useWorkspaceInvitations(a: Args) {
       applyPendingInvitations,
       bootstrapTeams,
       invitationsFetchTokenRef,
+      setChatToOpen,
       setLandingCelebration,
       setTeams,
       workspaceStore,

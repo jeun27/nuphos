@@ -11,6 +11,7 @@ import type {
 } from '../types/runtime'
 import type {
   HomeLayout,
+  InvitationConversation,
   SidebarFavoriteCloudEntry,
   TeamActivityRange,
   TeamRole,
@@ -111,8 +112,11 @@ export const teamApi = {
   atlasUpdateTeamMemberRole: (teamId: string, memberId: string, role: TeamRole) =>
     window.api.atlasUpdateTeamMemberRole(teamId, memberId, role),
   atlasListMyInvitations: () => window.api.atlasListMyInvitations(),
-  atlasInviteTeamMember: (teamId: string, inviteeEmail: string) =>
-    window.api.atlasInviteTeamMember(teamId, inviteeEmail),
+  atlasInviteTeamMember: (
+    teamId: string,
+    inviteeEmail: string,
+    conversation?: InvitationConversation,
+  ) => window.api.atlasInviteTeamMember(teamId, inviteeEmail, conversation),
   atlasAcceptInvitation: (invitationId: string) => window.api.atlasAcceptInvitation(invitationId),
   atlasRejectInvitation: (invitationId: string) => window.api.atlasRejectInvitation(invitationId),
   atlasListSlackChannelMappings: (teamId: string) =>

@@ -2,6 +2,7 @@ import { useWorkspaceAccounts } from './useWorkspaceAccounts'
 import { useWorkspaceActiveTab } from './useWorkspaceActiveTab'
 import { useWorkspaceAgentLinks } from './useWorkspaceAgentLinks'
 import { useWorkspaceBreadcrumb } from './useWorkspaceBreadcrumb'
+import { useWorkspaceChatLinkGate } from './useWorkspaceChatLinkGate'
 import { useWorkspaceChatLinks } from './useWorkspaceChatLinks'
 import { useWorkspaceClusterEntry } from './useWorkspaceClusterEntry'
 import { useWorkspaceInvitations } from './useWorkspaceInvitations'
@@ -47,7 +48,8 @@ export function useWorkspaceController(props: WorkspaceProps) {
   const s10 = useWorkspaceAgentLinks(acc9)
   const acc10 = { ...acc9, ...s10 }
   const s11 = useWorkspaceTakeover(acc10)
-  const acc11 = { ...acc10, ...s11 }
+  const s11b = useWorkspaceChatLinkGate({ ...acc10, ...s11 })
+  const acc11 = { ...acc10, ...s11, ...s11b }
   const s12 = useWorkspaceClusterEntry(acc11)
   const acc12 = { ...acc11, ...s12 }
   const s13 = useWorkspaceSidebarNav(acc12)

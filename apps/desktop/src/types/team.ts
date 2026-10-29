@@ -137,9 +137,14 @@ export type TeamInvitation = {
   team?: Pick<AtlasTeam, 'id' | 'name' | 'avatarUrl'>
   invitedAt: string
   inviteeEmail: string
+  /** Chats the invitee joins on accepting; an accept answer names the first in `sessionId`. */
+  conversations?: InvitationConversation[]
+  sessionId?: string
   acceptedAt?: string
   rejectedAt?: string
 }
+
+export type InvitationConversation = { sessionId: string; role: 'view' | 'reply' | 'manage' }
 
 export type SidebarFavoriteCloudEntry = { label: string; key?: string; href?: string }
 export type SidebarFavoritesCloudSnapshot = {

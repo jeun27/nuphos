@@ -46,6 +46,7 @@ export type WorkspaceAction =
   | { type: 'reorderTab'; tabId: string; targetTabId: string; placement: TabDropPlacement }
   | { type: 'updateTab'; tabId: string; updater: TabUpdater; history?: TabHistoryMode }
   | { type: 'retainTeams'; teamIds: readonly string[]; preferredTeamId: string | null }
+  | { type: 'knowTeams'; teamIds: readonly string[] }
   | { type: 'removeTeam'; teamId: string }
 
 export type WorkspaceStoreDeps = {

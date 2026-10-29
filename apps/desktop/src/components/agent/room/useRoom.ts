@@ -12,6 +12,14 @@ import type { RoomAgent } from './roomModel'
 import type { AgentConversation, AgentConversationParticipant } from '../../../api/agent-types'
 
 const roomPeopleKey = (sessionId: string) => `room-people:${sessionId}`
+const roomTeamKey = (teamId: string) => `room-team:${teamId}`
+
+/** The room's team as the viewer sees it: its name, and whether they administer it. */
+export type RoomTeam = { name: string; isAdmin: boolean }
+
+export function publishRoomTeam(teamId: string, team: RoomTeam) {
+  writeSwrCache(roomTeamKey(teamId), team)
+}
 
 /** The Share button loads who is here; the room reads the same list instead of asking again. */
 export function publishRoomPeople(sessionId: string, people: AgentConversationParticipant[]) {
@@ -24,6 +32,7 @@ export type Room = {
   /** The chat this room is open on: the manager, or one of its sub-agents. */
   here: string
   teamId: string
+  team?: RoomTeam
 }
 
 /**
@@ -32,6 +41,7 @@ export type Room = {
  */
 export function useRoom(sessionId: string, teamId: string): Room {
   const people = useSwrCache<AgentConversationParticipant[]>(roomPeopleKey(sessionId))
+  const team = useSwrCache<RoomTeam>(roomTeamKey(teamId))
   const listed = useSwrCache<AgentConversation[]>(agentSessionsCacheKey(teamId))
   const opened = useOpenedConversation(sessionId)
   const states = useAgentRuntimeStates()
@@ -44,5 +54,5 @@ export function useRoom(sessionId: string, teamId: string): Room {
     return roomAgents(roomRootOf(sessionId, conversations, opened), conversations, isWorking)
   }, [listed, opened, sessionId, states])
 
-  return { people: people ?? [], agents, here: sessionId, teamId }
+  return { people: people ?? [], agents, here: sessionId, teamId, team }
 }

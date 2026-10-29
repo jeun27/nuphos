@@ -28,6 +28,7 @@ import type { WorkspaceAccountsResult } from './useWorkspaceAccounts'
 import type { WorkspaceActiveTabResult } from './useWorkspaceActiveTab'
 import type { WorkspaceAgentLinksResult } from './useWorkspaceAgentLinks'
 import type { WorkspaceBreadcrumbResult } from './useWorkspaceBreadcrumb'
+import type { WorkspaceChatLinkGateResult } from './useWorkspaceChatLinkGate'
 import type { WorkspaceClusterEntryResult } from './useWorkspaceClusterEntry'
 import type { WorkspaceInvitationsResult } from './useWorkspaceInvitations'
 import type { WorkspaceNamespacesResult } from './useWorkspaceNamespaces'
@@ -59,7 +60,8 @@ type Args = WorkspaceProps &
   WorkspaceClusterEntryResult &
   WorkspaceSidebarNavResult &
   WorkspaceBreadcrumbResult &
-  WorkspaceToolbarResult
+  WorkspaceToolbarResult &
+  WorkspaceChatLinkGateResult
 
 export function useWorkspaceLinkOpeners(a: Args) {
   const {
@@ -74,6 +76,7 @@ export function useWorkspaceLinkOpeners(a: Args) {
     openConversationInNewTab,
     openSettingsSection,
     teams,
+    guardChatLink,
   } = a
   const openSessionBeside = useWorkspacePane()?.openSessionBeside
 
@@ -128,27 +131,21 @@ export function useWorkspaceLinkOpeners(a: Args) {
 
         return true
       }
+      const chatId = navigation.active === 'team.agent' ? navigation.agentSessionId : null
+
+      // A chat in a team this account is not in explains itself instead of switching there.
+      if (chatId && guardChatLink(chatId, navigation.scope.teamId)) return true
 
       // An artifact link opens its conversation, which then opens the artifact
       // beside it, once it has loaded for someone allowed to read it.
-      if (
-        navigation.active === 'team.agent' &&
-        navigation.agentSessionId &&
-        navigation.agentArtifact
-      ) {
-        requestArtifactOpen(
-          navigation.agentSessionId,
-          navigation.agentArtifact.artifactId,
-          navigation.agentArtifact.version,
-        )
-      }
-      if (beside) {
-        const sessionId = navigation.active === 'team.agent' ? navigation.agentSessionId : null
+      const artifact = chatId ? navigation.agentArtifact : null
 
+      if (chatId && artifact) requestArtifactOpen(chatId, artifact.artifactId, artifact.version)
+      if (beside) {
         // Message text is untrusted: a malformed team id falls back to the pane's team.
         const teamId = isTeamId(navigation.scope.teamId) ? navigation.scope.teamId : undefined
 
-        return Boolean(sessionId && openSessionBeside?.(sessionId, teamId))
+        return Boolean(chatId && openSessionBeside?.(chatId, teamId))
       }
       if (navigation.active === 'team.agent') {
         if (navigation.agentSessionId) {

@@ -37,6 +37,8 @@ export function useWorkspaceShellState() {
   // failure). The brand-new-user onboarding auto-entry waits on this so an
   // invited-but-teamless user is never trapped behind the overlay.
   const [invitationsLoaded, setInvitationsLoaded] = useState(false)
+  // A chat to open once its team is in the list: an accepted invitation carried it.
+  const [chatToOpen, setChatToOpen] = useState<{ teamId: string; sessionId: string } | null>(null)
   const [accountsByTeam, setAccountsByTeam] = useState<Record<string, AccountSet | undefined>>({})
   const [databaseConnectionsByTeam, setDatabaseConnectionsByTeam] = useState<
     Record<string, DatabaseConnection[] | undefined>
@@ -178,6 +180,8 @@ export function useWorkspaceShellState() {
     setPendingInvitations,
     invitationsLoaded,
     setInvitationsLoaded,
+    chatToOpen,
+    setChatToOpen,
     accountsByTeam,
     setAccountsByTeam,
     databaseConnectionsByTeam,

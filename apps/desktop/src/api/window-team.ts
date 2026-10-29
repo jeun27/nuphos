@@ -34,6 +34,7 @@ import type {
   AtlasTeam,
   OpenAbRuntimeStatus,
   DiscoverableTeam,
+  InvitationConversation,
   TeamInvitation,
   TeamMember,
   TeamRole,
@@ -170,7 +171,11 @@ export type WindowTeamApi = {
   atlasLeaveTeam(teamId: string): Promise<void>
   atlasUpdateTeamMemberRole(teamId: string, memberId: string, role: TeamRole): Promise<TeamMember>
   atlasListMyInvitations(): Promise<TeamInvitation[]>
-  atlasInviteTeamMember(teamId: string, inviteeEmail: string): Promise<TeamInvitation>
+  atlasInviteTeamMember(
+    teamId: string,
+    inviteeEmail: string,
+    conversation?: InvitationConversation,
+  ): Promise<TeamInvitation>
   atlasAcceptInvitation(invitationId: string): Promise<TeamInvitation>
   atlasRejectInvitation(invitationId: string): Promise<TeamInvitation>
   atlasListSlackChannelMappings(teamId: string): Promise<SlackChannelMapping[]>

@@ -147,9 +147,13 @@ export type TeamInvitation = {
   teamId: ObjectId
   invitedAt: Date
   inviteeEmail: string
+  /** Chats the invitee joins, with these roles, once they accept. */
+  conversations?: InvitationConversation[]
   acceptedAt?: Date
   rejectedAt?: Date
 }
+
+export type InvitationConversation = { sessionId: string; role: 'view' | 'reply' | 'manage' }
 
 export type SidebarFavoriteEntry = {
   label: string

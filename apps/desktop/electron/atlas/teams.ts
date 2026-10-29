@@ -54,9 +54,14 @@ export type TeamInvitation = {
   team?: Pick<Team, 'id' | 'name' | 'avatarUrl'>
   invitedAt: string
   inviteeEmail: string
+  /** Chats the invitee joins on accepting; an accept answer names the first in `sessionId`. */
+  conversations?: InvitationConversation[]
+  sessionId?: string
   acceptedAt?: string
   rejectedAt?: string
 }
+
+export type InvitationConversation = { sessionId: string; role: 'view' | 'reply' | 'manage' }
 
 export type SidebarFavoriteEntry = { label: string; key?: string; href?: string }
 export type SidebarFavoritesSnapshot = {
@@ -224,11 +229,12 @@ export async function listMyInvitations(): Promise<TeamInvitation[]> {
 export async function inviteTeamMember(
   teamId: string,
   inviteeEmail: string,
+  conversation?: InvitationConversation,
 ): Promise<TeamInvitation> {
   const data = await call<{ invitation: TeamInvitation }>(
     'POST',
     `/teams/${teamId}/invitations`,
-    { inviteeEmail },
+    conversation ? { inviteeEmail, conversation } : { inviteeEmail },
     { retry: false },
   )
 
@@ -236,14 +242,14 @@ export async function inviteTeamMember(
 }
 
 export async function acceptInvitation(invitationId: string): Promise<TeamInvitation> {
-  const data = await call<{ invitation: TeamInvitation }>(
+  const data = await call<{ invitation: TeamInvitation; sessionId?: string }>(
     'POST',
     `/invitations/${invitationId}/accept`,
     undefined,
     { retry: false },
   )
 
-  return data.invitation
+  return data.sessionId ? { ...data.invitation, sessionId: data.sessionId } : data.invitation
 }
 
 export async function rejectInvitation(invitationId: string): Promise<TeamInvitation> {

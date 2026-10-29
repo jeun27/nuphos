@@ -2,7 +2,7 @@ import { config } from '@/config'
 import { isEmailConfigured, sendEmail } from '@/lib/email'
 
 import type { NuphosTeam } from '@/lib/identity'
-import type { TeamInvitation } from '@/models'
+import type { InvitationConversation, TeamInvitation } from '@/models'
 
 export type SerializedTeamInvitation = {
   id: string
@@ -11,6 +11,7 @@ export type SerializedTeamInvitation = {
   team?: Pick<NuphosTeam, 'id' | 'name' | 'avatarUrl'>
   invitedAt: string
   inviteeEmail: string
+  conversations?: InvitationConversation[]
   acceptedAt?: string
   rejectedAt?: string
 }
@@ -30,6 +31,7 @@ export function serializeTeamInvitation(
     ...(team ? { team } : {}),
     invitedAt: invitation.invitedAt.toISOString(),
     inviteeEmail: invitation.inviteeEmail,
+    ...(invitation.conversations?.length ? { conversations: invitation.conversations } : {}),
     ...(invitation.acceptedAt ? { acceptedAt: invitation.acceptedAt.toISOString() } : {}),
     ...(invitation.rejectedAt ? { rejectedAt: invitation.rejectedAt.toISOString() } : {}),
   }

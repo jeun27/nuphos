@@ -33,7 +33,14 @@ export function useWorkspaceTeams(a: Args) {
     setTeamsLoaded,
     updateActiveTab,
     onLogout,
+    teams,
+    teamsLoaded,
   } = a
+
+  // Joining or leaving after the first load keeps the store's team list current.
+  useEffect(() => {
+    if (teamsLoaded) workspaceActions.knowTeams(teams.map((team) => team.id))
+  }, [teams, teamsLoaded, workspaceActions])
 
   const navigateHistory = useCallback(
     (direction: -1 | 1) => {

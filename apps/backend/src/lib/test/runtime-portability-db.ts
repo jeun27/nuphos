@@ -3,6 +3,11 @@
 type Doc = Record<string, any>
 const valueAt = (doc: Doc, key: string): any =>
   key.split('.').reduce((value, part) => value?.[part], doc)
+// ObjectIds and small value objects compare by value, the way Mongo does.
+const same = (a: any, b: any): boolean =>
+  a === b ||
+  (typeof a?.equals === 'function' ? a.equals(b) : JSON.stringify(a) === JSON.stringify(b))
+const has = (list: any[], value: any) => list.some((entry) => same(entry, value))
 
 function matches(doc: Doc, query: Doc): boolean {
   return Object.entries(query).every(([key, expected]) => {
@@ -20,7 +25,7 @@ function matches(doc: Doc, query: Doc): boolean {
       if ('$in' in expected) return expected.$in.includes(actual)
     }
 
-    return Array.isArray(actual) ? actual.includes(expected) : actual === expected
+    return Array.isArray(actual) ? has(actual, expected) : same(actual, expected)
   })
 }
 function update(doc: Doc, query: Doc, mutation: Doc) {
@@ -44,7 +49,7 @@ function update(doc: Doc, query: Doc, mutation: Doc) {
     doc[key] ??= []
     const values = value && typeof value === 'object' && '$each' in value ? value.$each : [value]
 
-    for (const entry of values) if (!doc[key].includes(entry)) doc[key].push(entry)
+    for (const entry of values) if (!has(doc[key], entry)) doc[key].push(entry)
   }
   for (const [key, value] of Object.entries<Doc>(mutation.$push ?? {})) {
     doc[key] ??= []

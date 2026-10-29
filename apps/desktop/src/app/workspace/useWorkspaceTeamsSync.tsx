@@ -106,6 +106,7 @@ export function useWorkspaceTeamsSync(a: Args) {
 
   return {
     refreshTeamsSilently,
+    refreshInvitationsSilently,
     invitationsFetchTokenRef,
     applyPendingInvitations,
   }

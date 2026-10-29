@@ -120,8 +120,16 @@ export function CheckBadge({ className }: { className: string }) {
   )
 }
 
-/** The link with its Copy button, above who that link opens for. */
-export function ShareLink({ url, children }: { url: string; children: React.ReactNode }) {
+/** The link with its Copy button and who it works for, above the control that decides that. */
+export function ShareLink({
+  url,
+  note,
+  children,
+}: {
+  url: string
+  note: string
+  children: React.ReactNode
+}) {
   const [copied, setCopied] = useState(false)
   const onCopy = () => {
     navigator.clipboard
@@ -155,6 +163,9 @@ export function ShareLink({ url, children }: { url: string; children: React.Reac
           )}
           {copied ? t('Copied') : t('Copy')}
         </button>
+      </div>
+      <div className="-mt-0.5 pb-1.5 pl-8 pr-2.5 text-[11px] leading-snug text-tertiary">
+        {note}
       </div>
       <div className="border-t border-zGray-800/60">{children}</div>
     </div>

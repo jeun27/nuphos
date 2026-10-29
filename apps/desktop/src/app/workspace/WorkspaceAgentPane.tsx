@@ -16,6 +16,7 @@ import { useChatSummaryOpen } from '../../lib/chatSummaryPanel'
 import { hasCloudOnboardingBinding } from '../../lib/connectorCategories'
 import { isLocalAgentRuntime } from '../../lib/localAgentSharing'
 
+import { ChatLinkGateScreen } from './ChatLinkGateScreen'
 import { PaneGrip } from './PaneGrip'
 import { PaneMenu } from './PaneMenu'
 import { SessionFindBar } from './SessionFindBar'
@@ -134,6 +135,13 @@ export function WorkspaceAgentPane({
         ws.mainPageOpen ? 'hidden' : 'flex',
       )}
     >
+      {ws.chatLinkGate && (
+        <ChatLinkGateScreen
+          invitation={ws.chatLinkInvitation}
+          onAccept={ws.acceptChatLinkInvitation}
+          onDismiss={ws.dismissChatLinkGate}
+        />
+      )}
       <div
         // Laid out at the width the column has once the dock settles, so the
         // dock's width transition slides over or uncovers it instead of
@@ -189,6 +197,7 @@ export function WorkspaceAgentPane({
               teamId={teamId}
               title={currentHeading.title}
               currentUserId={user.id}
+              team={currentTeam}
               canManage={mayRename}
               warnLocalAgent={mayRename && isLocalAgentRuntime(currentHeading.runtimeId)}
               compact={compact}

@@ -1,18 +1,18 @@
 import { Popover } from '@base-ui/react/popover'
 import clsx from 'clsx'
-import { Info, Loader2, X } from 'lucide-react'
+import { Info, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import { api } from '../../api'
 import { t } from '../../i18n'
 import { LOCAL_AGENT_SHARING_NOTE } from '../../lib/localAgentSharing'
-import { Button } from '../ui/button'
 import { toast } from '../ui/toast'
 
 import { TIMELINE_CHANGED_EVENT, announceTimelineChange } from './panel/timelineEvents'
-import { publishRoomPeople } from './room/useRoom'
+import { publishRoomPeople, publishRoomTeam } from './room/useRoom'
 import { agentSessionUrl } from './sessionUrl'
-import { GeneralAccessRow, RoleMenu } from './ShareAccess'
+import { linkAudience } from './linkAudience'
+import { GeneralAccessRow } from './ShareAccess'
 import {
   AddedReceipt,
   ParticipantList,
@@ -20,7 +20,7 @@ import {
   ShareLink,
   TitlebarDragSuspender,
 } from './ShareCard'
-import { TeammatePicker } from './TeammatePicker'
+import { AddPickedRow, TeammatePicker } from './TeammatePicker'
 
 import type {
   AgentConversationParticipant,
@@ -28,13 +28,7 @@ import type {
   GeneralAccess,
   ParticipantRole,
 } from '../../api/agent-types'
-import type { TeamMember } from '../../types'
-
-function addLabel(count: number) {
-  if (count === 0) return t('Add to agent')
-
-  return count === 1 ? t('Add 1 person') : t('Add {n} people', { n: String(count) })
-}
+import type { AtlasTeam, TeamMember } from '../../types'
 
 /**
  * The session's people, and the Share card that decides who else may open it:
@@ -47,6 +41,7 @@ export function SessionParticipants({
   teamId,
   title,
   currentUserId,
+  team,
   canManage,
   warnLocalAgent,
   compact,
@@ -55,6 +50,7 @@ export function SessionParticipants({
   teamId: string
   title: string
   currentUserId: string
+  team?: Pick<AtlasTeam, 'name' | 'role'> | null
   /** The viewer owns this session, so they decide who has access. */
   canManage: boolean
   /** The viewer owns this session and it runs on their own computer's Local Agent. */
@@ -71,6 +67,10 @@ export function SessionParticipants({
   const [added, setAdded] = useState<TeamMember[] | null>(null)
   // 'invite', 'undo', 'access', or the id of the participant being changed.
   const [pending, setPending] = useState<string | null>(null)
+  const teamName = team?.name ?? t('the team')
+  const isAdmin = team?.role === 'ADMINISTRATOR'
+
+  useEffect(() => publishRoomTeam(teamId, { name: teamName, isAdmin }), [teamId, teamName, isAdmin])
 
   // The pane keys this by sessionId, so a switch remounts it with no stale list. An invite
   // from elsewhere (the composer's @mention prompt) announces itself; the header reloads then.
@@ -238,7 +238,10 @@ export function SessionParticipants({
                     <X className="h-3.5 w-3.5" strokeWidth={2} />
                   </Popover.Close>
                 </div>
-                <ShareLink url={agentSessionUrl(teamId, sessionId)}>
+                <ShareLink
+                  url={agentSessionUrl(teamId, sessionId)}
+                  note={linkAudience(generalAccess, teamName)}
+                >
                   <GeneralAccessRow
                     value={generalAccess}
                     canManage={canManage && pending === null}
@@ -268,22 +271,18 @@ export function SessionParticipants({
                       picked={picked}
                       disabled={pending !== null}
                       onToggle={togglePicked}
+                      teamName={teamName}
+                      emailInvite={
+                        isAdmin ? { teamId, teamName, sessionId, role: inviteRole } : undefined
+                      }
                     />
-                    <div className="flex items-center gap-2">
-                      <RoleMenu value={inviteRole} onChange={setInviteRole} />
-                      <Button
-                        variant="neutral"
-                        size="sm"
-                        className="flex-1"
-                        disabled={picked.length === 0 || pending !== null}
-                        onClick={invite}
-                      >
-                        {pending === 'invite' && (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2} />
-                        )}
-                        {pending === 'invite' ? t('Adding…') : addLabel(picked.length)}
-                      </Button>
-                    </div>
+                    <AddPickedRow
+                      role={inviteRole}
+                      onRoleChange={setInviteRole}
+                      count={picked.length}
+                      pending={pending}
+                      onAdd={invite}
+                    />
                   </>
                 ) : (
                   <div className="px-1 text-[12px] text-tertiary">
