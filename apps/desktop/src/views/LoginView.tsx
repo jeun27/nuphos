@@ -10,7 +10,14 @@ import { toast } from '../components/ui/toast'
 import { useErrorShake } from '../hooks/useErrorShake'
 import { useStableCallback } from '../hooks/useStableCallback'
 import { useTextSwap } from '../hooks/useTextSwap'
-import { cleanCode, CODE_LENGTH, completesCode, singleFlight } from '../lib/codeEntry'
+import {
+  cleanCode,
+  CODE_LENGTH,
+  completesCode,
+  hasNonDigits,
+  pasteIntoCode,
+  singleFlight,
+} from '../lib/codeEntry'
 import { signInEmailError } from '../lib/emailDomain'
 import { cssDurationMs, prefersReducedMotion } from '../lib/motion'
 
@@ -122,6 +129,13 @@ export function LoginView({ onLogin }: Props) {
   const verifyLatest = useStableCallback(handleVerifyCode)
   const [verifyCode] = useState(() => singleFlight(verifyLatest))
 
+  // The sixth digit (typed, pasted or autofilled) submits; Verify stays for a retry.
+  function enterCode(next: string) {
+    clearCodeError()
+    setCode(next)
+    if (completesCode(code, next)) void verifyCode(next)
+  }
+
   return (
     <div className="titlebar-drag h-full flex flex-col login-surface">
       <div className="h-[44px] flex-shrink-0" />
@@ -206,13 +220,25 @@ export function LoginView({ onLogin }: Props) {
                 <input
                   value={code}
                   ref={codeRef}
-                  onChange={(e) => {
-                    clearCodeError()
-                    const next = cleanCode(e.target.value)
+                  onChange={(e) => enterCode(cleanCode(e.target.value))}
+                  // Typed letters, spaces and symbols never go in; the cursor stays put.
+                  onBeforeInput={(e) => {
+                    if (hasNonDigits(e.data)) e.preventDefault()
+                  }}
+                  onPaste={(e) => {
+                    const input = e.currentTarget
+                    const pasted = pasteIntoCode(
+                      code,
+                      {
+                        start: input.selectionStart ?? code.length,
+                        end: input.selectionEnd ?? code.length,
+                      },
+                      e.clipboardData.getData('text'),
+                    )
 
-                    setCode(next)
-                    // The sixth digit (typed, pasted or autofilled) submits; Verify stays for a retry.
-                    if (completesCode(code, next)) void verifyCode(next)
+                    e.preventDefault()
+                    enterCode(pasted.code)
+                    requestAnimationFrame(() => input.setSelectionRange(pasted.caret, pasted.caret))
                   }}
                   placeholder="000000"
                   inputMode="numeric"
