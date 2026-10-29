@@ -1384,7 +1384,7 @@
   "Teammates you pick can run their own agents here without asking. Use this for a machine set aside for it.": "選択したチームメンバーが、確認なしでここで自分のエージェントを実行できます。この用途専用のマシンで使用してください。",
   "Teammates you pick can run their own agents here. You approve each agent before it starts.": "選択したチームメンバーが、ここで自分のエージェントを実行できます。各エージェントの開始前にあなたが承認します。",
   "Teammates' computers": "チームメンバーのコンピュータ",
-  "Teammates’ messages here and in its sub-agents run on your computer with your agent sign-in. Turn it off any time.": "ここやサブエージェントでのチームメイトのメッセージは、あなたのコンピューターとエージェントのサインインで実行されます。いつでもオフにできます。",
+  "Teammates’ messages here and in its sub-agents run on your computer as you, with your agent sign-in, without asking you first, even where your computer is shared as “Ask me first”. Turn it off any time.": "ここやサブエージェントでのチームメイトのメッセージは、あなたとして、あなたのエージェントのサインインで、確認なしにあなたのコンピューターで実行されます。コンピューターを「先に確認」で共有していても同じです。いつでもオフにできます。",
   "Teams you can join": "参加できるチーム",
   "Telemetry": "テレメトリ",
   "Tell the agent what to change…": "変更内容をエージェントに伝える…",

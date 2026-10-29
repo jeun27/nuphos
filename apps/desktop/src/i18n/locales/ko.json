@@ -1384,7 +1384,7 @@
   "Teammates you pick can run their own agents here without asking. Use this for a machine set aside for it.": "선택한 팀원이 묻지 않고 여기에서 자신의 에이전트를 실행할 수 있습니다. 이 용도로 따로 마련한 머신에 사용하세요.",
   "Teammates you pick can run their own agents here. You approve each agent before it starts.": "선택한 팀원이 여기에서 자신의 에이전트를 실행할 수 있습니다. 각 에이전트는 시작 전에 내 승인을 받습니다.",
   "Teammates' computers": "팀원의 컴퓨터",
-  "Teammates’ messages here and in its sub-agents run on your computer with your agent sign-in. Turn it off any time.": "여기와 하위 에이전트에서 팀원의 메시지는 내 컴퓨터와 내 에이전트 로그인으로 실행됩니다. 언제든 끌 수 있습니다.",
+  "Teammates’ messages here and in its sub-agents run on your computer as you, with your agent sign-in, without asking you first, even where your computer is shared as “Ask me first”. Turn it off any time.": "여기와 하위 에이전트에서 팀원의 메시지는 내 컴퓨터에서 나로서, 내 에이전트 로그인으로, 먼저 묻지 않고 실행됩니다. 컴퓨터를 “먼저 묻기”로 공유했더라도 마찬가지입니다. 언제든 끌 수 있습니다.",
   "Teams you can join": "참여할 수 있는 팀",
   "Telemetry": "텔레메트리",
   "Tell the agent what to change…": "에이전트에게 변경할 내용을 알려주세요…",

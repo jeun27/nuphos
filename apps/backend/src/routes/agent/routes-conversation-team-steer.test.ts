@@ -56,6 +56,7 @@ beforeEach(() => {
     .push(
       { ...base, sessionId: 'room' },
       { ...base, sessionId: 'frontend', parentSessionId: 'room' },
+      { ...base, sessionId: 'nested-later', parentSessionId: 'room', ownAccess: true },
       { ...base, sessionId: 'team-chat', runtimeId: 'managed-1' },
     )
   memory
@@ -72,6 +73,8 @@ describe('letting the team steer a room on the owner’s computer', () => {
     expect((await steer('room', true)).status).toBe(200)
     expect(await roomTeamSteer(row('frontend')!)).toBe(true)
     expect(await roomTeamSteer(row('team-chat')!)).toBe(false)
+    // A thread nested under the room later, or shared by hand, keeps its own say.
+    expect(await roomTeamSteer(row('nested-later')!)).toBe(false)
   })
 
   test('turning it off withdraws every yes given in the room, and only there', async () => {

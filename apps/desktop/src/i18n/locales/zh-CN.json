@@ -1384,7 +1384,7 @@
   "Teammates you pick can run their own agents here without asking. Use this for a machine set aside for it.": "你选择的队友无需询问即可在此运行自己的 Agent。适用于专门用于此用途的机器。",
   "Teammates you pick can run their own agents here. You approve each agent before it starts.": "你选择的队友可以在此运行自己的 Agent。每个 Agent 启动前都需经你批准。",
   "Teammates' computers": "队友的电脑",
-  "Teammates’ messages here and in its sub-agents run on your computer with your agent sign-in. Turn it off any time.": "队友在这里和其子代理的消息会在你的电脑上、以你的代理登录运行。随时可以关闭。",
+  "Teammates’ messages here and in its sub-agents run on your computer as you, with your agent sign-in, without asking you first, even where your computer is shared as “Ask me first”. Turn it off any time.": "队友在这里和其子代理的消息会以你的身份、你的代理登录，在你的电脑上直接运行，不会先询问你；即使你的电脑设为“先询问我”也一样。随时可以关闭。",
   "Teams you can join": "你可以加入的团队",
   "Telemetry": "遥测",
   "Tell the agent what to change…": "告诉 Agent 需要修改什么…",

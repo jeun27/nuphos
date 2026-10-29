@@ -18,6 +18,7 @@ const OTHER_ADMIN = new ObjectId().toHexString()
 const SHANT = 'shant-user'
 
 let viewer = OWNER
+let role = 'ADMINISTRATOR'
 let memory = portabilityDb()
 const conversations = () => memory.rows('agent_conversations') as AgentConversation[]
 
@@ -34,7 +35,7 @@ const app = new Hono<{ Variables: TeamAuthVariables }>()
 app.use('*', async (c, next) => {
   c.set('userId', viewer)
   c.set('teamId', TEAM)
-  c.set('teamRole', 'ADMINISTRATOR')
+  c.set('teamRole', role as never)
   c.set('team', { id: TEAM, name: 'Workspace' } as never)
   await next()
 })
@@ -55,6 +56,7 @@ const stored = () => memory.rows('team_invitations') as TeamInvitation[]
 
 beforeEach(() => {
   viewer = OWNER
+  role = 'ADMINISTRATOR'
   memory = portabilityDb()
   conversations().push(
     { sessionId: 'chat-a', userId: OWNER, teamId: TEAM } as AgentConversation,
@@ -68,19 +70,23 @@ describe('team invitation carrying a chat', () => {
     const created = await invite({ conversation: { sessionId: 'chat-a' } })
 
     expect(created.status).toBe(201)
-    expect(created.body.invitation.conversations).toEqual([{ sessionId: 'chat-a', role: 'reply' }])
+    expect(created.body.invitation.conversations).toEqual([
+      { sessionId: 'chat-a', role: 'reply', inviterId: OWNER },
+    ])
     expect((await invite({ conversation: { sessionId: 'chat-b', role: 'admin' } })).status).toBe(
       400,
     )
     expect((await invite({ conversation: { role: 'view' } })).status).toBe(400)
   })
 
-  test('only someone who manages the chat may carry it, and only a chat in this team', async () => {
+  test('only the chat’s owner may carry it, not an admin who manages it, and only in this team', async () => {
     viewer = OTHER_ADMIN
     expect((await invite({ conversation: { sessionId: 'chat-a' } })).status).toBe(403)
     conversations()[0]!.participantIds = [OTHER_ADMIN]
     conversations()[0]!.managerIds = [OTHER_ADMIN]
-    expect((await invite({ conversation: { sessionId: 'chat-a' } })).status).toBe(201)
+    expect((await invite({ conversation: { sessionId: 'chat-a', role: 'manage' } })).status).toBe(
+      403,
+    )
     viewer = OWNER
     expect((await invite({ conversation: { sessionId: 'elsewhere' } })).status).toBe(404)
     expect((await invite({ conversation: { sessionId: 'missing' } })).status).toBe(404)
@@ -94,8 +100,8 @@ describe('team invitation carrying a chat', () => {
     expect((await invite({ conversation: { sessionId: 'chat-b', role: 'view' } })).status).toBe(200)
     expect(stored()).toHaveLength(1)
     expect(stored()[0]!.conversations).toEqual([
-      { sessionId: 'chat-a', role: 'reply' },
-      { sessionId: 'chat-b', role: 'view' },
+      { sessionId: 'chat-a', role: 'reply', inviterId: OWNER },
+      { sessionId: 'chat-b', role: 'view', inviterId: OWNER },
     ])
     expect(merged.body.invitation.inviteeEmail).toBe('shant@example.com')
     // Without a chat, a repeat invite is still a conflict.
@@ -124,4 +130,22 @@ describe('team invitation carrying a chat', () => {
     expect(await grantCarriedConversations(stored()[0]!, SHANT)).toBeUndefined()
     expect(conversations()[0]!.participantIds).toBeUndefined()
   })
+})
+
+test('accepting re-checks that each chat is still its inviter’s', async () => {
+  await invite({ conversation: { sessionId: 'chat-a' } })
+  stored()[0]!.conversations!.push({ sessionId: 'chat-b', role: 'manage', inviterId: OTHER_ADMIN })
+
+  expect(await grantCarriedConversations(stored()[0]!, SHANT)).toBe('chat-a')
+  expect(conversations()[1]!.participantIds ?? []).toEqual([])
+})
+
+test('only admins see which chats an invitation carries', async () => {
+  await invite({ conversation: { sessionId: 'chat-a' } })
+  role = 'EDITOR'
+  const listed = (await (await app.request('/invitations')).json()) as {
+    invitations: Record<string, unknown>[]
+  }
+
+  expect(listed.invitations[0]).not.toHaveProperty('conversations')
 })

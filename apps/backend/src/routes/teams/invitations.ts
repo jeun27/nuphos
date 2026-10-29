@@ -47,8 +47,13 @@ export function registerTeamInvitationRoutes(teamScoped: Hono<{ Variables: TeamA
       .limit(200)
       .toArray()
 
+    // Which chats an invite carries, and with what role, is for admins to see.
+    const admin = c.get('teamRole') === 'ADMINISTRATOR'
+
     return c.json({
-      invitations: invitations.map((invitation) => serializeTeamInvitation(invitation)),
+      invitations: invitations.map((invitation) =>
+        serializeTeamInvitation(admin ? invitation : { ...invitation, conversations: undefined }),
+      ),
     })
   })
 
@@ -57,7 +62,8 @@ export function registerTeamInvitationRoutes(teamScoped: Hono<{ Variables: TeamA
     requireTeamRole('ADMINISTRATOR'),
     zv('json', createInvitationSchema),
     async (c) => {
-      const { inviteeEmail, conversation } = c.req.valid('json')
+      const { inviteeEmail, conversation: carried } = c.req.valid('json')
+      const conversation = carried ? { ...carried, inviterId: c.get('userId') } : undefined
       const teamId = parseObjectId(c.get('teamId'), 'teamId')
 
       if (conversation) {

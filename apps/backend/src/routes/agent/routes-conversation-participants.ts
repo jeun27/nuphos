@@ -71,16 +71,17 @@ const treeScope = (conversation: AgentConversation) => ({
 // Before a change is written, the sub-agents below are cut down to what it will
 // leave, so a failure part-way through fails closed.
 async function beforeShareChange(conversation: AgentConversation, change: ShareChange) {
+  // A sub-agent changed here keeps its own sharing from now on. Marked first, so
+  // a parent widened meanwhile can only narrow it.
+  if (conversation.parentSessionId) await markOwnAccess(conversation.sessionId)
   await syncDescendantAccess(conversation.sessionId, treeScope(conversation), {
     grant: applyShareChange(conversation, change),
     narrowOnly: true,
   })
 }
 
-// Then the change reaches the sub-agents below, read fresh. A sub-agent changed
-// here keeps its own sharing from now on, so its parent only narrows it.
+// Then the change reaches the sub-agents below, read fresh.
 async function afterShareChange(conversation: AgentConversation, teamId: string) {
-  if (conversation.parentSessionId) await markOwnAccess(conversation.sessionId)
   await syncDescendantAccess(conversation.sessionId, treeScope(conversation))
 
   return await serializeAccess(conversation, teamId)

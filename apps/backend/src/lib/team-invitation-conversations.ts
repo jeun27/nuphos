@@ -1,7 +1,6 @@
 import { z } from 'zod'
 
 import { getConversationBySessionId } from '@/lib/agent/db'
-import { managesConversation } from '@/lib/agent/db/access'
 import { inviteExceedsParent } from '@/lib/agent/db/access-tree'
 import { markOwnAccess, syncDescendantAccess } from '@/lib/agent/db/access-tree-sync'
 import { inviteConversationParticipants } from '@/lib/agent/db/participants'
@@ -15,10 +14,7 @@ export const invitationConversationSchema = z.object({
   role: z.enum(['view', 'reply', 'manage']).default('reply'),
 })
 
-/**
- * Only someone who may change who is in a chat can invite a person into it.
- * The inviter is a team admin, so "manages" includes a participant invited to manage.
- */
+/** Only a chat's owner brings someone into it, as on the participants routes. */
 export async function assertMayShareConversation(
   sessionId: string,
   inviterId: string,
@@ -28,7 +24,7 @@ export async function assertMayShareConversation(
 
   if (!conversation || conversation.teamId !== teamId)
     throw new AppError(404, 'not_found', 'Conversation not found')
-  if (!managesConversation(conversation, inviterId, true))
+  if (conversation.userId !== inviterId)
     throw new AppError(
       403,
       'conversation_not_shareable',
@@ -49,13 +45,15 @@ async function grantOne(invitation: TeamInvitation, entry: InvitationConversatio
   const conversation = await getConversationBySessionId(entry.sessionId)
 
   if (!conversation || conversation.teamId !== invitation.teamId.toHexString()) return false
+  // Re-checked on accepting: the chat must still be the one who put it on the invite.
+  if (conversation.userId !== (entry.inviterId ?? invitation.inviterId.toHexString())) return false
   const parent = conversation.parentSessionId
     ? await getConversationBySessionId(conversation.parentSessionId)
     : null
 
   // A sub-agent is never shared further than the conversation that runs it.
   if (parent && inviteExceedsParent(parent, userId, entry.role)) return false
-  const actorId = invitation.inviterId.toHexString()
+  const actorId = conversation.userId
   const updated = await inviteConversationParticipants(
     entry.sessionId,
     actorId,

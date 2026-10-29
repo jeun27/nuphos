@@ -80,7 +80,7 @@ export function RoomSendNotice({
       <span>
         {teamSteers
           ? t(
-              'Teammates’ messages here and in its sub-agents run on your computer with your agent sign-in. Turn it off any time.',
+              'Teammates’ messages here and in its sub-agents run on your computer as you, with your agent sign-in, without asking you first, even where your computer is shared as “Ask me first”. Turn it off any time.',
             )
           : t('Teammates can send here. Each person’s first message waits for your OK in Inbox.')}
       </span>

@@ -1384,7 +1384,7 @@
   "Teammates you pick can run their own agents here without asking. Use this for a machine set aside for it.": "Los compañeros que elijas pueden ejecutar sus propios agentes aquí sin preguntar. Úsalo en una máquina reservada para ello.",
   "Teammates you pick can run their own agents here. You approve each agent before it starts.": "Los compañeros que elijas pueden ejecutar sus propios agentes aquí. Apruebas cada agente antes de que se inicie.",
   "Teammates' computers": "Computadoras de los compañeros",
-  "Teammates’ messages here and in its sub-agents run on your computer with your agent sign-in. Turn it off any time.": "Los mensajes de tus compañeros aquí y en sus subagentes se ejecutan en tu ordenador con tu sesión del agente. Desactívalo cuando quieras.",
+  "Teammates’ messages here and in its sub-agents run on your computer as you, with your agent sign-in, without asking you first, even where your computer is shared as “Ask me first”. Turn it off any time.": "Los mensajes de tus compañeros aquí y en sus subagentes se ejecutan en tu ordenador como tú, con tu sesión del agente y sin preguntarte antes, aunque tu ordenador esté compartido como “Preguntarme primero”. Desactívalo cuando quieras.",
   "Teams you can join": "Equipos a los que puedes unirte",
   "Telemetry": "Telemetría",
   "Tell the agent what to change…": "Dile al agente qué cambiar…",

@@ -164,7 +164,12 @@ export type TeamInvitation = {
   rejectedAt?: Date
 }
 
-export type InvitationConversation = { sessionId: string; role: 'view' | 'reply' | 'manage' }
+export type InvitationConversation = {
+  sessionId: string
+  role: 'view' | 'reply' | 'manage'
+  /** Who put the chat on the invite; it must still be their chat when it is accepted. */
+  inviterId?: string
+}
 
 export type SidebarFavoriteEntry = {
   label: string

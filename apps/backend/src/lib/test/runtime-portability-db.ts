@@ -79,7 +79,14 @@ export function portabilityDb() {
     find: (query: Doc) => {
       const toArray = async () => rows(name).filter((doc) => matches(doc, query))
 
-      return { toArray, sort: () => ({ toArray }), project: () => ({ toArray }) }
+      const limited = { toArray, limit: () => ({ toArray }) }
+
+      return {
+        toArray,
+        sort: () => limited,
+        limit: () => ({ toArray }),
+        project: () => ({ toArray }),
+      }
     },
     insertOne: async (doc: Doc) => {
       // The unique { teamId, hostedSlot } index on hosted runtimes.

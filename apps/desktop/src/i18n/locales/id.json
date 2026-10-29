@@ -1384,7 +1384,7 @@
   "Teammates you pick can run their own agents here without asking. Use this for a machine set aside for it.": "Rekan tim yang Anda pilih dapat menjalankan agen mereka sendiri di sini tanpa bertanya. Gunakan ini untuk mesin yang memang disiapkan untuk itu.",
   "Teammates you pick can run their own agents here. You approve each agent before it starts.": "Rekan tim yang Anda pilih dapat menjalankan agen mereka sendiri di sini. Anda menyetujui setiap agen sebelum dimulai.",
   "Teammates' computers": "Komputer rekan tim",
-  "Teammates’ messages here and in its sub-agents run on your computer with your agent sign-in. Turn it off any time.": "Pesan rekan tim di sini dan di sub-agennya berjalan di komputer Anda dengan login agen Anda. Matikan kapan saja.",
+  "Teammates’ messages here and in its sub-agents run on your computer as you, with your agent sign-in, without asking you first, even where your computer is shared as “Ask me first”. Turn it off any time.": "Pesan rekan tim di sini dan di sub-agennya berjalan di komputer Anda sebagai Anda, dengan login agen Anda, tanpa bertanya dulu, bahkan jika komputer Anda dibagikan dengan “Tanya saya dulu”. Matikan kapan saja.",
   "Teams you can join": "Tim yang dapat Anda ikuti",
   "Telemetry": "Telemetri",
   "Tell the agent what to change…": "Beri tahu agen apa yang perlu diubah…",
