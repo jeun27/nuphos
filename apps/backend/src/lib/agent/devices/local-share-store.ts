@@ -19,6 +19,8 @@ export type ShareApproval = {
   status: 'pending' | 'approved' | 'denied'
   requestedAt: Date
   decidedAt?: Date
+  /** Asked in the owner's own conversation, not for a computer share. */
+  room?: boolean
 }
 
 export const shareApprovals = (): Collection<ShareApproval> =>
@@ -115,8 +117,10 @@ export async function requestShareApproval(input: {
   teamId: string
   actorId: string
   sessionId: string
+  /** Asked in the owner's own conversation, not for a computer share. */
+  room?: boolean
 }): Promise<void> {
-  const { device, teamId, actorId, sessionId } = input
+  const { device, teamId, actorId, sessionId, room } = input
 
   await shareApprovals().updateOne(
     { ownerId: device.userId, deviceId: device.deviceId, sessionId, actorId },
@@ -126,6 +130,7 @@ export async function requestShareApproval(input: {
         teamId,
         status: 'pending',
         requestedAt: new Date(),
+        ...(room ? { room: true } : {}),
       },
     },
     { upsert: true },
@@ -176,6 +181,13 @@ export async function dropShareApprovals(
     ownerId,
     deviceId,
     teamId,
+    // A room's own approvals do not depend on the computer's share.
+    room: { $ne: true },
     ...(actorIds ? { actorId: { $in: actorIds } } : {}),
   })
+}
+
+/** The owner stops the team steering these rooms: every yes given in them is withdrawn. */
+export async function dropRoomApprovals(ownerId: string, sessionIds: string[]): Promise<void> {
+  await shareApprovals().deleteMany({ ownerId, room: true, sessionId: { $in: sessionIds } })
 }

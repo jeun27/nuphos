@@ -26,6 +26,8 @@ export const sessionAccessApi = {
     teamId: string,
     generalAccess: GeneralAccess,
   ) => ipcRenderer.invoke('agent:setConversationGeneralAccess', sessionId, teamId, generalAccess),
+  agentSetConversationTeamSteer: (sessionId: string, teamId: string, enabled: boolean) =>
+    ipcRenderer.invoke('agent:setConversationTeamSteer', sessionId, teamId, enabled),
   agentRemoveConversationParticipant: (sessionId: string, teamId: string, userId: string) =>
     ipcRenderer.invoke('agent:removeConversationParticipant', sessionId, teamId, userId),
 }

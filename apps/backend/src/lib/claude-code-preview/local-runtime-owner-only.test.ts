@@ -172,7 +172,7 @@ describe('only the owner can put a session on their local agent', () => {
     ).rejects.toMatchObject(notFound)
   })
 
-  test('a teammate cannot send to the owner’s conversation on the owner’s computer', async () => {
+  test('where the team keeps computers unshared, a teammate cannot send in the owner’s conversation', async () => {
     await expect(
       resolveConversationChatRuntime(TEAM, conversation('owner'), { userId: 'teammate' }),
     ).rejects.toMatchObject({ status: 403, code: 'local_runtime_owner_only' })

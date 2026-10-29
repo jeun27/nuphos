@@ -95,3 +95,57 @@ export function inviteExceedsParent(
 
   return !ceiling || ROLES.indexOf(role) > ROLES.indexOf(ceiling)
 }
+
+/** What a conversation is before anyone shares it. */
+export const PRIVATE_GRANT: Grant = {
+  generalAccess: 'none',
+  participantIds: [],
+  viewOnlyIds: [],
+  managerIds: [],
+}
+
+export type ShareChange =
+  | { kind: 'access'; generalAccess: GeneralAccess }
+  | { kind: 'invite'; userIds: readonly string[]; role: ParticipantRole }
+  | { kind: 'role'; userIds: readonly string[]; role: ParticipantRole }
+  | { kind: 'remove'; userId: string }
+
+/**
+ * The grant a share change leaves behind, worked out before it is written, so
+ * the sub-agents below can be narrowed to it first: a failure then fails closed.
+ */
+export function applyShareChange(current: GrantFields, change: ShareChange): Grant {
+  const grant = inheritedGrant(current)
+
+  if (change.kind === 'access') return { ...grant, generalAccess: change.generalAccess }
+  if (change.kind === 'remove') {
+    const keep = (ids: string[]) => ids.filter((id) => id !== change.userId)
+
+    return {
+      generalAccess: grant.generalAccess,
+      participantIds: keep(grant.participantIds),
+      viewOnlyIds: keep(grant.viewOnlyIds),
+      managerIds: keep(grant.managerIds),
+    }
+  }
+  const ids = new Set(change.userIds)
+  const participantIds =
+    change.kind === 'invite'
+      ? [...new Set([...grant.participantIds, ...change.userIds])]
+      : grant.participantIds
+  const touched = (id: string) => ids.has(id) && participantIds.includes(id)
+  const others = (list: string[]) => list.filter((id) => !ids.has(id))
+
+  return {
+    generalAccess: grant.generalAccess,
+    participantIds,
+    viewOnlyIds: [
+      ...others(grant.viewOnlyIds),
+      ...(change.role === 'view' ? participantIds.filter(touched) : []),
+    ],
+    managerIds: [
+      ...others(grant.managerIds),
+      ...(change.role === 'manage' ? participantIds.filter(touched) : []),
+    ],
+  }
+}

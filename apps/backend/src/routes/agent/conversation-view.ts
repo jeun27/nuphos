@@ -193,6 +193,7 @@ export function serializeConversationForViewer(
     // they may at least read, so null here means a personal conversation.
     access,
     generalAccess: generalAccessOf(grants),
+    ...(conversation.teamSteer ? { teamSteer: true } : {}),
     readOnly: !canReply(access),
     // iOS v0.8.0 and earlier read these two and treat a missing value as
     // false, which hides steering, approvals and Stop during a turn. Anyone

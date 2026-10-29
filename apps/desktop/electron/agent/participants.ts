@@ -49,6 +49,17 @@ export function setConversationGeneralAccess(
   return callJson('PATCH', path, { generalAccess }, 12_000)
 }
 
+/** The owner's switch: teammates' turns in this room run on their computer without asking. */
+export function setConversationTeamSteer(
+  sessionId: string,
+  teamId: string,
+  enabled: boolean,
+): Promise<{ teamSteer: boolean }> {
+  const path = `/agent/conversations/${encodeURIComponent(sessionId)}/team-steer${teamQuery(teamId)}`
+
+  return callJson('PUT', path, { enabled }, 12_000)
+}
+
 export function removeConversationParticipant(
   sessionId: string,
   teamId: string,

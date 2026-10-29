@@ -4,7 +4,7 @@ import { logError } from '@/lib/observability'
 
 import { purgeConversationTraces } from '../trace-store/store'
 
-import { narrowToParent } from './access-tree'
+import { PRIVATE_GRANT, narrowToParent } from './access-tree'
 import { syncDescendantAccess } from './access-tree-sync'
 import { agentConversations, agentMessages, withTeamScope } from './shared'
 
@@ -59,6 +59,11 @@ export async function setConversationAvatar(
   return result.matchedCount > 0
 }
 
+const treeScope = (conversation: { userId: string; teamId?: string }) => ({
+  userId: conversation.userId,
+  ...(conversation.teamId ? { teamId: conversation.teamId } : {}),
+})
+
 // Nests a conversation under another one, or stops nesting it when
 // `parentSessionId` is null.
 export async function setConversationParent(
@@ -70,11 +75,21 @@ export async function setConversationParent(
   const filter = withTeamScope({ sessionId, userId }, teamId)
 
   if (parentSessionId === null) {
-    const result = await agentConversations().updateOne(filter, {
-      $unset: { parentSessionId: '' },
-    })
+    // A thread an agent opened only had its parent's sharing; on its own it is
+    // private again, and so is whatever below it still follows it.
+    const unlinked = await agentConversations().findOneAndUpdate(
+      filter,
+      { $unset: { parentSessionId: '' } },
+      { returnDocument: 'after' },
+    )
 
-    return result.matchedCount > 0 ? 'ok' : 'not_found'
+    if (!unlinked) return 'not_found'
+    if (!unlinked.ownAccess) {
+      await agentConversations().updateOne(filter, { $set: PRIVATE_GRANT })
+      await syncDescendantAccess(sessionId, treeScope(unlinked))
+    }
+
+    return 'ok'
   }
   const conversation = await agentConversations().findOne(filter)
 
@@ -95,7 +110,7 @@ export async function setConversationParent(
     { returnDocument: 'after' },
   )
 
-  if (updated) await syncDescendantAccess(updated)
+  if (updated) await syncDescendantAccess(sessionId, treeScope(updated))
 
   return 'ok'
 }

@@ -184,6 +184,7 @@ export function createDeviceShareRoutes(deps: DeviceShareRouteDependencies = def
         sessionId: approval.sessionId,
         ...(titles.has(approval.sessionId) ? { title: titles.get(approval.sessionId) } : {}),
         actorId: approval.actorId,
+        ...(approval.room ? { room: true } : {}),
         requestedAt: approval.requestedAt.toISOString(),
       })),
     })

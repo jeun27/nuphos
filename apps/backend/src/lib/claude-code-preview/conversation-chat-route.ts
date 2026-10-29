@@ -1,5 +1,6 @@
 import { stampConversationAgentRuntime, stampConversationRuntimeInstance } from '@/lib/agent/db'
-import { isLocalRuntimeId } from '@/lib/agent/devices/local-runtime/address'
+import { isLocalRuntimeId, parseLocalRuntimeId } from '@/lib/agent/devices/local-runtime/address'
+import { roomTeamSteer } from '@/lib/agent/db/team-steer'
 import { isUnattendedSource } from '@/lib/agent/devices/local-share'
 import { AppError } from '@/lib/errors'
 import { getTeamAgentRuntime } from '@/lib/identity'
@@ -57,6 +58,16 @@ export function sharedRuntimeUse(
   }
 }
 
+// A Box, or a computer that is not the conversation owner's, is never steered.
+const boxOwnerOnly = () =>
+  new AppError(
+    403,
+    'local_runtime_owner_only',
+    'This conversation runs on its owner’s own machine, so only they can send messages here. Ask them to move it to a team agent to continue together.',
+  )
+const localRuntimeOwner = (runtimeId: string | undefined) =>
+  runtimeId ? parseLocalRuntimeId(runtimeId)?.userId : undefined
+
 /** Resolve every conversation onto the supported OpenAB runtime and placement. */
 export async function resolveConversationChatRuntime(
   teamId: string | undefined,
@@ -74,21 +85,30 @@ export async function resolveConversationChatRuntime(
   const selectedId = resolveConversationRuntimeId(conversation, request.runtimeId)
   const actor = request.userId ?? conversation?.userId
 
-  // A local agent runs on its owner's computer, as them, so only they drive it.
-  if (conversation && actor !== conversation.userId && isLocalRuntimeId(conversation.runtimeId))
-    throw new AppError(
-      403,
-      'local_runtime_owner_only',
-      'This conversation runs on its owner’s own computer, so only they can send messages here. Ask them to move it to a team agent to continue together.',
-    )
+  // A teammate steering the owner's chat on the owner's own computer: the
+  // computer is looked up as the owner's, and the turn passes the room's share.
+  // Anyone else's conversation on that computer stays the owner's alone.
+  const onLocal = Boolean(
+    conversation && actor !== conversation.userId && isLocalRuntimeId(conversation.runtimeId),
+  )
+  const room =
+    conversation && onLocal && localRuntimeOwner(conversation.runtimeId) === conversation.userId
+      ? { ownerId: conversation.userId, teamSteer: await roomTeamSteer(conversation) }
+      : undefined
+
+  if (onLocal && !room) throw boxOwnerOnly()
   const localAgentUser = conversation && conversation.userId !== actor ? undefined : actor
 
   if (selectedId && !teamId)
     throw new AppError(400, 'invalid_request', 'An agent requires a workspace')
   const instance =
     selectedId && teamId
-      ? await requireRuntimeInstance(teamId, selectedId, localAgentUser, { shared: true })
+      ? await requireRuntimeInstance(teamId, selectedId, room?.ownerId ?? localAgentUser, {
+          shared: true,
+        })
       : undefined
+
+  if (room && instance?.local?.box) throw boxOwnerOnly()
 
   if (instance?.status === 'disabled')
     throw new AppError(
@@ -106,15 +126,15 @@ export async function resolveConversationChatRuntime(
     await stampConversationAgentRuntime(conversation.sessionId, runtime)
   }
   if (!teamId) throw new Error('OpenAB conversation is missing its Team scope.')
-  if (instance?.kind === 'local' && localAgentUser) {
+  if (instance?.kind === 'local' && (localAgentUser ?? room)) {
     // A teammate's computer shared with this person runs only its conversation's own calls.
     const endpoint = await resolveLocalRuntimeEndpoint(
       teamId,
       instance.id,
-      localAgentUser,
+      localAgentUser ?? actor ?? '',
       purpose,
       undefined,
-      sharedRuntimeUse(conversation, request),
+      { ...sharedRuntimeUse(conversation, request), ...(room ? { room } : {}) },
     )
 
     if (conversation && !conversation.runtimeId)

@@ -1,7 +1,13 @@
 import { describe, expect, test } from 'bun:test'
 
 import { conversationAccess } from './access'
-import { inheritedGrant, inviteExceedsParent, narrowToParent, widerThanParent } from './access-tree'
+import {
+  applyShareChange,
+  inheritedGrant,
+  inviteExceedsParent,
+  narrowToParent,
+  widerThanParent,
+} from './access-tree'
 
 const parent = {
   userId: 'owner',
@@ -84,5 +90,37 @@ describe('narrowToParent', () => {
       viewOnlyIds: [],
       managerIds: [],
     })
+  })
+})
+
+describe('applyShareChange', () => {
+  test('works out the grant each change leaves behind', () => {
+    expect(applyShareChange(parent, { kind: 'remove', userId: 'ann' })).toEqual({
+      generalAccess: 'view',
+      participantIds: ['bo'],
+      viewOnlyIds: ['bo'],
+      managerIds: [],
+    })
+    expect(
+      applyShareChange(parent, { kind: 'role', userIds: ['bo'], role: 'manage' }),
+    ).toMatchObject({
+      viewOnlyIds: [],
+      managerIds: ['ann', 'bo'],
+    })
+    expect(
+      applyShareChange(parent, { kind: 'invite', userIds: ['carl'], role: 'view' }),
+    ).toMatchObject({
+      participantIds: ['ann', 'bo', 'carl'],
+      viewOnlyIds: ['bo', 'carl'],
+    })
+    expect(applyShareChange(parent, { kind: 'access', generalAccess: 'none' }).generalAccess).toBe(
+      'none',
+    )
+  })
+
+  test('a role change for someone not in the conversation adds nobody', () => {
+    expect(applyShareChange(parent, { kind: 'role', userIds: ['zed'], role: 'manage' })).toEqual(
+      inheritedGrant(parent),
+    )
   })
 })

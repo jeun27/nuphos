@@ -65,6 +65,21 @@ export function sharedLevelFor(
 }
 
 /**
+ * What a teammate may do in the owner's own conversation on this computer: run
+ * each turn once the owner says yes, or freely where the owner let the team
+ * steer the room. The ceiling still caps it; a Box is never steered this way.
+ */
+export function roomShareLevel(
+  device: AgentDevice,
+  teamSteer: boolean,
+  ceiling: LocalShareLevel,
+): Exclude<LocalShareLevel, 'off'> | null {
+  const level = capShareLevel(teamSteer ? 'full' : 'approve', ceiling)
+
+  return device.box || level === 'off' ? null : level
+}
+
+/**
  * Turns no person in the app sent: a channel, where anyone in it would drive
  * the owner's computer, a trigger or resource event, or another agent's thread.
  * They never run on a shared computer, whatever its level.
@@ -129,10 +144,19 @@ export async function requireSharedDevice(
   ownerId: string,
   deviceId: string,
   deps: LocalShareDeps = localShareDeps,
+  room?: { teamSteer: boolean },
 ): Promise<{ device: AgentDevice; level: Exclude<LocalShareLevel, 'off'> }> {
   const device = await deps.getDevice(ownerId, deviceId)
   const ceiling = device ? await deps.ceiling(teamId) : 'off'
-  const level = device ? sharedLevelFor(device, actorId, teamId, ceiling) : null
+  let level = device ? sharedLevelFor(device, actorId, teamId, ceiling) : null
+
+  if (device && room && level !== 'full') level = roomShareLevel(device, room.teamSteer, ceiling)
+  if (device && room && !level)
+    throw new AppError(
+      403,
+      'local_runtime_owner_only',
+      'This conversation runs on its owner’s own computer, and this team does not let teammates run agents there. Ask them to move it to a team agent.',
+    )
 
   if (
     !device ||
@@ -150,10 +174,16 @@ export async function requireSharedDevice(
  * `approve`, its owner says yes. Asking again while it waits changes nothing.
  */
 export async function requireShareApproval(
-  input: { device: AgentDevice; teamId: string; actorId: string; sessionId: string },
+  input: {
+    device: AgentDevice
+    teamId: string
+    actorId: string
+    sessionId: string
+    room?: boolean
+  },
   deps: LocalShareDeps = localShareDeps,
 ): Promise<void> {
-  const { device, teamId, actorId, sessionId } = input
+  const { device, teamId, actorId, sessionId, room } = input
   const found: ShareApproval | null = await deps.findApproval(
     device.userId,
     device.deviceId,
@@ -168,7 +198,7 @@ export async function requireShareApproval(
       'local_share_denied',
       `The owner of ${device.label} declined to run this agent on it. Move it to another runtime to continue.`,
     )
-  if (!found) await deps.requestApproval({ device, teamId, actorId, sessionId })
+  if (!found) await deps.requestApproval({ device, teamId, actorId, sessionId, room })
   throw new AppError(
     403,
     'local_share_approval_required',
@@ -214,7 +244,8 @@ export async function resolveSharedDevice(
   const { teamId, ref, userId, purpose, use } = call
 
   if (!use || !deps || ref.userId === userId || purpose === 'login') return null
-  const shared = await requireSharedDevice(userId, teamId, ref.userId, ref.deviceId, deps)
+  const room = use.room?.ownerId === ref.userId ? use.room : undefined
+  const shared = await requireSharedDevice(userId, teamId, ref.userId, ref.deviceId, deps, room)
 
   if (isUnattendedSource(use.source))
     throw new AppError(
@@ -224,7 +255,7 @@ export async function resolveSharedDevice(
     )
   if (shared.level === 'approve' && purpose === 'transport' && use.sessionId)
     await requireShareApproval(
-      { device: shared.device, teamId, actorId: userId, sessionId: use.sessionId },
+      { device: shared.device, teamId, actorId: userId, sessionId: use.sessionId, room: !!room },
       deps,
     )
 

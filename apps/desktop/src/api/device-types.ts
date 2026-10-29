@@ -140,6 +140,8 @@ export type LocalShareApproval = {
   /** The waiting conversation's title, when it has one. */
   title?: string
   actorId: string
+  /** Asked in the owner's own conversation (a shared room), not for a computer share. */
+  room?: boolean
   requestedAt: string
 }
 

@@ -1,6 +1,6 @@
 import { Popover } from '@base-ui/react/popover'
 import clsx from 'clsx'
-import { Lock } from 'lucide-react'
+import { Laptop } from 'lucide-react'
 
 import { t } from '../../../i18n'
 import { AGENT_PROVIDER } from '../../../types/runtime'
@@ -10,7 +10,7 @@ import { AgentProviderIcon } from '../panel/icons'
 import { TitlebarDragSuspender } from '../ShareCard'
 
 import { RoomMembers } from './RoomMembers'
-import { firstName, roomHeadline, roomIsShared, roomProviders, roomSendRule } from './roomModel'
+import { firstName, roomHeadline, roomIsShared, roomProviders, roomSteering } from './roomModel'
 import { useRoom } from './useRoom'
 
 import type { Room } from './useRoom'
@@ -62,18 +62,26 @@ function Faces({ room }: { room: Room }) {
   )
 }
 
-/** On its owner's computer only the owner can send; say so where everyone looks. */
+/** On its owner's computer, say who decides what teammates' messages may do. */
 function SendRuleChip({ room, currentUserId }: { room: Room; currentUserId: string }) {
-  const { ownerOnly, owner } = roomSendRule(room)
+  const { steering, owner } = roomSteering(room)
 
-  if (!ownerOnly) return null
+  if (steering === 'open') return null
+  const yours = !owner || owner.id === currentUserId
+  const name = owner ? firstName(owner.name) : ''
+  let text = yours
+    ? t('On your computer · you OK each teammate')
+    : t('On {name}’s computer · {name} OKs each teammate', { name })
+
+  if (steering === 'team')
+    text = yours
+      ? t('On your computer · team can steer')
+      : t('On {name}’s computer · team can steer', { name })
 
   return (
     <span className="ml-auto flex h-6 shrink-0 items-center gap-1.5 rounded-md bg-zGray-800/50 px-2 text-[12px] text-secondary">
-      <Lock className="h-3 w-3" aria-hidden />
-      {owner && owner.id !== currentUserId
-        ? t('Only {name} can send', { name: firstName(owner.name) })
-        : t('Only you can send')}
+      <Laptop className="h-3 w-3" aria-hidden />
+      {text}
     </span>
   )
 }

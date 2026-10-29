@@ -18,12 +18,19 @@ export function useShareApprovalWait(
 ): 'pending' | 'denied' | null {
   const selected = control?.options?.find((instance) => instance.id === control.value?.id)
   const asks = selected?.local?.shared?.level === 'approve'
+  const status = useShareApprovalStatus(asks ? sessionId : undefined)
+
+  return status === 'pending' || status === 'denied' ? status : null
+}
+
+/** This person's own answer from the computer's owner for this conversation, polled until approved. */
+export function useShareApprovalStatus(sessionId: string | undefined): ShareApprovalStatus | null {
   const [answer, setAnswer] = useState<{ sessionId: string; status: ShareApprovalStatus } | null>(
     null,
   )
 
   useEffect(() => {
-    if (!asks || !sessionId) return
+    if (!sessionId) return
     let live = true
     let timer: ReturnType<typeof setTimeout> | undefined
     const load = () =>
@@ -45,10 +52,7 @@ export function useShareApprovalWait(
       live = false
       clearTimeout(timer)
     }
-  }, [asks, sessionId])
+  }, [sessionId])
 
-  if (!asks || !sessionId || answer?.sessionId !== sessionId) return null
-  const { status } = answer
-
-  return status === 'pending' || status === 'denied' ? status : null
+  return sessionId && answer?.sessionId === sessionId ? answer.status : null
 }

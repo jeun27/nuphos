@@ -36,6 +36,12 @@ export const agentReadChannels = {
     teamId: string,
     generalAccess: GeneralAccess,
   ) => agent.setConversationGeneralAccess(sessionId, teamId, generalAccess),
+  'agent:setConversationTeamSteer': (
+    _e: unknown,
+    sessionId: string,
+    teamId: string,
+    enabled: boolean,
+  ) => agent.setConversationTeamSteer(sessionId, teamId, enabled),
   'agent:removeConversationParticipant': (
     _e: unknown,
     sessionId: string,

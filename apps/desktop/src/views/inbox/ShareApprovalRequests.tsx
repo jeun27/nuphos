@@ -55,7 +55,8 @@ export function ShareApprovalRequests({
             )}
           >
             <span className="min-w-0 text-secondary">
-              <span className="text-main">{nameOf(approval.actorId)}</span> wants to run{' '}
+              <span className="text-main">{nameOf(approval.actorId)}</span>
+              {approval.room ? ' wants to steer your room ' : ' wants to run '}
               {approval.title ? (
                 <span className="text-main">“{approval.title}”</span>
               ) : (

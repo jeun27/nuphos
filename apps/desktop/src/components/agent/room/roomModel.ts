@@ -23,6 +23,8 @@ export type RoomAgent = {
   ownerId?: string
   /** On its owner's own computer, where only the owner can send. */
   local: boolean
+  /** The owner lets teammates' turns run on their computer here without asking. */
+  teamSteer: boolean
   /** The pull requests and issues it opened or linked, newest first. */
   changes: SessionResource[]
   /** 0 for the chat itself, 1 for its sub-agents, and so on. */
@@ -67,6 +69,7 @@ function toRoomAgent(conversation: AgentConversation, depth: number, working: bo
     runtimeLabel: conversation.runtimeLabel,
     ownerId: conversation.owner?.id,
     local: isLocalAgentRuntime(conversation.runtimeId),
+    teamSteer: conversation.teamSteer === true,
     changes: (conversation.linkedResources ?? []).filter(
       (resource) => resource.provider === 'github' || resource.provider === 'linear',
     ),
@@ -140,22 +143,26 @@ export function possessiveRuntime(name: string, provider: AgentProvider): string
 }
 
 /**
- * Who may send in the room. A chat on its owner's own computer, and so every
- * sub-agent it opened, takes messages from the owner alone.
+ * How teammates' messages run in the room. On a team runtime they just run.
+ * On the owner's own computer each one waits for the owner's yes, unless the
+ * owner let the team steer the whole room.
  */
-export function roomSendRule(room: {
+export type RoomSteering = 'open' | 'ask' | 'team'
+
+export function roomSteering(room: {
   people: readonly AgentConversationParticipant[]
   agents: readonly RoomAgent[]
-}): { ownerOnly: boolean; owner?: AgentConversationParticipant } {
-  return {
-    ownerOnly: room.agents.at(0)?.local ?? false,
-    owner: room.people.find((person) => person.isOwner),
-  }
+}): { steering: RoomSteering; owner?: AgentConversationParticipant; rootId?: string } {
+  const root = room.agents.at(0)
+  let steering: RoomSteering = 'open'
+
+  if (root?.local) steering = root.teamSteer ? 'team' : 'ask'
+
+  return { steering, owner: room.people.find((person) => person.isOwner), rootId: root?.sessionId }
 }
 
-export function roleLabel(role: AgentConversationParticipant['role'], ownerOnly = false): string {
+export function roleLabel(role: AgentConversationParticipant['role']): string {
   if (role === 'owner') return t('Owner')
-  if (ownerOnly) return t('Can view')
   if (role === 'manage') return t('Can manage')
   if (role === 'reply') return t('Can reply')
 

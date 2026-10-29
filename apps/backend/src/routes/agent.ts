@@ -19,10 +19,12 @@ import './agent/routes-device-runtime'
 
 import { agent } from './agent/router'
 import { conversationParticipantsRoutes } from './agent/routes-conversation-participants'
+import { conversationTeamSteerRoutes } from './agent/routes-conversation-team-steer'
 import { createDeviceShareRoutes } from './agent/routes-devices-share'
 import { sessionConfigRoutes } from './agent/routes-session-config'
 
 agent.route('/', conversationParticipantsRoutes)
+agent.route('/', conversationTeamSteerRoutes)
 agent.route('/', sessionConfigRoutes)
 agent.route('/', createDeviceShareRoutes())
 

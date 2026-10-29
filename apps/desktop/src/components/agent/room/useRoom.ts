@@ -23,6 +23,7 @@ export type Room = {
   agents: RoomAgent[]
   /** The chat this room is open on: the manager, or one of its sub-agents. */
   here: string
+  teamId: string
 }
 
 /**
@@ -43,5 +44,5 @@ export function useRoom(sessionId: string, teamId: string): Room {
     return roomAgents(roomRootOf(sessionId, conversations, opened), conversations, isWorking)
   }, [listed, opened, sessionId, states])
 
-  return { people: people ?? [], agents, here: sessionId }
+  return { people: people ?? [], agents, here: sessionId, teamId }
 }

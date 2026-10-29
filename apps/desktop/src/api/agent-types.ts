@@ -57,6 +57,8 @@ export type AgentConversation = {
   lastActiveAt: string
   /** Owner-set archive marker; conversation stays intact and listable. */
   archivedAt?: string
+  /** On its owner's computer: the owner lets teammates' turns run without asking. */
+  teamSteer?: boolean
   /** The conversation that opened this one as a thread; the sidebar nests it there. */
   parentSessionId?: string
   /** This viewer gets its push notifications. Absent from a backend that predates watching. */

@@ -62,10 +62,17 @@ describe('setConversationParent', () => {
     expect(doc('nested')?.generalAccess).toBe('none')
   })
 
-  test('null unlinks and leaves the sharing as it was', async () => {
+  test('unlinking a thread an agent opened makes it private again', async () => {
+    doc('nested')!.generalAccess = 'reply'
     expect(await setConversationParent('nested', 'u', 't', null)).toBe('ok')
     expect(parentOf('nested')).toBeUndefined()
-    expect(doc('nested')?.generalAccess).toBeUndefined()
+    expect(doc('nested')).toMatchObject({ generalAccess: 'none', participantIds: [] })
+  })
+
+  test('unlinking a thread shared by hand keeps its own sharing', async () => {
+    Object.assign(doc('nested')!, { generalAccess: 'view', ownAccess: true })
+    await setConversationParent('nested', 'u', 't', null)
+    expect(doc('nested')?.generalAccess).toBe('view')
   })
 
   test('rejects itself, a descendant, and conversations outside the owner and team', async () => {

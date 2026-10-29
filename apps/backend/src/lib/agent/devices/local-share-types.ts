@@ -22,4 +22,9 @@ export type SharedLocalRuntimeUse = {
   sessionId?: string
   /** Where the conversation came from, as `metadata.source` records it. */
   source?: string
+  /**
+   * The computer owner's own conversation, which a teammate in it steers. It
+   * runs at `approve` unless the owner let the team steer this room.
+   */
+  room?: { ownerId: string; teamSteer: boolean }
 }

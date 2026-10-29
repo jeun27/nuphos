@@ -7,7 +7,7 @@ import {
   generalAccessOf,
   participantRole,
 } from '@/lib/agent/db/access'
-import { inviteExceedsParent, widerThanParent } from '@/lib/agent/db/access-tree'
+import { applyShareChange, inviteExceedsParent, widerThanParent } from '@/lib/agent/db/access-tree'
 import { markOwnAccess, syncDescendantAccess } from '@/lib/agent/db/access-tree-sync'
 import {
   conversationParticipantIds,
@@ -27,6 +27,7 @@ import {
 } from './team-scope'
 
 import type { GeneralAccess, ParticipantRole } from '@/lib/agent/db/access'
+import type { ShareChange } from '@/lib/agent/db/access-tree'
 
 import type { AgentConversation } from '@/lib/agent/db'
 import type { AuthVariables } from '@/middleware/auth'
@@ -62,11 +63,25 @@ async function serializeAccess(
   }
 }
 
-// Every change reaches the sub-agents below. A sub-agent changed here keeps its
-// own sharing from now on, so a later change on its parent only narrows it.
+const treeScope = (conversation: AgentConversation) => ({
+  userId: conversation.userId,
+  ...(conversation.teamId ? { teamId: conversation.teamId } : {}),
+})
+
+// Before a change is written, the sub-agents below are cut down to what it will
+// leave, so a failure part-way through fails closed.
+async function beforeShareChange(conversation: AgentConversation, change: ShareChange) {
+  await syncDescendantAccess(conversation.sessionId, treeScope(conversation), {
+    grant: applyShareChange(conversation, change),
+    narrowOnly: true,
+  })
+}
+
+// Then the change reaches the sub-agents below, read fresh. A sub-agent changed
+// here keeps its own sharing from now on, so its parent only narrows it.
 async function afterShareChange(conversation: AgentConversation, teamId: string) {
   if (conversation.parentSessionId) await markOwnAccess(conversation.sessionId)
-  await syncDescendantAccess(conversation)
+  await syncDescendantAccess(conversation.sessionId, treeScope(conversation))
 
   return await serializeAccess(conversation, teamId)
 }
@@ -171,6 +186,7 @@ conversationParticipantsRoutes.post('/conversations/:sessionId/participants', as
   )
   // Render the post-write document rather than a locally merged copy, so a
   // simultaneous invite from someone else is already reflected in the answer.
+  await beforeShareChange(conversation, { kind: 'invite', userIds: invitees, role })
   const updated = await inviteConversationParticipants(sessionId, userId, invitees, role)
 
   if (!updated) throw new AppError(404, 'not_found', 'Conversation not found')
@@ -192,6 +208,7 @@ conversationParticipantsRoutes.delete(
 
     if (targetId === conversation.userId)
       throw new AppError(400, 'invalid_request', 'The conversation owner cannot be removed')
+    await beforeShareChange(conversation, { kind: 'remove', userId: targetId })
     const updated = await removeConversationParticipant(sessionId, c.get('userId'), targetId)
 
     if (!updated) throw new AppError(404, 'not_found', 'Conversation not found')
@@ -215,6 +232,7 @@ conversationParticipantsRoutes.patch(
     if (!participantRole(conversation, targetId))
       throw new AppError(404, 'not_found', 'That person is not in this conversation')
     await assertWithinParent(conversation, (parent) => inviteExceedsParent(parent, targetId, role))
+    await beforeShareChange(conversation, { kind: 'role', userIds: [targetId], role })
     const updated = await setParticipantRole(sessionId, [targetId], role)
 
     if (!updated) throw new AppError(404, 'not_found', 'Conversation not found')
@@ -236,6 +254,7 @@ conversationParticipantsRoutes.patch('/conversations/:sessionId/access', async (
   const conversation = await requireOwnedConversation(sessionId, c.get('userId'), teamId)
 
   await assertWithinParent(conversation, (parent) => widerThanParent(generalAccess, parent))
+  await beforeShareChange(conversation, { kind: 'access', generalAccess })
   const updated = await setGeneralAccess(sessionId, generalAccess)
 
   if (!updated) throw new AppError(404, 'not_found', 'Conversation not found')

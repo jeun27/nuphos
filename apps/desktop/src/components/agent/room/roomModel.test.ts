@@ -10,8 +10,7 @@ import {
   roomIsShared,
   roomProviders,
   roomRootOf,
-  roomSendRule,
-  roleLabel,
+  roomSteering,
   runningRequester,
 } from './roomModel.ts'
 
@@ -121,22 +120,18 @@ test("teammates' queued messages keep their order and say who sent them", () => 
   ])
 })
 
-test('a room on its owner’s computer takes messages from the owner alone', () => {
-  const local = [
-    chat('manager', { runtimeId: 'local_bryan_mac' }),
+test('on its owner’s computer a room asks the owner, unless they let the team steer', () => {
+  const people = [person('bryan', true), person('mira', false)]
+  const local = (teamSteer: boolean) => [
+    chat('manager', { runtimeId: 'local_bryan_mac', teamSteer }),
     chat('builder', { parentSessionId: 'manager', runtimeId: 'local_bryan_mac' }),
   ]
-  const people = [person('bryan', true), person('mira', false)]
-  const rule = roomSendRule({ people, agents: roomAgents(local[0], local, () => false) })
+  const steering = (list: AgentConversation[]) =>
+    roomSteering({ people, agents: roomAgents(list[0], list, () => false) })
 
-  assert.equal(rule.ownerOnly, true)
-  assert.equal(rule.owner?.id, 'bryan')
-  assert.equal(roleLabel('reply', rule.ownerOnly), 'Can view')
-  assert.equal(roleLabel('owner', rule.ownerOnly), 'Owner')
-  assert.equal(
-    roomSendRule({ people, agents: roomAgents(tree[0], tree, () => false) }).ownerOnly,
-    false,
-  )
+  assert.deepEqual(steering(local(false)), { steering: 'ask', owner: people[0], rootId: 'manager' })
+  assert.equal(steering(local(true)).steering, 'team')
+  assert.equal(steering(tree).steering, 'open')
 })
 
 test('an agent row carries the pull requests and issues it linked, not chat threads', () => {

@@ -5,15 +5,14 @@ export function isLocalAgentRuntime(runtimeId: string | undefined): boolean {
   return runtimeId?.startsWith('local_') === true
 }
 
-/** Shown in the Share menu of a session on the owner's computer. The backend
- *  refuses a turn there from anyone but the owner (`local_runtime_owner_only`),
- *  so the people it is shared with can read it but not run anything. */
+/** Shown in the Share menu of a session on the owner's computer. A teammate's
+ *  turn there waits for the owner's yes, or runs at once where the owner let the
+ *  team steer the room; either way it runs as the owner. */
 export const LOCAL_AGENT_SHARING_NOTE =
-  'This agent runs on your computer’s local runtime. People you share it with can read it, but only you can send messages. Move it to a team runtime to work on it together.'
+  'This agent runs on your computer’s local runtime. Teammates you share it with can send messages; each person’s first one waits for your OK, unless you let the team steer from the room bar. Their turns use your computer and your agent sign-in.'
 
 /** The confirmation a move needs before it puts the session on a computer:
- *  from then on only the owner can send messages, so anyone who could reply
- *  before is left read-only. */
+ *  from then on teammates' messages wait for the owner, and run as the owner. */
 export function localAgentMoveWarning(
   target: Pick<RuntimeInstance, 'kind' | 'local'>,
 ): string | undefined {
@@ -25,5 +24,5 @@ export function localAgentMoveWarning(
       shared.level === 'approve' ? ' They approve this agent before its first message runs.' : ''
     } Only you can send messages in this agent.`
 
-  return 'This runtime runs on your computer. After the move, only you can send messages in this agent. People you shared it with can still read it.'
+  return 'This runtime runs on your computer. After the move, teammates’ messages in this agent wait for your OK unless you let the team steer it, and run with your agent sign-in.'
 }

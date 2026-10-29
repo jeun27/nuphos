@@ -10,7 +10,7 @@ import { ResourceMark } from '../../sidebar/ResourceMark'
 import { resourceLabel } from '../../sidebar/sessionResourcePresentation'
 import { AgentProviderIcon } from '../panel/icons'
 
-import { agentsBroughtBy, possessiveRuntime, roleLabel, roomSendRule } from './roomModel'
+import { agentsBroughtBy, possessiveRuntime, roleLabel, roomSteering } from './roomModel'
 import { RoomSendNotice } from './RoomSendNotice'
 
 import type { RoomAgent, RoomTab } from './roomModel'
@@ -24,12 +24,10 @@ function PersonRow({
   person,
   agents,
   isYou,
-  ownerOnly,
 }: {
   person: AgentConversationParticipant
   agents: RoomAgent[]
   isYou: boolean
-  ownerOnly: boolean
 }) {
   const brought = agentsBroughtBy(person, agents)
 
@@ -61,9 +59,7 @@ function PersonRow({
           )}
         </div>
       </div>
-      <span className="shrink-0 text-[12px] text-tertiary">
-        {roleLabel(person.role, ownerOnly)}
-      </span>
+      <span className="shrink-0 text-[12px] text-tertiary">{roleLabel(person.role)}</span>
     </div>
   )
 }
@@ -149,14 +145,13 @@ export function RoomMembers({
   onOpenAgent?: (sessionId: string) => void
 }) {
   const [tab, setTab] = useState<RoomTab>('all')
-  const { ownerOnly, owner } = roomSendRule(room)
+  const { steering, owner, rootId } = roomSteering(room)
   const people = room.people.map((person) => (
     <PersonRow
       key={person.id}
       person={person}
       agents={room.agents}
       isYou={person.id === currentUserId}
-      ownerOnly={ownerOnly}
     />
   ))
   const agents = room.agents.map((agent) => (
@@ -174,9 +169,12 @@ export function RoomMembers({
       onValueChange={(value: RoomTab) => setTab(value)}
       className="flex flex-col"
     >
-      {ownerOnly && (
+      {steering !== 'open' && rootId && (
         <RoomSendNotice
-          sessionId={room.here}
+          steering={steering}
+          rootId={rootId}
+          hereId={room.here}
+          teamId={room.teamId}
           ownerName={owner?.name}
           viewerIsOwner={owner?.id === currentUserId}
         />

@@ -1,6 +1,7 @@
 import { getSessionBypass, setSessionBypass } from '@/lib/agent/auto-mode/store'
 import { getConversationBySessionId, recordAgentEvent } from '@/lib/agent/db'
 import { managesConversation } from '@/lib/agent/db/access'
+import { isLocalRuntimeId } from '@/lib/agent/devices/local-runtime/address'
 import { AppError } from '@/lib/errors'
 import { getTeamMembership } from '@/lib/identity'
 
@@ -24,6 +25,13 @@ async function assertCanSetMode(sessionId: string, userId: string) {
   if (!conversation || !managesConversation(conversation, userId, isTeamMember)) {
     throw new AppError(404, 'not_found', 'Conversation not found')
   }
+  // On the owner's own computer, only the owner lets tools run unasked.
+  if (conversation.userId !== userId && isLocalRuntimeId(conversation.runtimeId))
+    throw new AppError(
+      403,
+      'local_runtime_full_access_owner_only',
+      'Full Access on a teammate’s computer stays with its owner.',
+    )
 }
 
 agent.get('/auto-mode/bypass', async (c) => {
