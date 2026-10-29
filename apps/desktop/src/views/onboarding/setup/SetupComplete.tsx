@@ -1,9 +1,13 @@
+import { useEffect, useRef } from 'react'
+
 import { ClaudeIcon, CodexIcon, AgentProviderIcon } from '../../../components/agent/panel/icons'
 import { Button } from '../../../components/ui/button'
 import { useLocalRuntimeState } from '../../../hooks/useLocalRuntimeState'
+import { useStableCallback } from '../../../hooks/useStableCallback'
 import { AGENT_PROVIDER } from '../../../types/runtime'
 
 import { LOCAL_AGENT_INFO, readyLocalAgents } from './agentSetup'
+import { autoFinish } from './autoFinish'
 import { SetupScreen, StatusPill } from './SetupChrome'
 
 import type { ConnectedCloudAgent } from './SelfHostedSetup'
@@ -34,7 +38,7 @@ function AgentRow({
   )
 }
 
-/** What this flow set up, before landing in the app. */
+/** What this flow set up, before landing in the app: it moves on by itself after a beat. */
 export function SetupComplete({
   cloudAgent,
   onFinish,
@@ -44,6 +48,14 @@ export function SetupComplete({
 }) {
   const local = readyLocalAgents(useLocalRuntimeState())
   const empty = local.length === 0 && !cloudAgent
+  const finishLatest = useStableCallback(onFinish)
+  const auto = useRef<ReturnType<typeof autoFinish> | null>(null)
+
+  useEffect(() => {
+    auto.current = autoFinish(finishLatest)
+
+    return auto.current.cancel
+  }, [finishLatest])
 
   return (
     <SetupScreen
@@ -53,7 +65,7 @@ export function SetupComplete({
           ? 'You can add runtimes any time from Settings › Runtimes.'
           : 'These runtimes are ready for your agents.'
       }
-      actions={<Button onClick={onFinish}>Start using Nuphos</Button>}
+      actions={<Button onClick={() => auto.current?.finish()}>Start using Nuphos</Button>}
     >
       {!empty && (
         <ul className="space-y-3">
