@@ -41,11 +41,18 @@ export function botAvatarName(file: BotAvatarFile): string {
   return file.slice(0, -4)
 }
 
-/** "22-lady-with-an-ermine.svg" → "Lady with an ermine". */
+// Sentence case would lowercase a person's surname ("Van gogh").
+const NAME_LABELS: Partial<Record<BotAvatarFile, string>> = {
+  '03-mona-lisa.svg': 'Mona Lisa',
+  '10-van-gogh.svg': 'Van Gogh',
+  '29-amelia-earhart.svg': 'Amelia Earhart',
+}
+
+/** "22-lady-with-an-ermine.svg" → "Lady with an ermine"; people keep their capitals. */
 export function botAvatarLabel(file: BotAvatarFile): string {
   const words = botAvatarName(file).slice(3).replaceAll('-', ' ')
 
-  return words.charAt(0).toUpperCase() + words.slice(1)
+  return NAME_LABELS[file] ?? words.charAt(0).toUpperCase() + words.slice(1)
 }
 
 export function derivedBotAvatar(agentId: string): BotAvatarFile {
