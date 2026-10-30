@@ -1,4 +1,4 @@
-// Keep this order stable: existing Agents derive their character from their ID.
+// Keep this order stable and only append: existing Agents derive their character from their ID.
 export const BOT_AVATARS = [
   '01-vermeer-girl.svg',
   '02-leonardo.svg',
@@ -31,6 +31,9 @@ export const BOT_AVATARS = [
   '29-amelia-earhart.svg',
 ] as const
 
+/** Only the first 28 are derived from an ID, so appending a character never changes an Agent's face. */
+export const DEFAULT_BOT_AVATAR_COUNT = 28
+
 export type BotAvatarFile = (typeof BOT_AVATARS)[number]
 
 /** The name an Agent stores when someone picks a character: the file without `.svg`. */
@@ -50,7 +53,7 @@ export function derivedBotAvatar(agentId: string): BotAvatarFile {
 
   for (const char of agentId) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619) >>> 0
 
-  return BOT_AVATARS[hash % BOT_AVATARS.length]
+  return BOT_AVATARS[hash % DEFAULT_BOT_AVATAR_COUNT]
 }
 
 /** The picked character when this build ships it, else the one the ID selects. */

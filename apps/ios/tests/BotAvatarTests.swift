@@ -7,7 +7,7 @@ enum BotAvatarTests {
         for fixture in fixtures {
             precondition(BotAvatars.file(for: fixture.id) == fixture.file, "Desktop/Swift mapping differs: \(fixture.id)")
         }
-        precondition(Set(fixtures.map(\.file)).count == 29)
+        precondition(Set(fixtures.map(\.file)).count == 28)
         print("Shared Desktop/iOS avatar mapping: \(fixtures.count) fixtures passed")
 
         let id = "a155f25d-32b1-45d4-837c-9bb6d4e5155e"
