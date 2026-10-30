@@ -1,8 +1,8 @@
 import { useEffect } from 'react'
 
-import { focusSessionDesktop } from '../../../lib/sessionDesktops.ts'
+import { focusSessionDesktop, publishSessionDesktops } from '../../../lib/sessionDesktops.ts'
 
-import { desktopsFromRuntimeState } from './shells.ts'
+import { desktopsFromRuntimeState, sessionDesktopsOf } from './shells.ts'
 
 import type { Tab } from './model'
 
@@ -37,9 +37,16 @@ export function surfaceAgentDesktop(tab: TurnView): void {
   focusSessionDesktop(tab.sessionId, display)
 }
 
-export function useSurfaceAgentDesktop(tab: Tab): void {
+/** The chat's desktops for the dock, and the one its agent starts using brought forward. */
+export function useSessionDesktops(tab: Tab, teamId: string | undefined): void {
   const { sessionId, messages, streaming, runtimeState, foreign } = tab
 
+  // The workspace turns these into dock tabs; a chat that leaves the screen is forgotten, not closed.
+  useEffect(() => {
+    if (teamId)
+      publishSessionDesktops(sessionId, sessionDesktopsOf(teamId, { runtimeState, foreign }))
+  }, [sessionId, teamId, runtimeState, foreign])
+  useEffect(() => () => publishSessionDesktops(sessionId, null), [sessionId])
   useEffect(() => {
     surfaceAgentDesktop({ sessionId, messages, streaming, runtimeState, foreign })
   }, [sessionId, messages, streaming, runtimeState, foreign])
