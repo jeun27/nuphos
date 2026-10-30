@@ -28,6 +28,7 @@ export const BOT_AVATARS = [
   '26-the-swing.svg',
   '27-the-astronomer.svg',
   '28-the-sleeping-gypsy.svg',
+  '29-amelia-earhart.svg',
 ] as const
 
 export type BotAvatarFile = (typeof BOT_AVATARS)[number]

@@ -10,7 +10,7 @@ object BotAvatars {
         "17-the-scream.svg", "18-american-gothic.svg", "19-the-fifer.svg", "20-son-of-man.svg",
         "21-the-milkmaid.svg", "22-lady-with-an-ermine.svg", "23-girl-with-peaches.svg",
         "24-the-blue-boy.svg", "25-infanta.svg", "26-the-swing.svg", "27-the-astronomer.svg",
-        "28-the-sleeping-gypsy.svg",
+        "28-the-sleeping-gypsy.svg", "29-amelia-earhart.svg",
     )
 
     fun file(id: String): String {

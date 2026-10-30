@@ -4,8 +4,8 @@ import test from 'node:test'
 
 import { BOT_AVATARS, botAvatarLabel, botAvatarName, botAvatarUrl } from './botAvatars.ts'
 
-test('Agent identities resolve consistently to one of the 28 shipped vector assets', () => {
-  assert.equal(new Set(BOT_AVATARS).size, 28)
+test('Agent identities resolve consistently to one of the 29 shipped vector assets', () => {
+  assert.equal(new Set(BOT_AVATARS).size, 29)
   const seen = new Set<string>()
 
   for (let i = 0; i < 1000; i++) {
@@ -16,7 +16,7 @@ test('Agent identities resolve consistently to one of the 28 shipped vector asse
     assert.ok(BOT_AVATARS.some((name) => url.endsWith(name)))
     seen.add(url)
   }
-  assert.equal(seen.size, 28)
+  assert.equal(seen.size, 29)
   for (const name of BOT_AVATARS) {
     const svg = readFileSync(new URL(`../../public/bot-avatars/${name}`, import.meta.url), 'utf8')
 
@@ -32,7 +32,7 @@ test('Desktop and iOS share the exact ID mapping and SVG bytes', () => {
   ) as { id: string; file: string }[]
 
   for (const { id, file } of fixtures) assert.equal(botAvatarUrl(id), `/bot-avatars/${file}`)
-  assert.equal(new Set(fixtures.map(({ file }) => file)).size, 28)
+  assert.equal(new Set(fixtures.map(({ file }) => file)).size, 29)
   for (const file of BOT_AVATARS) {
     const ios = new URL(
       `../../../ios/nuphos-ios/Assets.xcassets/BotAvatars/bot-avatar-${file.slice(0, -4)}.imageset/${file}`,
