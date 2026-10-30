@@ -8,7 +8,7 @@ import { createWorkspaceTabFromNavigation } from '../../../app/workspaceTabFacto
 import { navigationFromAppPath } from '../../../lib/appRoutes.ts'
 import { publishSessionDesktops, subscribeSessionDesktops } from '../../../lib/sessionDesktops.ts'
 
-import { surfaceAgentDesktop } from './surfaceAgentDesktop.ts'
+import { surfaceAgentDesktop } from './useSurfaceAgentDesktop.ts'
 
 import type { Message } from './model'
 import type { RuntimeExecution } from '../../../lib/runtimeExecution.ts'
