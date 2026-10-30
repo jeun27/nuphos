@@ -19,6 +19,7 @@ import { CollapsedWorkView, LoadingText } from './partChrome'
 import { collapseRepeatedFailures } from './repeatedFailures'
 import { sessionDesktopsOf } from './shells'
 import { DEFERRED_MESSAGE_STYLE } from './status'
+import { useSurfaceAgentDesktop } from './surfaceAgentDesktop'
 import { MovingSessionLine, TimelineEventLine } from './TimelineEventLine'
 import { placeTimelineEvents } from './timelineEvents'
 import { UserMessage } from './UserMessage'
@@ -78,6 +79,7 @@ export function ConversationMessageList({
     if (teamId) publishSessionDesktops(tab.sessionId, sessionDesktopsOf(teamId, tab))
   }, [tab.sessionId, teamId, tab.runtimeState, tab.foreign])
   useEffect(() => () => publishSessionDesktops(tab.sessionId, null), [tab.sessionId])
+  useSurfaceAgentDesktop(tab)
   usePublishSessionArtifacts(tab.sessionId, tab.messages)
   useOpenRequestedArtifact(tab.sessionId, teamId, onOpenNuphosLink)
   const downloadsByMessage = useTransferDownloads(tab, teamId, hasEarlier)
