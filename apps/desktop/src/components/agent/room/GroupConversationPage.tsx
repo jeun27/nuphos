@@ -1,36 +1,41 @@
 import { useMemo } from 'react'
 
+import { useCurrentUser } from '../../../hooks/useCurrentUser'
 import { t } from '../../../i18n'
-import { useSwrCache } from '../../../lib/swrCache'
-import { agentSessionsCacheKey } from '../../sidebar/state'
+import { toAbsoluteAtlasUrl } from '../../../lib/webBaseUrl'
 import { Composer } from '../panel/Composer'
 import { composerDraftKey } from '../panel/composerDrafts'
 import { Conversation } from '../panel/Conversation'
 
 import { GroupMessagesContext } from './groupMessages'
+import { RoomBar } from './RoomBar'
 import { agentsPaused } from './roomModel'
+import { useRoom } from './useRoom'
 
-import type { AgentConversation } from '../../../api/agent-types'
 import type { PanelViewCtx } from '../panel/ctx'
 import type { Tab } from '../panel/model'
 
 /**
- * A group open in the chat pane: the shared transcript and a
+ * A group open in the chat pane: who is here, the shared transcript, and a
  * composer that posts to the group. No agent runs here, so there is no
  * stop, no runtime, and no waiting row for agents that stay quiet.
  */
 export function GroupConversationPage({ c, tab }: { c: PanelViewCtx; tab: Tab }) {
   const teamId = c.teamId ?? ''
-  // An agent's name links to its session only when the viewer's list has it.
-  const listed = useSwrCache<AgentConversation[]>(agentSessionsCacheKey(teamId))
+  const currentUserId = useCurrentUser()?.id ?? ''
+  const room = useRoom(tab.sessionId, teamId, tab.agentSessionIds, !tab.foreign)
+  const { listed } = room
   const group = useMemo(() => {
-    const readable = new Set((listed ?? []).map((conversation) => conversation.sessionId))
+    const readable = new Set(listed.map((conversation) => conversation.sessionId))
 
     return { teamId, readable: (sessionId: string) => readable.has(sessionId) }
   }, [listed, teamId])
+  const openAgent = (sessionId: string) =>
+    c.onOpenNuphosLink?.(toAbsoluteAtlasUrl(`/teams/${teamId}/agent/${sessionId}`))
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
+      <RoomBar room={room} currentUserId={currentUserId} onOpenAgent={openAgent} />
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <GroupMessagesContext.Provider value={group}>
           <Conversation
@@ -46,7 +51,7 @@ export function GroupConversationPage({ c, tab }: { c: PanelViewCtx; tab: Tab })
         </GroupMessagesContext.Provider>
       </div>
       <div className="z-10">
-        {agentsPaused(tab.agentTurns, tab.agentSessionIds?.length ?? 0) && (
+        {agentsPaused(tab.agentTurns, room.agents.length) && (
           <p className="mx-auto w-full max-w-[760px] px-6 pb-1.5 text-[12px] text-tertiary">
             {t('Agents are paused until someone posts.')}
           </p>

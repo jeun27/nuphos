@@ -3,11 +3,16 @@ import { test } from 'node:test'
 
 import {
   GROUP_AGENT_TURN_BUDGET,
+  addableAgents,
   agentPostLink,
   agentsPaused,
+  canRemoveAgent,
   groupFields,
   isAgentPost,
   isGroup,
+  outsideEmail,
+  roomAgents,
+  roomHeadline,
 } from './roomModel.ts'
 
 import type { AgentConversation, AgentMessageMetadata } from '../../../api/agent-types.ts'
@@ -56,6 +61,60 @@ test('agents pause once the next post would overrun the budget', () => {
   assert.equal(agentsPaused(50, 0), false)
 })
 
+test('room agents take provider and access from the listed sessions', () => {
+  const agents = roomAgents(
+    [
+      { sessionId: 'lead', title: 'Lead', ownerId: 'u1' },
+      { sessionId: 'hidden', title: '', ownerId: 'u2' },
+    ],
+    [conversation('lead', { agentRuntime: 'codex', canManage: true })],
+  )
+
+  assert.deepEqual(
+    agents.map(({ sessionId, provider, readable, managed }) => ({
+      sessionId,
+      provider,
+      readable,
+      managed,
+    })),
+    [
+      { sessionId: 'lead', provider: 'codex', readable: true, managed: true },
+      { sessionId: 'hidden', provider: undefined, readable: false, managed: false },
+    ],
+  )
+  assert.equal(agents[1].title, 'Untitled agent')
+})
+
+test('the headline counts people and agents', () => {
+  assert.equal(roomHeadline(2, 3), '2 people, 3 agents')
+  assert.equal(roomHeadline(1, 1), '1 person, 1 agent')
+})
+
+test('only own or managed sessions outside the group may be added', () => {
+  const listed = [
+    conversation('mine', { isOwner: true }),
+    conversation('managed', { isOwner: false, canManage: true }),
+    conversation('theirs', { isOwner: false }),
+    conversation('group', { isOwner: true, kind: 'group' }),
+    conversation('archived', { isOwner: true, archivedAt: '2026-01-01' }),
+    conversation('present', { isOwner: true }),
+  ]
+
+  assert.deepEqual(
+    addableAgents(listed, ['present']).map((c) => c.sessionId),
+    ['mine', 'managed'],
+  )
+})
+
+test('the group owner, or the agent’s owner or manager, may remove it', () => {
+  const [agent] = roomAgents([{ sessionId: 'a', title: 'A', ownerId: 'u2' }], [])
+
+  assert.equal(canRemoveAgent(agent, 'u1', true), true)
+  assert.equal(canRemoveAgent(agent, 'u2', false), true)
+  assert.equal(canRemoveAgent(agent, 'u3', false), false)
+  assert.equal(canRemoveAgent({ ...agent, managed: true }, 'u3', false), true)
+})
+
 test('agent posts link to their session only when the viewer can read it', () => {
   assert.equal(isAgentPost(post()), true)
   assert.equal(
@@ -75,4 +134,12 @@ test('agent posts link to their session only when the viewer can read it', () =>
     agentPostLink(post({ sourceSessionId: undefined }), () => true),
     null,
   )
+})
+
+test('an email that is no teammate’s needs a workspace invite first', () => {
+  const members = [{ email: 'sam@example.com' }]
+
+  assert.equal(outsideEmail('new@example.com', members), true)
+  assert.equal(outsideEmail(' SAM@example.com ', members), false)
+  assert.equal(outsideEmail('sam', members), false)
 })

@@ -28,12 +28,15 @@ export function TeammatePicker({
   picked,
   disabled,
   onToggle,
+  noMatch,
 }: {
   members: TeamMember[] | null
   invitable: TeamMember[]
   picked: TeamMember[]
   disabled: boolean
   onToggle: (member: TeamMember) => void
+  /** What to say instead of "No teammates match." for this query, if anything. */
+  noMatch?: (query: string) => string | null
 }) {
   const [query, setQuery] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
@@ -104,7 +107,7 @@ export function TeammatePicker({
       )}
       {members && invitable.length === 0 && (
         <div className="px-1 text-[12px] text-tertiary">
-          {t('Everyone in the team is already here.')}
+          {noMatch?.(query) ?? t('Everyone in the team is already here.')}
         </div>
       )}
       {/* Sized by the whole team, not by the matches, so typing never resizes the card. */}
@@ -117,7 +120,7 @@ export function TeammatePicker({
         >
           {shown.length === 0 && (
             <div className="col-span-5 px-1 text-[12px] text-tertiary">
-              {t('No teammates match.')}
+              {noMatch?.(query) ?? t('No teammates match.')}
             </div>
           )}
           {shown.map((member) => {
