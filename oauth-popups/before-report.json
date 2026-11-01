@@ -1,0 +1,23 @@
+{
+  "appWindow": [
+    164,
+    55,
+    1400,
+    880
+  ],
+  "tabAfterClick": {
+    "url": "http://127.0.0.1:4802/gsi/transform",
+    "title": "Sign In – Fixture Account"
+  },
+  "popupWindow": null,
+  "newWindows": 0,
+  "authOpener": false,
+  "afterPick": {
+    "tab": {
+      "url": "http://127.0.0.1:4802/gsi/transform",
+      "title": "Sign In – Fixture Account"
+    },
+    "status": null,
+    "popupStillOpen": false
+  }
+}

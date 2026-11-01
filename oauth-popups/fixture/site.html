@@ -1,0 +1,20 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Fixture App · Sign in</title>
+<style>body{font:16px -apple-system,system-ui,sans-serif;margin:0;display:grid;place-items:center;height:100vh;background:#f6f5f2;color:#222}
+.card{background:#fff;border:1px solid #e3e1dc;border-radius:14px;padding:32px 40px;width:340px;text-align:center}
+button,a.btn{display:block;width:100%;box-sizing:border-box;margin:10px 0;padding:11px;border:1px solid #ccc;border-radius:8px;background:#fff;font:inherit;cursor:pointer;color:#222;text-decoration:none}
+#status{margin-top:18px;font-weight:600}#status.ok{color:#137333}</style></head><body><div class="card">
+<h2>Fixture App</h2><p>Test sign-in page (no real accounts)</p>
+<button id="google">Continue with Google</button>
+<a class="btn" id="docs" href="/docs.html" target="_blank">Read the docs (target=_blank)</a>
+<div id="status">Signed out</div></div>
+<script>
+const AUTH = location.protocol + '//127.0.0.1:' + (Number(location.port) + 1)
+document.getElementById('google').onclick = () => {
+  window.open(AUTH + '/gsi/transform', 'g_auth', 'width=480,height=560,left=200,top=120')
+}
+addEventListener('message', (e) => {
+  if (e.origin !== AUTH || e.data?.type !== 'signed-in') return
+  const s = document.getElementById('status'); s.textContent = 'Signed in as ' + e.data.user; s.className = 'ok'
+  document.title = 'Fixture App · Signed in'
+})
+</script></body></html>

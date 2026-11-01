@@ -1,0 +1,24 @@
+{
+  "appWindow": [
+    164,
+    55,
+    1400,
+    880
+  ],
+  "tabAfterClick": {
+    "url": "http://localhost:4801/",
+    "title": "Fixture App · Sign in"
+  },
+  "popupWindow": "http://127.0.0.1:4802/gsi/transform",
+  "newWindows": 1,
+  "authOpener": true,
+  "popupNode": "undefined",
+  "afterPick": {
+    "tab": {
+      "url": "http://localhost:4801/",
+      "title": "Fixture App · Signed in"
+    },
+    "status": "Signed in as test-user@example.test",
+    "popupStillOpen": false
+  }
+}
