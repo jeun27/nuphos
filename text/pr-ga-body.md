@@ -23,6 +23,6 @@ Part of the runtime sign-in dead-end audit. It's independent of the other PRs in
   - other codes keep the server's text.
 - `ShareApprovalTest`: the declined message says to switch runtime.
 - CI runs `:app:testDebugUnitTest :app:lintDebug :app:assembleDebug`. There's no Android SDK in the sandbox I work from, so CI is the build and test run for this PR.
-- **Visuals: not captured yet.** No Android emulator is available to me (no KVM in my sandbox, and no Android SDK on the Mac I use). I'll post a full "Visuals for <head>" comment once one is set up. The iOS PR #1590 shows the same states and copy.
+- **Visuals:** none. No device or emulator capture exists; see the Visuals comment for what the tests cover and what to check on a device.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
