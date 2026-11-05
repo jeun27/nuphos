@@ -1,0 +1,5 @@
+fix(desktop): tell a member which admin signs a team runtime in
+
+A member viewing a signed-out team runtime saw "Not signed in." with no button, or "Sign in here, or on the runtime's host" with nothing to press. Only an administrator can sign a team runtime in.
+
+RuntimeSignIn takes memberOf for a non-admin and names the team's longest-standing administrator (adminName): "Not signed in. Ask {name} to sign it in." The host command isn't shown to members. Admins are unchanged. 2 new keys in all 7 locales.
