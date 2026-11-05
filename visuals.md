@@ -1,6 +1,6 @@
 Visuals for e1efea23782c429833a52a2f438bfda19154b88b
 
-Captured at e1efea2 (after) and its parent on main (before), applied on b2e7232 with an identical diff. Page-only captures of the real Desktop renderer with fixture accounts (Alex: new workspace admin; Sam: invited editor to a team with GitHub). Light theme, no backend. First version, so no range-diff.
+Before: main at b2e7232. After: b2e7232 with this PR's diff applied. Head e1efea2 is the same diff on main 584e7b97, which applied cleanly. Page-only captures of the real Desktop renderer with fixture accounts (Alex: new workspace admin; Sam: invited editor to a team with GitHub). Light theme, no backend. First version, so no range-diff.
 
 | State | Before | After |
 |---|---|---|
