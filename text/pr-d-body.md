@@ -16,7 +16,7 @@ A `runtime_disabled` conversation gets the same banner. Its send was already blo
 
 New locale key: "{name} is no longer available.", inserted in all 7 locales. Nothing else in the locale files changed.
 
-Part of the runtime sign-in dead-end audit. **Merge order:** after #1585, which also edits `bannerCopy` in `ReadOnlyNotice.tsx`. I'll rebase this once that lands.
+Part of the runtime sign-in dead-end audit. Rebased onto main after #1585 merged.
 
 ## Test
 
