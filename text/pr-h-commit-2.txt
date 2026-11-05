@@ -1,0 +1,5 @@
+fix(desktop): a failing cancel no longer traps the sign-in dialog, and a runtime that never starts ends the wait
+
+A cancel request that kept failing left the runtime and local sign-in dialogs unclosable. The first failure still keeps them open, and closing again leaves; the attempt expires on its own or is picked up on reopen.
+
+Waiting for a computer to come up polled forever and promised a card sign-in that a cloud computer's agent doesn't have. After BOX_SETUP_TIMEOUT_MS the wait ends with boxSetupProblem('timeout') and Try again. The spinner just says it can take a few minutes; that key is replaced in place in all 7 locales.
