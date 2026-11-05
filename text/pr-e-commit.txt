@@ -1,0 +1,5 @@
+fix(desktop): install a missing runtime from onboarding, then check again
+
+Onboarding's card for a missing Claude Code or Codex was dimmed and had only text and a docs link, so a new user had to install from a terminal and reopen Nuphos. Settings already has Install and Check again for this.
+
+Export Settings' InstallButton and show it with Check again (localRuntimeRefresh) on the onboarding card while the CLI is missing. The card is no longer dimmed in that state. No new strings.
