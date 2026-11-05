@@ -1,0 +1,5 @@
+fix(desktop): ask a teammate to sign their computer's agent in from the banner and picker
+
+A signed-out agent on a teammate's computer said "Ask its owner to sign it in" with no button, and clicking the picker's "Ask" row did nothing: usePickerFixes.run had no ask branch. The card's real ask only appears after a failed turn, which the blocked send never allows.
+
+A sign-in ask now carries its runtimeId, and usePickerFixes sends it for the open conversation with the same runtimeSignInAsk the card uses. The banner offers "Ask {name} to sign in" and then says whom you asked. The picker row gets an "Ask to sign in" chip. New key "Asked {name}. You can send once they sign it in." in all 7 locales.
