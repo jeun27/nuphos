@@ -1,0 +1,5 @@
+fix(desktop): Grok/OpenCode sign-in card gets its button, and an outdated runtime says why Send is off
+
+signInRoute answered "none" for Grok Build and OpenCode on this computer, so the failed-turn card had nothing to press. The picker had patched that case itself. Route them to the runtime sign-in, as settings does.
+
+An outdated runtime blocked Send with no reason. runtimeSendRefusal() in queuedAutoSend.ts replaces Composer's inline check and returns runtimeStateLabel, which Send shows as its reason.
