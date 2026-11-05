@@ -1,0 +1,127 @@
+diff --git a/apps/desktop/src/components/agent/panel/agentSignInModel.test.ts b/apps/desktop/src/components/agent/panel/agentSignInModel.test.ts
+index bf8c15af..ab92f492 100644
+--- a/apps/desktop/src/components/agent/panel/agentSignInModel.test.ts
++++ b/apps/desktop/src/components/agent/panel/agentSignInModel.test.ts
+@@ -81,6 +81,27 @@ test("this computer's agent signs in through its own CLI", () => {
+   assert.deepEqual(route('local_u-editor_dev-1_grok'), { kind: 'none' })
+ })
+ 
++test("an added agent on this computer signs in through the runtime, not the default agent's CLI", () => {
++  const runtimeId = 'local_u-editor_dev-1_claude-code_i2'
++  const instance = {
++    ...managed,
++    id: runtimeId,
++    kind: 'local' as const,
++    local: {
++      ownerUserId: 'u-editor',
++      deviceId: 'dev-1',
++      deviceLabel: 'Mac',
++      instanceId: 'i2',
++      signedIn: false,
++    },
++  }
++
++  assert.deepEqual(signInRoute({ ...base, runtimeId, instance, onThisComputer: true }), {
++    kind: 'dialog',
++    instance,
++  })
++})
++
+ test('the last message you sent is what gets resent', () => {
+   const messages = [
+     { id: '1', role: 'user', parts: [{ type: 'text', text: 'first' }] },
+diff --git a/apps/desktop/src/components/agent/panel/agentSignInModel.ts b/apps/desktop/src/components/agent/panel/agentSignInModel.ts
+index 0d581636..e58d9681 100644
+--- a/apps/desktop/src/components/agent/panel/agentSignInModel.ts
++++ b/apps/desktop/src/components/agent/panel/agentSignInModel.ts
+@@ -41,8 +41,9 @@ export function signInRoute({
+   members: TeamMember[] | null
+ }): SignInRoute {
+   if (!runtimeId) return { kind: 'none' }
+-  // Grok Build and OpenCode sign in from Agent settings, not through their own CLI here.
+-  if (onThisComputer)
++  // Grok Build and OpenCode sign in from Agent settings, not through their own CLI here. An
++  // added agent has its own login, which only the runtime sign-in below reaches.
++  if (onThisComputer && !instance?.local?.instanceId)
+     return /_(grok|opencode)$/u.test(runtimeId)
+       ? { kind: 'none' }
+       : { kind: 'cli', provider: runtimeId.endsWith('_codex') ? 'codex' : 'claude-code' }
+diff --git a/apps/desktop/src/views/settings/RuntimeInstanceCard.tsx b/apps/desktop/src/views/settings/RuntimeInstanceCard.tsx
+index d2724dc0..9424e9d5 100644
+--- a/apps/desktop/src/views/settings/RuntimeInstanceCard.tsx
++++ b/apps/desktop/src/views/settings/RuntimeInstanceCard.tsx
+@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
+ import { api } from '../../api'
+ import { AgentProviderIcon } from '../../components/agent/panel/icons'
+ import { ConfirmDialog } from '../../components/ConfirmDialog'
++import { Button } from '../../components/ui/button'
+ import { InlineRename } from '../../components/ui/inline-rename'
+ import { toast } from '../../components/ui/toast'
+ import { RUNTIME_INSTANCES_CHANGED } from '../../hooks/useRuntimeInstances'
+@@ -234,7 +235,13 @@ export function RuntimeInstanceCard({
+             ) : localSignIn ? (
+               <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-4">
+                 <p className="text-xs leading-relaxed text-tertiary">{t('Not signed in.')}</p>
+-                <LocalAgentSignIn provider={localSignIn} />
++                {localSignIn === 'runtime' ? (
++                  <Button size="sm" disabled={busy} onClick={() => setSigningIn(true)}>
++                    {t('Sign in')}
++                  </Button>
++                ) : (
++                  <LocalAgentSignIn provider={localSignIn} />
++                )}
+               </div>
+             ) : (
+               hosted &&
+diff --git a/apps/desktop/src/views/settings/agentPresentation.test.ts b/apps/desktop/src/views/settings/agentPresentation.test.ts
+index 32fda544..1d546599 100644
+--- a/apps/desktop/src/views/settings/agentPresentation.test.ts
++++ b/apps/desktop/src/views/settings/agentPresentation.test.ts
+@@ -200,8 +200,17 @@ test("this computer's signed-out agent signs in right here; others do not", () =
+   assert.equal(thisComputerSignIn(local('a', 'mac', false), null), undefined)
+   const extra = local('a', 'mac', false)
+ 
++  const added = { ...extra, local: { ...extra.local!, instanceId: 'x' } }
++
++  // An added agent has its own login, so it signs in through the runtime, never the CLI.
++  assert.equal(thisComputerSignIn(added, here), 'runtime')
++  assert.equal(thisComputerSignIn({ ...added, provider: 'grok' }, here), 'runtime')
++  assert.equal(
++    thisComputerSignIn({ ...added, local: { ...added.local, signedIn: true } }, here),
++    undefined,
++  )
+   assert.equal(
+-    thisComputerSignIn({ ...extra, local: { ...extra.local!, instanceId: 'x' } }, here),
++    thisComputerSignIn({ ...added, local: { ...added.local, deviceId: 'box1' } }, here),
+     undefined,
+   )
+   assert.equal(thisComputerSignIn({ ...extra, provider: 'grok' }, here), undefined)
+diff --git a/apps/desktop/src/views/settings/agentPresentation.ts b/apps/desktop/src/views/settings/agentPresentation.ts
+index a4bdf94c..5ba27839 100644
+--- a/apps/desktop/src/views/settings/agentPresentation.ts
++++ b/apps/desktop/src/views/settings/agentPresentation.ts
+@@ -69,18 +69,20 @@ export function agentRunsOn(
+ }
+ 
+ /**
+- * The CLI to sign in to right here, for this computer's own Claude Code or Codex agent while it
+- * is not signed in. Another computer's agent signs in on that computer.
++ * How to sign in right here, for this computer's own agent while it is not signed in: the CLI
++ * for its default Claude Code or Codex agent, the runtime sign-in for an added agent (the CLI's
++ * login is the default agent's). Another computer's agent signs in on that computer.
+  */
+ export function thisComputerSignIn(
+   instance: RuntimeInstance,
+   thisComputer: { userId: string; deviceId: string } | null,
+-): 'claude-code' | 'codex' | undefined {
++): 'claude-code' | 'codex' | 'runtime' | undefined {
+   const local = instance.local
+ 
+-  if (!local || local.instanceId || local.signedIn === true) return undefined
++  if (!local || local.signedIn === true) return undefined
+   if (local.deviceId !== thisComputer?.deviceId || local.ownerUserId !== thisComputer.userId)
+     return undefined
++  if (local.instanceId) return 'runtime'
+ 
+   return instance.provider === 'claude-code' || instance.provider === 'codex'
+     ? instance.provider
