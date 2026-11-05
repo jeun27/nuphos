@@ -1,0 +1,5 @@
+fix(ios): offer Switch runtime when a conversation's runtime can't take a turn
+
+Runtime errors (not found, disabled, offline, signed out) and an owner's decline were red text with nothing to press, the sign-in instructions pointed at a "Settings → Runtimes" that doesn't exist and told a teammate to sign in on someone else's computer, and the runtime chip vanished when the runtime was gone.
+
+HintRow and ShareApprovalStrip offer the conversation's existing Switch runtime for those cases, the copy says to switch, the instructions name the desktop's Runtimes page and send a teammate to the owner, and the chip falls back to "Choose runtime".
