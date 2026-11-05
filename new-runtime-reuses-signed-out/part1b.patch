@@ -1,0 +1,451 @@
+diff --git a/apps/desktop/src/views/settings/BoxParts.tsx b/apps/desktop/src/views/settings/BoxParts.tsx
+index b4bd7fe4..d87adff0 100644
+--- a/apps/desktop/src/views/settings/BoxParts.tsx
++++ b/apps/desktop/src/views/settings/BoxParts.tsx
+@@ -8,8 +8,8 @@ import { Menu, MenuContent, MenuItem, MenuTrigger } from '../../components/ui/me
+ import { t } from '../../i18n'
+ import { AGENT_PROVIDER } from '../../types/runtime'
+ 
+-import { agentName, agentOffline } from './agentPresentation'
+-import { accessHint, machineLine, newAgentAction, seenFrom } from './boxPresentation'
++import { agentName, agentOffline, newAgentAction } from './agentPresentation'
++import { accessHint, machineLine, seenFrom } from './boxPresentation'
+ import { STATUS_DOT } from './runtimePresentation'
+ 
+ import type { AgentDevice } from '../../api'
+@@ -118,18 +118,23 @@ export function NewAgentMenu({
+         <Plus className="h-3.5 w-3.5" />
+       </MenuTrigger>
+       <MenuContent align="start">
+-        {PROVIDERS.map((provider) => (
+-          <MenuItem
+-            key={provider}
+-            disabled={busy || !newAgentAction(agents, provider)}
+-            icon={<AgentProviderIcon provider={provider} className="h-4 w-4" />}
+-            onClick={() => onAdd(provider)}
+-          >
+-            {canAddAgents
+-              ? AGENT_PROVIDER[provider].label
+-              : t('Sign in to {provider}', { provider: AGENT_PROVIDER[provider].label })}
+-          </MenuItem>
+-        ))}
++        {PROVIDERS.map((provider) => {
++          const action = newAgentAction(agents, provider)
++          const label = AGENT_PROVIDER[provider].label
++
++          return (
++            <MenuItem
++              key={provider}
++              disabled={busy || !action}
++              icon={<AgentProviderIcon provider={provider} className="h-4 w-4" />}
++              onClick={() => onAdd(provider)}
++            >
++              {action && 'create' in action
++                ? label
++                : t('Sign in to {provider}', { provider: label })}
++            </MenuItem>
++          )
++        })}
+         {!canAddAgents && (
+           <MenuItem disabled>{t('Update the computer host to add more runtimes')}</MenuItem>
+         )}
+diff --git a/apps/desktop/src/views/settings/BoxRow.tsx b/apps/desktop/src/views/settings/BoxRow.tsx
+index 37cd81fd..8dd540d8 100644
+--- a/apps/desktop/src/views/settings/BoxRow.tsx
++++ b/apps/desktop/src/views/settings/BoxRow.tsx
+@@ -10,6 +10,7 @@ import { toast } from '../../components/ui/toast'
+ import { RUNTIME_INSTANCES_CHANGED } from '../../hooks/useRuntimeInstances'
+ import { t } from '../../i18n'
+ 
++import { newAgentAction } from './agentPresentation'
+ import { BoxAccessDialog } from './BoxAccessDialog'
+ import { BoxAgentSetup } from './BoxAgentSetup'
+ import { agentSlots, askToAdd, canAddAgent } from './boxAgentSlots'
+@@ -21,14 +22,7 @@ import { BoxHostUpdate } from './BoxHostUpdate'
+ import { AccessHint, LiveDot, MachineLine, OwnerLine } from './BoxParts'
+ import { copyUid } from './boxCopyUid'
+ import { openBoxPaywall } from './boxPaywallStore'
+-import {
+-  BOX_BADGE,
+-  boxActions,
+-  boxState,
+-  canManage,
+-  newAgentAction,
+-  removal,
+-} from './boxPresentation'
++import { BOX_BADGE, boxActions, boxState, canManage, removal } from './boxPresentation'
+ import { boxRestartLabel, boxRestartOf, boxUpdateLabel } from './boxRestartPresentation'
+ import { boxRestarts, useBoxRestart } from './boxRestartStore'
+ import { LocalAgentShareDialog } from './LocalAgentShareDialog'
+diff --git a/apps/desktop/src/views/settings/LocalAgentSignInRow.tsx b/apps/desktop/src/views/settings/LocalAgentSignInRow.tsx
+new file mode 100644
+index 00000000..09230c60
+--- /dev/null
++++ b/apps/desktop/src/views/settings/LocalAgentSignInRow.tsx
+@@ -0,0 +1,39 @@
++import { Button } from '../../components/ui/button'
++import { t } from '../../i18n'
++
++import { LocalAgentSignIn } from './LocalAgentSignIn'
++
++/** A signed-out agent on one of the viewer's own computers, signed in from its card. */
++export function LocalAgentSignInRow({
++  signIn,
++  cliOpen,
++  onCliClosed,
++  onRuntimeSignIn,
++  busy,
++}: {
++  signIn: 'claude-code' | 'codex' | 'runtime'
++  /** Its CLI sign-in is open, started from the ⋯ menu. */
++  cliOpen: boolean
++  onCliClosed: () => void
++  onRuntimeSignIn: () => void
++  busy: boolean
++}) {
++  return (
++    <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-4">
++      <p className="text-xs leading-relaxed text-tertiary">{t('Not signed in.')}</p>
++      {signIn === 'runtime' ? (
++        <Button size="sm" disabled={busy} onClick={onRuntimeSignIn}>
++          {t('Sign in')}
++        </Button>
++      ) : (
++        // Opened from the menu, it starts open; closing it brings the button back.
++        <LocalAgentSignIn
++          key={String(cliOpen)}
++          provider={signIn}
++          initiallyOpen={cliOpen}
++          onClosed={onCliClosed}
++        />
++      )}
++    </div>
++  )
++}
+diff --git a/apps/desktop/src/views/settings/RuntimeActionsMenu.tsx b/apps/desktop/src/views/settings/RuntimeActionsMenu.tsx
+index 3961d183..de052aab 100644
+--- a/apps/desktop/src/views/settings/RuntimeActionsMenu.tsx
++++ b/apps/desktop/src/views/settings/RuntimeActionsMenu.tsx
+@@ -12,6 +12,7 @@ export function RuntimeActionsMenu({
+   busy,
+   canEdit,
+   authenticated,
++  localSignIn,
+   onRename,
+   onSignIn,
+   onToggleEnabled,
+@@ -22,6 +23,8 @@ export function RuntimeActionsMenu({
+   canEdit: boolean
+   /** What the runtime reported about its own account, if it can say. */
+   authenticated?: boolean
++  /** One of the viewer's own computers' agents that is signed out, so it signs in from here too. */
++  localSignIn?: boolean
+   onRename: () => void
+   onSignIn: () => void
+   onToggleEnabled: () => void
+@@ -30,7 +33,8 @@ export function RuntimeActionsMenu({
+   if (!canEdit) return null
+   const enabled = instance.status === 'active'
+   // Unknown authentication is not evidence that the agent cannot sign in.
+-  const canSignIn = enabled && (instance.kind === 'managed' || instance.kind === 'external')
++  const canSignIn =
++    enabled && (instance.kind === 'managed' || instance.kind === 'external' || localSignIn === true)
+ 
+   return (
+     <Menu>
+diff --git a/apps/desktop/src/views/settings/RuntimeInstanceCard.tsx b/apps/desktop/src/views/settings/RuntimeInstanceCard.tsx
+index 5a0d93d4..88cf51db 100644
+--- a/apps/desktop/src/views/settings/RuntimeInstanceCard.tsx
++++ b/apps/desktop/src/views/settings/RuntimeInstanceCard.tsx
+@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
+ import { api } from '../../api'
+ import { AgentProviderIcon } from '../../components/agent/panel/icons'
+ import { ConfirmDialog } from '../../components/ConfirmDialog'
+-import { Button } from '../../components/ui/button'
+ import { InlineRename } from '../../components/ui/inline-rename'
+ import { toast } from '../../components/ui/toast'
+ import { RUNTIME_INSTANCES_CHANGED } from '../../hooks/useRuntimeInstances'
+@@ -13,8 +12,8 @@ import { t } from '../../i18n'
+ import { AGENT_PROVIDER } from '../../types/runtime'
+ 
+ import { AgentAddedBy } from './AgentAddedBy'
+-import { agentName, localRemovalId, thisComputerSignIn } from './agentPresentation'
+-import { LocalAgentSignIn } from './LocalAgentSignIn'
++import { agentName, localRemovalId, localSignIn } from './agentPresentation'
++import { LocalAgentSignInRow } from './LocalAgentSignInRow'
+ import { RuntimeActionsMenu } from './RuntimeActionsMenu'
+ import { RuntimeLoginDialog } from './RuntimeLoginDialog'
+ import { RuntimeMetricsCharts } from './RuntimeMetricsCharts'
+@@ -44,7 +43,8 @@ export function RuntimeInstanceCard({
+   isAdmin: boolean
+ }) {
+   const [signingIn, setSigningIn] = useState(false)
+-  const localSignIn = thisComputerSignIn(instance, useThisComputer())
++  const [cliSigningIn, setCliSigningIn] = useState(false)
++  const signIn = localSignIn(instance, useThisComputer())
+   const [editing, setEditing] = useState(false)
+   const [confirmRemoval, setConfirmRemoval] = useState(false)
+   const [busy, setBusy] = useState(false)
+@@ -182,7 +182,10 @@ export function RuntimeInstanceCard({
+           canEdit={canEdit}
+           authenticated={runtime?.authenticated}
+           onRename={() => setEditing(true)}
+-          onSignIn={() => setSigningIn(true)}
++          localSignIn={signIn !== undefined}
++          onSignIn={() =>
++            signIn && signIn !== 'runtime' ? setCliSigningIn(true) : setSigningIn(true)
++          }
+           onToggleEnabled={() =>
+             void mutate(() =>
+               api.atlasUpdateRuntimeInstance(teamId, instance.id, {
+@@ -232,17 +235,14 @@ export function RuntimeInstanceCard({
+                   'The runtime’s owner revoked this team’s connection from its console. Generate a new pairing code there, connect again and choose Update existing connection.',
+                 )}
+               </p>
+-            ) : localSignIn ? (
+-              <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-4">
+-                <p className="text-xs leading-relaxed text-tertiary">{t('Not signed in.')}</p>
+-                {localSignIn === 'runtime' ? (
+-                  <Button size="sm" disabled={busy} onClick={() => setSigningIn(true)}>
+-                    {t('Sign in')}
+-                  </Button>
+-                ) : (
+-                  <LocalAgentSignIn provider={localSignIn} />
+-                )}
+-              </div>
++            ) : signIn ? (
++              <LocalAgentSignInRow
++                signIn={signIn}
++                cliOpen={cliSigningIn}
++                onCliClosed={() => setCliSigningIn(false)}
++                onRuntimeSignIn={() => setSigningIn(true)}
++                busy={busy}
++              />
+             ) : (
+               hosted &&
+               enabled &&
+diff --git a/apps/desktop/src/views/settings/agentPresentation.test.ts b/apps/desktop/src/views/settings/agentPresentation.test.ts
+index 1d546599..9e062a24 100644
+--- a/apps/desktop/src/views/settings/agentPresentation.test.ts
++++ b/apps/desktop/src/views/settings/agentPresentation.test.ts
+@@ -6,7 +6,8 @@ import {
+   agentOffline,
+   agentRunsOn,
+   localRemovalId,
+-  thisComputerSignIn,
++  localSignIn,
++  newAgentAction,
+   visibleAgent,
+ } from './agentPresentation.ts'
+ import { boxAgents } from './boxPresentation.ts'
+@@ -186,32 +187,62 @@ test("a computer's agent goes by the name given to it, else its provider's", ()
+   assert.equal(agentName({ ...agent, local: { ...agent.local!, agentLabel: 'Review' } }), 'Review')
+ })
+ 
+-test("this computer's signed-out agent signs in right here; others do not", () => {
++test("every signed-out agent on the viewer's own computers can sign in; others' cannot", () => {
+   const here = { userId: 'owner', deviceId: 'mac' }
++  const codex = local('a', 'mac', false)
++  const added = { ...codex, local: { ...codex.local!, instanceId: 'x' } }
++
++  // This computer's default Claude Code or Codex agent: its own CLI.
++  assert.equal(localSignIn(codex, here), 'codex')
++  assert.equal(localSignIn(local('a', 'mac', null), here), 'codex')
++  // An added agent, or any agent on another computer, has a login of its own that only the
++  // runtime sign-in reaches.
++  assert.equal(localSignIn(added, here), 'runtime')
++  assert.equal(localSignIn(local('a', 'box1', false), here), 'runtime')
++  assert.equal(localSignIn({ ...codex, provider: 'grok' }, here), 'runtime')
++  // Signed in already, or someone else's agent: nothing to offer.
++  assert.equal(localSignIn(local('a', 'mac', true), here), undefined)
++  assert.equal(localSignIn(local('a', 'box1', true), here), undefined)
++  assert.equal(localSignIn(codex, { ...here, userId: 'other' }), undefined)
++  assert.equal(localSignIn(codex, null), undefined)
++  assert.equal(localSignIn(teamAgent('managed'), here), undefined)
++})
+ 
+-  assert.equal(thisComputerSignIn(local('a', 'mac', false), here), 'codex')
+-  assert.equal(thisComputerSignIn(local('a', 'mac', null), here), 'codex')
+-  assert.equal(thisComputerSignIn(local('a', 'mac', true), here), undefined)
+-  assert.equal(thisComputerSignIn(local('a', 'box1', false), here), undefined)
+-  assert.equal(
+-    thisComputerSignIn(local('a', 'mac', false), { ...here, userId: 'other' }),
+-    undefined,
+-  )
+-  assert.equal(thisComputerSignIn(local('a', 'mac', false), null), undefined)
+-  const extra = local('a', 'mac', false)
+-
+-  const added = { ...extra, local: { ...extra.local!, instanceId: 'x' } }
++const hostAgent = (
++  id: string,
++  provider: RuntimeInstance['provider'],
++  signedIn: boolean | null,
++  agentInstances?: boolean,
++) =>
++  ({
++    id,
++    provider,
++    kind: 'local',
++    local: { deviceId: 'a', signedIn, agentInstances },
++  }) as RuntimeInstance
++
++test('New Agent signs in a signed-out agent of that provider before it adds another', () => {
++  const old = [hostAgent('claude', 'claude-code', true), hostAgent('codex', 'codex', null)]
++  const capable = [
++    hostAgent('claude', 'claude-code', true, true),
++    hostAgent('codex', 'codex', null, true),
++  ]
++  const lapsed = [
++    hostAgent('claude', 'claude-code', false, true),
++    hostAgent('claude-2', 'claude-code', true, true),
++  ]
+ 
+-  // An added agent has its own login, so it signs in through the runtime, never the CLI.
+-  assert.equal(thisComputerSignIn(added, here), 'runtime')
+-  assert.equal(thisComputerSignIn({ ...added, provider: 'grok' }, here), 'runtime')
+-  assert.equal(
+-    thisComputerSignIn({ ...added, local: { ...added.local, signedIn: true } }, here),
+-    undefined,
+-  )
+-  assert.equal(
+-    thisComputerSignIn({ ...added, local: { ...added.local, deviceId: 'box1' } }, here),
+-    undefined,
+-  )
+-  assert.equal(thisComputerSignIn({ ...extra, provider: 'grok' }, here), undefined)
++  // A lapsed sign-in is signed in again, never turned into "Claude Code 2".
++  // A new computer whose first sign-in was cancelled: its agent is hidden (never signed in), so
++  // New runtime is the way back to it.
++  const fresh = hostAgent('claude', 'claude-code', false, true)
++
++  assert.equal(visibleAgent(fresh), false)
++  assert.deepEqual(newAgentAction([fresh], 'claude-code'), { signIn: 'claude' })
++  assert.deepEqual(newAgentAction(lapsed, 'claude-code'), { signIn: 'claude' })
++  assert.deepEqual(newAgentAction(capable, 'codex'), { signIn: 'codex' })
++  // Every agent of the provider signed in: a capable host adds one, an older host has none to add.
++  assert.deepEqual(newAgentAction(capable, 'claude-code'), { create: true })
++  assert.deepEqual(newAgentAction(old, 'codex'), { signIn: 'codex' })
++  assert.equal(newAgentAction(old, 'claude-code'), null)
+ })
+diff --git a/apps/desktop/src/views/settings/agentPresentation.ts b/apps/desktop/src/views/settings/agentPresentation.ts
+index 5ba27839..51afa78d 100644
+--- a/apps/desktop/src/views/settings/agentPresentation.ts
++++ b/apps/desktop/src/views/settings/agentPresentation.ts
+@@ -1,6 +1,7 @@
+ import { t } from '../../i18n/index.ts'
+ import { AGENT_PROVIDER } from '../../types/runtime.ts'
+ 
++import type { LocalAgentProvider } from '../../api/device-types'
+ import type { RuntimeInstance, RuntimeQuota } from '../../types/runtime'
+ 
+ /**
+@@ -69,22 +70,37 @@ export function agentRunsOn(
+ }
+ 
+ /**
+- * How to sign in right here, for this computer's own agent while it is not signed in: the CLI
+- * for its default Claude Code or Codex agent, the runtime sign-in for an added agent (the CLI's
+- * login is the default agent's). Another computer's agent signs in on that computer.
++ * How the viewer signs in one of their own computers' agents while it is not signed in. This
++ * computer's default Claude Code or Codex agent signs in through its CLI. Any other agent, added
++ * or on another computer, signs in through the runtime sign-in, which reaches exactly that agent
++ * (the CLI's login is only this computer's default agent's). Someone else's agent: none.
+  */
+-export function thisComputerSignIn(
++export function localSignIn(
+   instance: RuntimeInstance,
+   thisComputer: { userId: string; deviceId: string } | null,
+ ): 'claude-code' | 'codex' | 'runtime' | undefined {
+   const local = instance.local
+ 
+-  if (!local || local.signedIn === true) return undefined
+-  if (local.deviceId !== thisComputer?.deviceId || local.ownerUserId !== thisComputer.userId)
++  if (!local || local.signedIn === true || local.ownerUserId !== thisComputer?.userId)
+     return undefined
+-  if (local.instanceId) return 'runtime'
++  if (instance.provider !== 'claude-code' && instance.provider !== 'codex') return 'runtime'
+ 
+-  return instance.provider === 'claude-code' || instance.provider === 'codex'
++  return !local.instanceId && local.deviceId === thisComputer.deviceId
+     ? instance.provider
+-    : undefined
++    : 'runtime'
++}
++
++/**
++ * What New Agent does for a provider: sign in the machine's signed-out one first, so a lapsed
++ * sign-in never turns into a second agent; else add an agent when the host can.
++ */
++export function newAgentAction(
++  agents: RuntimeInstance[],
++  provider: LocalAgentProvider,
++): { create: true } | { signIn: string } | null {
++  const idle = agents.find((agent) => agent.provider === provider && agent.local?.signedIn !== true)
++
++  if (idle) return { signIn: idle.id }
++
++  return agents.some((agent) => agent.local?.agentInstances === true) ? { create: true } : null
+ }
+diff --git a/apps/desktop/src/views/settings/boxPresentation.test.ts b/apps/desktop/src/views/settings/boxPresentation.test.ts
+index 9ac21514..46a4eb41 100644
+--- a/apps/desktop/src/views/settings/boxPresentation.test.ts
++++ b/apps/desktop/src/views/settings/boxPresentation.test.ts
+@@ -16,7 +16,6 @@ import {
+   boxes,
+   boxPollMs,
+   boxState,
+-  newAgentAction,
+   agentNameTaken,
+   defaultAgentName,
+   machineLine,
+@@ -140,29 +139,6 @@ test('a machine reads as its OS and model', () => {
+   assert.equal(machineLine(box('a', 'running')), 'Linux · instabox')
+ })
+ 
+-const local = (
+-  id: string,
+-  provider: RuntimeInstance['provider'],
+-  signedIn: boolean | null,
+-  agentInstances?: boolean,
+-) =>
+-  ({
+-    id,
+-    provider,
+-    kind: 'local',
+-    local: { deviceId: 'a', signedIn, agentInstances },
+-  }) as RuntimeInstance
+-
+-test('New Agent adds an agent on a capable host, and only signs in the existing one on an older host', () => {
+-  const old = [local('claude', 'claude-code', true), local('codex', 'codex', null)]
+-  const capable = [local('claude', 'claude-code', true, true), local('codex', 'codex', null, true)]
+-
+-  assert.deepEqual(newAgentAction(capable, 'codex'), { create: true })
+-  assert.deepEqual(newAgentAction(capable, 'claude-code'), { create: true })
+-  assert.deepEqual(newAgentAction(old, 'codex'), { signIn: 'codex' })
+-  assert.equal(newAgentAction(old, 'claude-code'), null)
+-})
+-
+ const named = (agentLabel?: string) =>
+   ({ provider: 'codex', kind: 'local', local: { agentLabel } }) as RuntimeInstance
+ 
+diff --git a/apps/desktop/src/views/settings/boxPresentation.ts b/apps/desktop/src/views/settings/boxPresentation.ts
+index 3d8f12cb..6b100988 100644
+--- a/apps/desktop/src/views/settings/boxPresentation.ts
++++ b/apps/desktop/src/views/settings/boxPresentation.ts
+@@ -170,17 +170,6 @@ export function boxAgents(deviceId: string, instances: RuntimeInstance[]): Runti
+   )
+ }
+ 
+-/** What New Agent does for a provider: add an agent when the host can, else sign in the one it has. */
+-export function newAgentAction(
+-  agents: RuntimeInstance[],
+-  provider: LocalAgentProvider,
+-): { create: true } | { signIn: string } | null {
+-  if (agents.some((agent) => agent.local?.agentInstances === true)) return { create: true }
+-  const idle = agents.find((agent) => agent.provider === provider && agent.local?.signedIn !== true)
+-
+-  return idle ? { signIn: idle.id } : null
+-}
+-
+ /** Whether an agent on this machine already goes by this name, in any case. */
+ export function agentNameTaken(agents: RuntimeInstance[], name: string): boolean {
+   const wanted = name.trim().toLocaleLowerCase()
