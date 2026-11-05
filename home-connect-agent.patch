@@ -1,0 +1,482 @@
+diff --git a/apps/desktop/src/components/agent/panel/AgentHomePage.tsx b/apps/desktop/src/components/agent/panel/AgentHomePage.tsx
+index ccc1389..8e143c4 100644
+--- a/apps/desktop/src/components/agent/panel/AgentHomePage.tsx
++++ b/apps/desktop/src/components/agent/panel/AgentHomePage.tsx
+@@ -6,8 +6,8 @@ import { successfulTurns } from './endEventEffects'
+ import { StarStrip } from './hero'
+ import { RevealedHistoryBlock } from './historyRows'
+ import { AgentHomeAnimation, COMPOSER_REVEAL_MS, DelayedPanelReveal } from './homeAnimation'
++import { HomeGithubButton } from './HomeGithubButton'
+ import { HomeWidgets } from './HomeWidgets'
+-import { LocalAgentHint } from './LocalAgentHint'
+ import { StarterSuggestionsBlock } from './starterSuggestions'
+ import { homeGreeting } from './textUtils'
+ import { useEntranceCount } from './useEntranceCount'
+@@ -119,6 +119,7 @@ export function AgentHomePage({
+   // "not now" both retire it for good.
+   const [starDismissed, dismissStar] = useStickyDismiss('nuphos.agent.starStrip.dismissed')
+   const showStar = !starDismissed && successfulTurns() >= 5
++  const onConnectAgent = runtimeControl?.onConnectAgent
+ 
+   return (
+     // A size container, so the block above can measure half of what is visible.
+@@ -178,7 +179,9 @@ export function AgentHomePage({
+         </div>
+         <div className="mx-auto w-full max-w-[820px]">
+           <DelayedPanelReveal replayKey={entranceKey}>
+-            <LocalAgentHint />
++            {teamId && isTeamAdmin && !onConnectAgent && !runtimeControl?.loading && (
++              <HomeGithubButton teamId={teamId} />
++            )}
+           </DelayedPanelReveal>
+           <div className="pt-3">
+             {!unbound &&
+@@ -189,7 +192,7 @@ export function AgentHomePage({
+                   <StarterSuggestionsBlock
+                     loading={starterSuggestionsLoading}
+                     suggestions={starterSuggestions}
+-                    onPick={(prompt) => onSend(prompt, [])}
++                    onPick={(prompt) => (onConnectAgent ? onConnectAgent() : onSend(prompt, []))}
+                   />
+                 </RevealedHistoryBlock>
+               )}
+diff --git a/apps/desktop/src/components/agent/panel/Composer.tsx b/apps/desktop/src/components/agent/panel/Composer.tsx
+index bf7e7d9..6c8a9ac 100644
+--- a/apps/desktop/src/components/agent/panel/Composer.tsx
++++ b/apps/desktop/src/components/agent/panel/Composer.tsx
+@@ -286,6 +286,7 @@ export function Composer({
+               hasQueueablePayload={!(isEmpty && filePaths.length === 0)}
+               sendDisabled={sendDisabled}
+               sendBlockedReason={agentSendBlock}
++              onConnectAgent={runtimeControl?.onConnectAgent}
+               onSubmit={actions.submit}
+               onStop={onStop}
+             />
+diff --git a/apps/desktop/src/components/agent/panel/CredentialSelectorButton.tsx b/apps/desktop/src/components/agent/panel/CredentialSelectorButton.tsx
+index 1e0655d..2fa03c9 100644
+--- a/apps/desktop/src/components/agent/panel/CredentialSelectorButton.tsx
++++ b/apps/desktop/src/components/agent/panel/CredentialSelectorButton.tsx
+@@ -99,12 +99,15 @@ function SelectionButton({
+         aria-label={title}
+       >
+         <Icon className={iconSize} strokeWidth={devices ? 1.75 : 2} />
+-        <span
+-          key={selectedCount}
+-          className="absolute -right-1 -top-1 flex min-w-3.5 h-3.5 items-center justify-center rounded-full bg-zViolet-accent px-0.5 text-[9.5px] text-white font-medium leading-none transition-[transform,opacity,background-color] duration-150 ease-out"
+-        >
+-          {selectedCount}
+-        </span>
++        {/* Nothing to pick yet: a "0" reads as a warning, not a count. */}
++        {totalCount > 0 && (
++          <span
++            key={selectedCount}
++            className="absolute -right-1 -top-1 flex min-w-3.5 h-3.5 items-center justify-center rounded-full bg-zViolet-accent px-0.5 text-[9.5px] text-white font-medium leading-none transition-[transform,opacity,background-color] duration-150 ease-out"
++          >
++            {selectedCount}
++          </span>
++        )}
+         {hasNew && (
+           <span
+             aria-hidden
+diff --git a/apps/desktop/src/components/agent/panel/HomeGithubButton.tsx b/apps/desktop/src/components/agent/panel/HomeGithubButton.tsx
+new file mode 100644
+index 0000000..da55423
+--- /dev/null
++++ b/apps/desktop/src/components/agent/panel/HomeGithubButton.tsx
+@@ -0,0 +1,48 @@
++import { useEffect, useState } from 'react'
++
++import { api } from '../../../api'
++import { t } from '../../../i18n'
++import { BindGithubDialog } from '../../../views/BindGithubDialog'
++import { GithubMark } from '../../GithubMark'
++import { Button } from '../../ui/button'
++
++/** Under the home composer while the team has no GitHub: one step to the repos it can work on. */
++export function HomeGithubButton({ teamId }: { teamId: string }) {
++  // Unknown until read.
++  const [bound, setBound] = useState<boolean | null>(null)
++  const [open, setOpen] = useState(false)
++
++  useEffect(() => {
++    let alive = true
++
++    api
++      .atlasListGithubInstallations(teamId)
++      .then((installations) => {
++        if (alive) setBound(installations.length > 0)
++      })
++      .catch(() => {
++        // A failed read offers nothing rather than a step that may be done.
++      })
++
++    return () => {
++      alive = false
++    }
++  }, [teamId])
++
++  if (bound !== false) return null
++
++  return (
++    <div className="mt-3 flex justify-center">
++      <Button variant="secondary" size="sm" onClick={() => setOpen(true)}>
++        <GithubMark size={14} />
++        {t('Connect GitHub')}
++      </Button>
++      <BindGithubDialog
++        open={open}
++        teamId={teamId}
++        onClose={() => setOpen(false)}
++        onBound={() => setBound(true)}
++      />
++    </div>
++  )
++}
+diff --git a/apps/desktop/src/components/agent/panel/LocalAgentHint.tsx b/apps/desktop/src/components/agent/panel/LocalAgentHint.tsx
+deleted file mode 100644
+index e2017fe..0000000
+--- a/apps/desktop/src/components/agent/panel/LocalAgentHint.tsx
++++ /dev/null
+@@ -1,23 +0,0 @@
+-import { Monitor } from 'lucide-react'
+-
+-import { useLocalRuntimeState } from '../../../hooks/useLocalRuntimeState'
+-import { t } from '../../../i18n'
+-import { localAgentReady } from '../../../lib/localAgentReady'
+-
+-/** A quiet pointer to set up the local agent, shown only while this computer has none ready. */
+-export function LocalAgentHint() {
+-  const state = useLocalRuntimeState()
+-  const claude = state?.agents['claude-code']
+-
+-  if (claude?.available && claude.cli?.installed) return null
+-  if (localAgentReady(state) !== false) return null
+-
+-  return (
+-    <p className="mt-3 flex items-center justify-center gap-1.5 text-[12px] text-tertiary">
+-      <Monitor strokeWidth={1.5} className="h-3.5 w-3.5 shrink-0" />
+-      {t(
+-        'Install and sign in to Claude Code or Codex to run a runtime on this computer — see User settings › This computer › Local runtime.',
+-      )}
+-    </p>
+-  )
+-}
+diff --git a/apps/desktop/src/components/agent/panel/RuntimeSelector.tsx b/apps/desktop/src/components/agent/panel/RuntimeSelector.tsx
+index 8cc6c41..1c3d219 100644
+--- a/apps/desktop/src/components/agent/panel/RuntimeSelector.tsx
++++ b/apps/desktop/src/components/agent/panel/RuntimeSelector.tsx
+@@ -54,6 +54,8 @@ export type RuntimeControl = {
+   onSettings?: () => void
+   /** New conversation: add a team agent in place, without leaving the conversation. */
+   onAddAgent?: () => void
++  /** New conversation, and the team has no agent to run: sending sets one up, the draft waits. */
++  onConnectAgent?: () => void
+   /** A pick that needs the user's go-ahead before it takes effect. */
+   confirm?: {
+     title: string
+diff --git a/apps/desktop/src/components/agent/panel/composerControls.tsx b/apps/desktop/src/components/agent/panel/composerControls.tsx
+index 8380795..f5ca244 100644
+--- a/apps/desktop/src/components/agent/panel/composerControls.tsx
++++ b/apps/desktop/src/components/agent/panel/composerControls.tsx
+@@ -3,6 +3,7 @@ import { ArrowUp, Square } from 'lucide-react'
+ import { useLayoutEffect, useRef } from 'react'
+ 
+ import { t } from '../../../i18n'
++import { Button } from '../../ui/button'
+ 
+ import { isRichImageDrop } from './attachmentDrag'
+ import { AGENT_QUEUE_PLACEHOLDER } from './constants'
+@@ -110,6 +111,7 @@ export function ComposerSendControls({
+   hasQueueablePayload,
+   sendDisabled,
+   sendBlockedReason,
++  onConnectAgent,
+   onSubmit,
+   onStop,
+ }: {
+@@ -123,6 +125,8 @@ export function ComposerSendControls({
+   sendDisabled: boolean
+   /** Shown on the disabled button: why this message cannot go. */
+   sendBlockedReason?: string | null
++  /** Takes the send button's place while no agent can run. */
++  onConnectAgent?: () => void
+   onSubmit: () => void
+   onStop: () => void
+ }) {
+@@ -158,6 +162,14 @@ export function ComposerSendControls({
+     )
+   }
+ 
++  if (onConnectAgent && !readOnly) {
++    return (
++      <Button size="sm" onClick={onConnectAgent} className={hero ? 'rounded-full' : undefined}>
++        {t('Connect your agent')}
++      </Button>
++    )
++  }
++
+   return (
+     // A disabled button gets no hover, so the reason sits on its wrapper.
+     <span className="inline-flex" title={sendBlockedReason ?? undefined}>
+diff --git a/apps/desktop/src/components/agent/panel/panelHomeView.tsx b/apps/desktop/src/components/agent/panel/panelHomeView.tsx
+index 25fbbe8..2d89b36 100644
+--- a/apps/desktop/src/components/agent/panel/panelHomeView.tsx
++++ b/apps/desktop/src/components/agent/panel/panelHomeView.tsx
+@@ -1,9 +1,12 @@
++import { openAgentSetup } from '../../../views/onboarding/setup/agentSetupStore'
++
+ import { AgentHomePage } from './AgentHomePage'
+ import { Composer } from './Composer'
+ import { composerDraftKey } from './composerDrafts'
+ import { Welcome } from './homeAnimation'
+ import { useLocalSessionImport } from './importLocalSession'
+ import { ModelSelector } from './ModelSelector'
++import { noAgentToRun } from './runtimeControlSignOut'
+ import { useAddAgent } from './useAddAgent'
+ import { useRuntimeModelConfig } from './useRuntimeModelConfig'
+ 
+@@ -46,6 +49,15 @@ export function PanelHomePage({ c }: { c: PanelViewCtx }) {
+     openConversation: c.openConversation,
+   })
+ 
++  // The draft stays in the composer while setup runs over it.
++  const onConnectAgent = noAgentToRun(
++    runtimeInstances,
++    runtimeInstancesLoading,
++    runtimeInstancesError,
++  )
++    ? openAgentSetup
++    : undefined
++
+   const runtimeControl = {
+     teamId,
+     canUpdateTeamAgents: isTeamAdmin,
+@@ -57,6 +69,7 @@ export function PanelHomePage({ c }: { c: PanelViewCtx }) {
+     error: runtimeInstancesError,
+     onSettings: onOpenAgentSettings,
+     ...addAgent.control,
++    onConnectAgent,
+   }
+   // A local agent still starting has no models to report yet.
+   const modelRuntimeId =
+@@ -113,7 +126,7 @@ export function PanelHomePage({ c }: { c: PanelViewCtx }) {
+   ) : (
+     <>
+       {addAgent.dialog}
+-      <Welcome onPick={(prompt) => startChatWith(prompt)} />
++      <Welcome onPick={(prompt) => (onConnectAgent ? onConnectAgent() : startChatWith(prompt))} />
+       <Composer
+         newChat
+         onSend={(text, filePaths, mentions) =>
+diff --git a/apps/desktop/src/components/agent/panel/runtimeControlSignOut.test.ts b/apps/desktop/src/components/agent/panel/runtimeControlSignOut.test.ts
+index a24f88b..e9972b6 100644
+--- a/apps/desktop/src/components/agent/panel/runtimeControlSignOut.test.ts
++++ b/apps/desktop/src/components/agent/panel/runtimeControlSignOut.test.ts
+@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
+ import test from 'node:test'
+ 
+ import {
++  noAgentToRun,
+   runtimeControlSendBlock,
+   selectedAgentName,
+   selectedAgentReachability,
+@@ -84,3 +85,24 @@ test('a signed-out agent is named with its computer, not as the computer', () =>
+   assert.equal(selectedAgentName(control(undefined)), 'Claude Code')
+   assert.equal(selectedAgentName({ value: null }), 'The runtime')
+ })
++
++const agent = (over: Partial<RuntimeInstance> = {}): RuntimeInstance => ({
++  id,
++  provider: 'claude-code',
++  label: 'Claude Code',
++  status: 'active',
++  kind: 'managed',
++  createdAt: '2026-11-05T00:00:00Z',
++  ...over,
++})
++
++test('sending sets up an agent only when the team surely has none to run', () => {
++  assert.equal(noAgentToRun([], false, null), true)
++  assert.equal(noAgentToRun([agent({ status: 'disabled' })], false, null), true)
++  assert.equal(noAgentToRun([agent({ deletion: { state: 'deleting' } })], false, null), true)
++  assert.equal(noAgentToRun([agent()], false, null), false)
++  assert.equal(noAgentToRun([agent({ starting: true })], false, null), false)
++  // Not known yet, or not knowable: the composer stays as it is.
++  assert.equal(noAgentToRun([], true, null), false)
++  assert.equal(noAgentToRun([], false, 'offline'), false)
++})
+diff --git a/apps/desktop/src/components/agent/panel/runtimeControlSignOut.ts b/apps/desktop/src/components/agent/panel/runtimeControlSignOut.ts
+index 5d4a99d..5362ffc 100644
+--- a/apps/desktop/src/components/agent/panel/runtimeControlSignOut.ts
++++ b/apps/desktop/src/components/agent/panel/runtimeControlSignOut.ts
+@@ -2,6 +2,7 @@ import { t } from '../../../i18n/index.ts'
+ import { AGENT_PROVIDER } from '../../../types/runtime.ts'
+ 
+ import type { RuntimeControl } from './RuntimeSelector'
++import type { RuntimeInstance } from '../../../types/runtime.ts'
+ 
+ /** Whether the picked agent can take a message now: its Box first, then its sign-in. */
+ export type AgentReachability = 'ready' | 'signIn' | 'offline'
+@@ -50,3 +51,15 @@ export function runtimeControlSendBlock(control: RuntimeControl | undefined): st
+ 
+   return null
+ }
++
++/**
++ * The team has no agent a new conversation could start on, so sending can only
++ * mean setting one up. Unknown while the list loads or fails: never claimed then.
++ */
++export function noAgentToRun(
++  instances: readonly RuntimeInstance[],
++  loading: boolean,
++  error: string | null,
++): boolean {
++  return !loading && !error && !instances.some((i) => i.status === 'active' && !i.deletion)
++}
+diff --git a/apps/desktop/src/i18n/locales/es.json b/apps/desktop/src/i18n/locales/es.json
+index 65d00f9..598bd8b 100644
+--- a/apps/desktop/src/i18n/locales/es.json
++++ b/apps/desktop/src/i18n/locales/es.json
+@@ -2108,7 +2108,6 @@
+   "Install GitHub App": "Instalar la GitHub App",
+   "Install Nuphos in Slack, pick channels from the bot DM, then @mention the agent in those channels.": "Instala Nuphos en Slack, elige canales desde el DM del bot y luego @menciona al agente en esos canales.",
+   "Install Slack App": "Instalar app de Slack",
+-  "Install and sign in to Claude Code or Codex to run a runtime on this computer — see User settings › This computer › Local runtime.": "Instala Claude Code o Codex e inicia sesión para ejecutar un entorno de ejecución en esta computadora. Consulta Configuración de usuario › Esta computadora › Entorno de ejecución local.",
+   "Install it here, or from PowerShell with {command}, then check again.": "Instálalo aquí o desde PowerShell con {command} y vuelve a comprobarlo.",
+   "Install it here, or from a terminal with {command}, then check again.": "Instálalo aquí o desde una terminal con {command} y vuelve a comprobarlo.",
+   "Install the GitHub CLI and run `gh auth login` to comment, review or merge from here.": "Instala la CLI de GitHub y ejecuta `gh auth login` para comentar, revisar o fusionar desde aquí.",
+@@ -4035,6 +4034,8 @@
+   "Set up the connection": "Configura la conexión",
+   "Set up with agent": "Configurar con un agente",
+   "Set up your agent": "Configura tu agente",
++  "Connect your agent": "Conecta tu agente",
++  "Connect GitHub": "Conectar GitHub",
+   "Set up {card}": "Configurar {card}",
+   "Setting up your workspace…": "Configurando tu espacio de trabajo…",
+   "Settings": "Configuración",
+diff --git a/apps/desktop/src/i18n/locales/id.json b/apps/desktop/src/i18n/locales/id.json
+index 67a8d1d..f4eee3b 100644
+--- a/apps/desktop/src/i18n/locales/id.json
++++ b/apps/desktop/src/i18n/locales/id.json
+@@ -2108,7 +2108,6 @@
+   "Install GitHub App": "Instal GitHub App",
+   "Install Nuphos in Slack, pick channels from the bot DM, then @mention the agent in those channels.": "Instal Nuphos di Slack, pilih kanal dari DM bot, lalu @mention agen di kanal tersebut.",
+   "Install Slack App": "Instal Aplikasi Slack",
+-  "Install and sign in to Claude Code or Codex to run a runtime on this computer — see User settings › This computer › Local runtime.": "Instal dan masuk ke Claude Code atau Codex untuk menjalankan runtime di komputer ini — lihat Pengaturan pengguna › Komputer ini › Runtime lokal.",
+   "Install it here, or from PowerShell with {command}, then check again.": "Instal di sini, atau dari PowerShell dengan {command}, lalu periksa lagi.",
+   "Install it here, or from a terminal with {command}, then check again.": "Instal di sini, atau dari terminal dengan {command}, lalu periksa lagi.",
+   "Install the GitHub CLI and run `gh auth login` to comment, review or merge from here.": "Pasang GitHub CLI dan jalankan `gh auth login` untuk berkomentar, me-review, atau me-merge dari sini.",
+@@ -4035,6 +4034,8 @@
+   "Set up the connection": "Siapkan koneksi",
+   "Set up with agent": "Siapkan dengan agen",
+   "Set up your agent": "Siapkan agen Anda",
++  "Connect your agent": "Hubungkan agen Anda",
++  "Connect GitHub": "Hubungkan GitHub",
+   "Set up {card}": "Siapkan {card}",
+   "Setting up your workspace…": "Menyiapkan workspace Anda…",
+   "Settings": "Pengaturan",
+diff --git a/apps/desktop/src/i18n/locales/ja.json b/apps/desktop/src/i18n/locales/ja.json
+index 7d7a4be..58b6a97 100644
+--- a/apps/desktop/src/i18n/locales/ja.json
++++ b/apps/desktop/src/i18n/locales/ja.json
+@@ -2108,7 +2108,6 @@
+   "Install GitHub App": "GitHub App をインストール",
+   "Install Nuphos in Slack, pick channels from the bot DM, then @mention the agent in those channels.": "Slack に Nuphos をインストールし、ボットの DM でチャンネルを選んでから、そのチャンネルでエージェントを @メンションします。",
+   "Install Slack App": "Slack アプリをインストール",
+-  "Install and sign in to Claude Code or Codex to run a runtime on this computer — see User settings › This computer › Local runtime.": "このコンピュータでランタイムを実行するには、Claude Code または Codex をインストールしてサインインしてください。［ユーザー設定］›［このコンピュータ］›［ローカルランタイム］を参照してください。",
+   "Install it here, or from PowerShell with {command}, then check again.": "ここでインストールするか、PowerShell で {command} を実行してから、もう一度確認してください。",
+   "Install it here, or from a terminal with {command}, then check again.": "ここでインストールするか、ターミナルで {command} を実行してから、もう一度確認してください。",
+   "Install the GitHub CLI and run `gh auth login` to comment, review or merge from here.": "GitHub CLI をインストールして `gh auth login` を実行すると、ここからコメント、レビュー、マージができます。",
+@@ -4035,6 +4034,8 @@
+   "Set up the connection": "接続を設定",
+   "Set up with agent": "エージェントで設定",
+   "Set up your agent": "エージェントを設定する",
++  "Connect your agent": "エージェントを接続",
++  "Connect GitHub": "GitHub を接続",
+   "Set up {card}": "{card} を設定",
+   "Setting up your workspace…": "ワークスペースを設定中…",
+   "Settings": "設定",
+diff --git a/apps/desktop/src/i18n/locales/ko.json b/apps/desktop/src/i18n/locales/ko.json
+index 8ad00e5..f58710b 100644
+--- a/apps/desktop/src/i18n/locales/ko.json
++++ b/apps/desktop/src/i18n/locales/ko.json
+@@ -2108,7 +2108,6 @@
+   "Install GitHub App": "GitHub 앱 설치",
+   "Install Nuphos in Slack, pick channels from the bot DM, then @mention the agent in those channels.": "Slack에 Nuphos를 설치하고 봇 DM에서 채널을 선택한 후, 해당 채널에서 에이전트를 @멘션하세요.",
+   "Install Slack App": "Slack 앱 설치",
+-  "Install and sign in to Claude Code or Codex to run a runtime on this computer — see User settings › This computer › Local runtime.": "이 컴퓨터에서 런타임을 실행하려면 Claude Code 또는 Codex를 설치하고 로그인하세요. 사용자 설정 › 이 컴퓨터 › 로컬 런타임을 참고하세요.",
+   "Install it here, or from PowerShell with {command}, then check again.": "여기에서 설치하거나 PowerShell에서 {command} 명령으로 설치한 후 다시 확인하세요.",
+   "Install it here, or from a terminal with {command}, then check again.": "여기에서 설치하거나 터미널에서 {command} 명령으로 설치한 후 다시 확인하세요.",
+   "Install the GitHub CLI and run `gh auth login` to comment, review or merge from here.": "여기에서 댓글, 리뷰, 병합을 하려면 GitHub CLI를 설치하고 `gh auth login`을 실행하세요.",
+@@ -4035,6 +4034,8 @@
+   "Set up the connection": "연결 설정",
+   "Set up with agent": "에이전트로 설정",
+   "Set up your agent": "에이전트 설정하기",
++  "Connect your agent": "에이전트 연결하기",
++  "Connect GitHub": "GitHub 연결",
+   "Set up {card}": "{card} 설정",
+   "Setting up your workspace…": "워크스페이스 설정 중…",
+   "Settings": "설정",
+diff --git a/apps/desktop/src/i18n/locales/th.json b/apps/desktop/src/i18n/locales/th.json
+index af7e175..15e2f8e 100644
+--- a/apps/desktop/src/i18n/locales/th.json
++++ b/apps/desktop/src/i18n/locales/th.json
+@@ -2108,7 +2108,6 @@
+   "Install GitHub App": "ติดตั้ง GitHub App",
+   "Install Nuphos in Slack, pick channels from the bot DM, then @mention the agent in those channels.": "ติดตั้ง Nuphos ใน Slack เลือกช่องจาก DM ของบอท แล้ว @mention เอเจนต์ในช่องเหล่านั้น",
+   "Install Slack App": "ติดตั้งแอป Slack",
+-  "Install and sign in to Claude Code or Codex to run a runtime on this computer — see User settings › This computer › Local runtime.": "ติดตั้งและลงชื่อเข้าใช้ Claude Code หรือ Codex เพื่อรันรันไทม์บนคอมพิวเตอร์เครื่องนี้ — ดูที่การตั้งค่าผู้ใช้ › คอมพิวเตอร์เครื่องนี้ › รันไทม์ในเครื่อง",
+   "Install it here, or from PowerShell with {command}, then check again.": "ติดตั้งที่นี่ หรือจาก PowerShell ด้วย {command} แล้วตรวจสอบอีกครั้ง",
+   "Install it here, or from a terminal with {command}, then check again.": "ติดตั้งที่นี่ หรือจากเทอร์มินัลด้วย {command} แล้วตรวจสอบอีกครั้ง",
+   "Install the GitHub CLI and run `gh auth login` to comment, review or merge from here.": "ติดตั้ง GitHub CLI และรัน `gh auth login` เพื่อแสดงความคิดเห็น รีวิว หรือ merge จากที่นี่",
+@@ -4035,6 +4034,8 @@
+   "Set up the connection": "ตั้งค่าการเชื่อมต่อ",
+   "Set up with agent": "ตั้งค่าด้วยเอเจนต์",
+   "Set up your agent": "ตั้งค่าเอเจนต์ของคุณ",
++  "Connect your agent": "เชื่อมต่อเอเจนต์ของคุณ",
++  "Connect GitHub": "เชื่อมต่อ GitHub",
+   "Set up {card}": "ตั้งค่า {card}",
+   "Setting up your workspace…": "กำลังตั้งค่าเวิร์กสเปซของคุณ…",
+   "Settings": "การตั้งค่า",
+diff --git a/apps/desktop/src/i18n/locales/zh-CN.json b/apps/desktop/src/i18n/locales/zh-CN.json
+index 6c2358f..ff89ff7 100644
+--- a/apps/desktop/src/i18n/locales/zh-CN.json
++++ b/apps/desktop/src/i18n/locales/zh-CN.json
+@@ -2108,7 +2108,6 @@
+   "Install GitHub App": "安装 GitHub 应用",
+   "Install Nuphos in Slack, pick channels from the bot DM, then @mention the agent in those channels.": "在 Slack 中安装 Nuphos，从机器人私信中选择频道，然后在这些频道中 @提及 Agent。",
+   "Install Slack App": "安装 Slack 应用",
+-  "Install and sign in to Claude Code or Codex to run a runtime on this computer — see User settings › This computer › Local runtime.": "安装并登录 Claude Code 或 Codex，即可在本机运行运行环境，详见“用户设置 › 本机 › 本地运行环境”。",
+   "Install it here, or from PowerShell with {command}, then check again.": "可在此安装，或在 PowerShell 中运行 {command} 安装，然后重新检查。",
+   "Install it here, or from a terminal with {command}, then check again.": "可在此安装，或在终端中运行 {command} 安装，然后重新检查。",
+   "Install the GitHub CLI and run `gh auth login` to comment, review or merge from here.": "请安装 GitHub CLI 并运行 `gh auth login`，即可在此评论、审阅或合并。",
+@@ -4035,6 +4034,8 @@
+   "Set up the connection": "设置连接",
+   "Set up with agent": "通过 Agent 设置",
+   "Set up your agent": "设置你的 Agent",
++  "Connect your agent": "连接你的 Agent",
++  "Connect GitHub": "连接 GitHub",
+   "Set up {card}": "设置{card}",
+   "Setting up your workspace…": "正在设置你的工作区…",
+   "Settings": "设置",
+diff --git a/apps/desktop/src/i18n/locales/zh-TW.json b/apps/desktop/src/i18n/locales/zh-TW.json
+index bf71ed0..96089b8 100644
+--- a/apps/desktop/src/i18n/locales/zh-TW.json
++++ b/apps/desktop/src/i18n/locales/zh-TW.json
+@@ -2108,7 +2108,6 @@
+   "Install GitHub App": "安裝 GitHub App",
+   "Install Nuphos in Slack, pick channels from the bot DM, then @mention the agent in those channels.": "在 Slack 中安裝 Nuphos，從機器人私訊中選擇頻道，然後在這些頻道中 @提及 Agent。",
+   "Install Slack App": "安裝 Slack App",
+-  "Install and sign in to Claude Code or Codex to run a runtime on this computer — see User settings › This computer › Local runtime.": "安裝並登入 Claude Code 或 Codex，即可在這台電腦上執行執行環境。請參閱「使用者設定 › 這台電腦 › 本機執行環境」。",
+   "Install it here, or from PowerShell with {command}, then check again.": "請在這裡安裝，或在 PowerShell 中執行 {command}，然後再檢查一次。",
+   "Install it here, or from a terminal with {command}, then check again.": "請在這裡安裝，或在終端機中執行 {command}，然後再檢查一次。",
+   "Install the GitHub CLI and run `gh auth login` to comment, review or merge from here.": "請安裝 GitHub CLI 並執行 `gh auth login`，即可在此留言、審查或合併。",
+@@ -4035,6 +4034,8 @@
+   "Set up the connection": "設定連線",
+   "Set up with agent": "透過 Agent 設定",
+   "Set up your agent": "設定你的 Agent",
++  "Connect your agent": "連接你的 Agent",
++  "Connect GitHub": "連接 GitHub",
+   "Set up {card}": "設定{card}",
+   "Setting up your workspace…": "正在設定你的工作區…",
+   "Settings": "設定",
