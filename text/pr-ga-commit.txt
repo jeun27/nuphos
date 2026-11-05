@@ -1,0 +1,5 @@
+fix(android): offer Switch runtime when a conversation's runtime can't take a turn
+
+Runtime errors (signed out, disabled, not found, offline) were shown raw, including the server's "Settings → Agent", with nothing to press. An owner's decline said "Move it" with no button. The sign-in instructions pointed at a "Settings → Runtimes" that doesn't exist and told a teammate to sign in on someone else's computer.
+
+Map the four codes to Conflict.RuntimeBlocked, worded for a phone as on iOS. Hint rows with them and the declined strip open the conversation's runtime sheet through Switch runtime. The instructions name the desktop's Runtimes page and send a teammate to the owner.
