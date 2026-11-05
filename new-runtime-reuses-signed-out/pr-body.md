@@ -22,16 +22,16 @@ Captured from the real components in a page-only harness at `main` (45122135) an
 
 | | Before | After |
 | --- | --- | --- |
-| Page | <img src="R/before-page.png" width="400"><br>Claude Code is hidden | same: still hidden until signed in |
-| "+" | <img src="R/before-plus.png" width="400"><br>Creates "Claude Code 2" | <img src="R/after-plus-menu.png" width="400"><br>"Sign in to Claude Code" |
-| "+" → Claude Code | | <img src="R/after-plus.png" width="400"><br>Started `runtime:local_user-alex_device-buildbox` |
+| Page | <img src="https://raw.githubusercontent.com/jeun27/nuphos/8f7fc8e866e3cf39b947c802ee5da265f72bc06f/new-runtime-reuses-signed-out/before-page.png" width="400"><br>Claude Code is hidden | same: still hidden until signed in |
+| "+" | <img src="https://raw.githubusercontent.com/jeun27/nuphos/8f7fc8e866e3cf39b947c802ee5da265f72bc06f/new-runtime-reuses-signed-out/before-plus.png" width="400"><br>Creates "Claude Code 2" | <img src="https://raw.githubusercontent.com/jeun27/nuphos/8f7fc8e866e3cf39b947c802ee5da265f72bc06f/new-runtime-reuses-signed-out/after-plus-menu.png" width="400"><br>"Sign in to Claude Code" |
+| "+" → Claude Code | | <img src="https://raw.githubusercontent.com/jeun27/nuphos/8f7fc8e866e3cf39b947c802ee5da265f72bc06f/new-runtime-reuses-signed-out/after-plus.png" width="400"><br>Started `runtime:local_user-alex_device-buildbox` |
 
 **Default Claude Code on "Build Box", signed out**
 
 | | Before | After |
 | --- | --- | --- |
-| ⋯ menu | <img src="R/box-before-menu.png" width="400"><br>No Sign in | <img src="R/box-after-menu.png" width="400"><br>**Sign in** for that runtime |
-| "+" → Claude Code | <img src="R/box-before-plus.png" width="400"><br>Creates "Claude Code 2" | <img src="R/box-after-plus.png" width="400"><br>Signs in the existing one |
+| ⋯ menu | <img src="https://raw.githubusercontent.com/jeun27/nuphos/8f7fc8e866e3cf39b947c802ee5da265f72bc06f/new-runtime-reuses-signed-out/box-before-menu.png" width="400"><br>No Sign in | <img src="https://raw.githubusercontent.com/jeun27/nuphos/8f7fc8e866e3cf39b947c802ee5da265f72bc06f/new-runtime-reuses-signed-out/box-after-menu.png" width="400"><br>**Sign in** for that runtime |
+| "+" → Claude Code | <img src="https://raw.githubusercontent.com/jeun27/nuphos/8f7fc8e866e3cf39b947c802ee5da265f72bc06f/new-runtime-reuses-signed-out/box-before-plus.png" width="400"><br>Creates "Claude Code 2" | <img src="https://raw.githubusercontent.com/jeun27/nuphos/8f7fc8e866e3cf39b947c802ee5da265f72bc06f/new-runtime-reuses-signed-out/box-after-plus.png" width="400"><br>Signs in the existing one |
 
 ## Tests
 
