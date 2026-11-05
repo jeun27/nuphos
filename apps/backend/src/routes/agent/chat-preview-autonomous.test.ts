@@ -268,3 +268,45 @@ test('a placeholder cannot hide an autonomous runtime interruption', async () =>
   })
   expect(h.calls).toEqual(['emit', 'emit', 'finish'])
 })
+
+// After a dropped runtime connection the call's card is in the turn that
+// started it, marked "connection dropped". Its result must land on that card,
+// not open a new turn with a second, nameless card.
+describe('a result for a call that began before the connection dropped', () => {
+  const tracked = () => {
+    const results: string[] = []
+    const begins: string[] = []
+    const handler = createClaudeCodeAutonomousUpdateHandler({
+      begin: (_context, messageId) => {
+        begins.push(messageId)
+
+        return { emit: () => {}, finish: () => {}, handleTool: () => {}, toolSteps: () => [] }
+      },
+      earlierToolResult: async (_context, update) => {
+        results.push(`${update.toolCallId}:${update.status}`)
+      },
+    })
+
+    return { handler, results, begins }
+  }
+  const tool = (status: string, rawInput?: unknown) => ({
+    kind: 'agent' as const,
+    update: { kind: 'tool' as const, toolCallId: 'merge', title: '', status, rawInput },
+  })
+
+  test('goes to the earlier card and opens no turn', async () => {
+    const h = tracked()
+
+    await h.handler.update({ ...context, update: tool('completed') })
+    expect(h.results).toEqual(['merge:completed'])
+    expect(h.begins).toEqual([])
+  })
+
+  test('a call that starts here is this turn’s own', async () => {
+    const h = tracked()
+
+    await h.handler.update({ ...context, update: tool('in_progress', { command: 'ls' }) })
+    expect(h.results).toEqual([])
+    expect(h.begins).toHaveLength(1)
+  })
+})

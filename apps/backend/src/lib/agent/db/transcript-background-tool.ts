@@ -20,9 +20,13 @@ export async function updateBackgroundToolResult(args: {
       'parts.$[tool].runtimeResult': true,
       ...(args.errorText === undefined ? {} : { 'parts.$[tool].errorText': args.errorText }),
     }
+    // A success clears an error the card was given while its result was
+    // outstanding, such as a dropped runtime connection.
+    const cleared =
+      args.state === 'output-available' ? { 'parts.$[tool].errorText': '' as const } : null
     const result = await agentMessages().updateMany(
       { sessionId: args.sessionId, userId: args.userId, 'parts.toolCallId': args.toolCallId },
-      { $set: fields },
+      { $set: fields, ...(cleared ? { $unset: cleared } : {}) },
       { arrayFilters: [{ 'tool.toolCallId': args.toolCallId }] },
     )
 

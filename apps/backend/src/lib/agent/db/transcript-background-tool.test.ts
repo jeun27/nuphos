@@ -68,3 +68,19 @@ test('does not write a result into a conversation outside the authorized team', 
   await updateBackgroundToolResult(result)
   expect(writes).toEqual([])
 })
+
+// A command that finished after a dropped runtime connection must not keep the
+// "connection dropped" error its card was given while it was still running.
+test('a late success clears the error the card got while its result was outstanding', async () => {
+  await updateBackgroundToolResult({ ...result, state: 'output-available', errorText: undefined })
+  expect(writes[0]?.update).toMatchObject({
+    $set: { 'parts.$[tool].state': 'output-available' },
+    $unset: { 'parts.$[tool].errorText': '' },
+  })
+})
+
+test('a late failure keeps its own error and unsets nothing', async () => {
+  await updateBackgroundToolResult(result)
+  expect(writes[0]?.update).not.toHaveProperty('$unset')
+  expect(writes[0]?.update).toMatchObject({ $set: { 'parts.$[tool].errorText': 'exit 1' } })
+})

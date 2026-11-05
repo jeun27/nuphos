@@ -249,6 +249,30 @@ test('Stop ends a turn the backend still holds and starts the queue, even if the
   }
 })
 
+// The suspected leaked claim: the runtime finished and is idle, nothing to
+// cancel there, but the backend still holds a turn, so the queue never starts.
+test('Stop ends a held turn while the runtime is idle, and the queue starts behind it', async () => {
+  activeActor = 'owner'
+  await enqueuePendingUserMessage(
+    'owner',
+    'shared-control',
+    buildPendingUserMessage({ renderedText: 'and then deploy', source: 'app' }),
+  )
+  installQueuedTurnStarter(async (_user, sessionId) => {
+    queueStarts.push(sessionId)
+  })
+  try {
+    expect((await request('cancel-runtime')).status).toBe(200)
+    expect(cancelled).toBe(1)
+    expect(stoppedRuns).toEqual(['running'])
+    await Bun.sleep(0)
+    expect(queueStarts).toEqual(['shared-control'])
+  } finally {
+    installQueuedTurnStarter(startQueuedTurn)
+    await drainPendingUserMessages('owner', 'shared-control')
+  }
+})
+
 test('Stop with nothing held and no runtime to reach reports the failure', async () => {
   unreachable = true
 

@@ -10,7 +10,10 @@ import {
 import { logError } from '@/lib/observability'
 
 import { createClaudeCodeAutonomousUpdateHandler } from './chat-preview-autonomous'
-import { registerBackgroundToolPersistence } from './chat-preview-background-tools'
+import {
+  persistLateToolResult,
+  registerBackgroundToolPersistence,
+} from './chat-preview-background-tools'
 import { createPreviewRunState, createPreviewToolLog } from './chat-preview-run'
 import { consumePreviewToolPresentation, handlePreviewToolUpdate } from './chat-preview-tool-update'
 import { createAgentRun, registerAgentRun } from './run-registry'
@@ -67,6 +70,7 @@ export const autonomous = createClaudeCodeAutonomousUpdateHandler({
       toolSteps: tools.list,
     }
   },
+  earlierToolResult: persistLateToolResult,
 })
 
 registerBackgroundToolPersistence()

@@ -45,6 +45,25 @@ type AutonomousTurnDeps = {
     messageId: string,
   ) => Omit<AutonomousTurn, 'messageId' | 'context' | 'text' | 'reasoning' | 'orderedParts'>
   authorize?: typeof handleOpenAbPermissionRequest
+  /** A call that finished after its turn's connection dropped: its card is in that turn. */
+  earlierToolResult?: (
+    context: ClaudeCodeAutonomousContext,
+    update: Extract<PreviewAgentUpdate, { kind: 'tool' }>,
+  ) => Promise<void>
+}
+
+type ToolUpdate = Extract<PreviewAgentUpdate, { kind: 'tool' }>
+
+/** A result with no start in the open turn: the call began before the connection dropped. */
+function earlierToolResult(update: ClaudeCodeAutonomousUpdate, open?: AutonomousTurn) {
+  if (update.update.kind !== 'agent' || update.update.update.kind !== 'tool') return null
+  const tool: ToolUpdate = update.update.update
+
+  if (tool.status !== 'completed' && tool.status !== 'failed') return null
+  if (tool.rawInput !== undefined) return null
+  if (open?.toolSteps().some((step) => step.toolCallId === tool.toolCallId)) return null
+
+  return tool
 }
 
 function keyOf(context: ClaudeCodeAutonomousContext): string {
@@ -128,6 +147,18 @@ export function createClaudeCodeAutonomousUpdateHandler(deps: AutonomousTurnDeps
     update: (update: ClaudeCodeAutonomousUpdate): void | Promise<void> => {
       if (update.update.kind === 'agent' && update.update.update.kind === 'runtime-state') return
       if (update.update.kind === 'async-task' || update.update.kind === 'prompt-suggestion') return
+      const earlier = deps.earlierToolResult && earlierToolResult(update, turns.get(keyOf(update)))
+
+      if (earlier) {
+        void deps.earlierToolResult?.(update, earlier).catch((error: unknown) => {
+          logError('agent.chat.preview_autonomous_tool_result.error', error, {
+            session_id: update.conversationId,
+            team_id: update.teamId,
+          })
+        })
+
+        return
+      }
       if (update.update.kind === 'status') {
         if (update.update.status === 'active') {
           // Snapshots are broadcast to all observers, including connections

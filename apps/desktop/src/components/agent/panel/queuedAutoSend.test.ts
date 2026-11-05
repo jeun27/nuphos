@@ -162,7 +162,8 @@ test('the composer offers Stop through a dropped runtime connection and after th
   assert.equal(canStopTurn(tab({ runtimeState: unreachable, streaming: true })), true)
   assert.equal(canStopTurn(tab({ runtimeState: { state: 'disconnected' }, streaming: true })), true)
   assert.equal(canStopTurn(tab({ runtimeState: unreachable, queued: waiting })), true)
-  // After the give-up: the runtime is idle, the message still waits.
+  // After the give-up, or a turn the backend still holds while the runtime is
+  // idle: nothing to cancel there, the message still waits.
   assert.equal(canStopTurn(tab({ runtimeState: status(true), queued: waiting })), true)
   // Nothing ahead: Send only.
   assert.equal(canStopTurn(tab({ runtimeState: status(true) })), false)
