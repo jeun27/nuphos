@@ -1,0 +1,222 @@
+diff --git a/apps/desktop/src/components/agent/panel/runtimeControlSignOut.test.ts b/apps/desktop/src/components/agent/panel/runtimeControlSignOut.test.ts
+index e9972b6..e501495 100644
+--- a/apps/desktop/src/components/agent/panel/runtimeControlSignOut.test.ts
++++ b/apps/desktop/src/components/agent/panel/runtimeControlSignOut.test.ts
+@@ -100,6 +100,10 @@ test('sending sets up an agent only when the team surely has none to run', () =>
+   assert.equal(noAgentToRun([], false, null), true)
+   assert.equal(noAgentToRun([agent({ status: 'disabled' })], false, null), true)
+   assert.equal(noAgentToRun([agent({ deletion: { state: 'deleting' } })], false, null), true)
++  const local = { ownerUserId: 'u', deviceId: 'box1', deviceLabel: 'Mac' }
++
++  assert.equal(noAgentToRun([agent({ local: { ...local, signedIn: false } })], false, null), true)
++  assert.equal(noAgentToRun([agent({ local: { ...local, online: false } })], false, null), true)
+   assert.equal(noAgentToRun([agent()], false, null), false)
+   assert.equal(noAgentToRun([agent({ starting: true })], false, null), false)
+   // Not known yet, or not knowable: the composer stays as it is.
+diff --git a/apps/desktop/src/components/agent/panel/runtimeControlSignOut.ts b/apps/desktop/src/components/agent/panel/runtimeControlSignOut.ts
+index 5362ffc..2380add 100644
+--- a/apps/desktop/src/components/agent/panel/runtimeControlSignOut.ts
++++ b/apps/desktop/src/components/agent/panel/runtimeControlSignOut.ts
+@@ -1,4 +1,5 @@
+ import { t } from '../../../i18n/index.ts'
++import { usable } from '../../../lib/agentName.ts'
+ import { AGENT_PROVIDER } from '../../../types/runtime.ts'
+ 
+ import type { RuntimeControl } from './RuntimeSelector'
+@@ -53,13 +54,14 @@ export function runtimeControlSendBlock(control: RuntimeControl | undefined): st
+ }
+ 
+ /**
+- * The team has no agent a new conversation could start on, so sending can only
+- * mean setting one up. Unknown while the list loads or fails: never claimed then.
++ * No agent a new conversation could start on (none, or only signed-out, offline
++ * or deleting ones), so sending can only mean setting one up. Unknown while the
++ * list loads or fails: never claimed then.
+  */
+ export function noAgentToRun(
+   instances: readonly RuntimeInstance[],
+   loading: boolean,
+   error: string | null,
+ ): boolean {
+-  return !loading && !error && !instances.some((i) => i.status === 'active' && !i.deletion)
++  return !loading && !error && !instances.some((i) => usable(i) && !i.deletion)
+ }
+diff --git a/apps/desktop/src/components/agent/panel/useNewConversationRuntime.ts b/apps/desktop/src/components/agent/panel/useNewConversationRuntime.ts
+index 6887fb7..7cb5ad2 100644
+--- a/apps/desktop/src/components/agent/panel/useNewConversationRuntime.ts
++++ b/apps/desktop/src/components/agent/panel/useNewConversationRuntime.ts
+@@ -4,7 +4,7 @@ import { useLocalRuntimeState } from '../../../hooks/useLocalRuntimeState'
+ import { useRuntimeInstances } from '../../../hooks/useRuntimeInstances'
+ import { useRuntimeQuotas } from '../../../hooks/useRuntimeQuotas'
+ import { useThisComputer } from '../../../hooks/useThisComputer'
+-import { defaultAgent, usable } from '../../../lib/agentName'
++import { newChatAgent } from '../../../lib/agentName'
+ import { pendingLocalAgents } from '../../../lib/localAgentReady'
+ 
+ import {
+@@ -30,14 +30,14 @@ export function useNewConversationRuntime(teamId?: string) {
+     ? [...catalog.instances, ...pendingLocalAgents(localState, catalog.instances)]
+     : catalog.instances
+   const choice = readNewChatChoice(newChatChoiceKey(teamId))
+-  const best = defaultAgent(instances, owner, (instance) => {
++  // The saved agent stands while it is usable; otherwise the nearest one, never none.
++  // So an agent connected from the home composer is picked the moment it lists.
++  const selected = newChatAgent(instances, choice?.runtimeId, owner, (instance) => {
+     const windows = runtimeQuotas.get(instance.id)?.windows ?? []
+ 
+     return windows.length ? Math.max(...windows.map((window) => window.usedPercent)) : undefined
+   })
+-  // The saved agent stands while it is usable; otherwise the best agent, never none.
+-  const chosen = choice && instances.find((instance) => instance.id === choice.runtimeId)
+-  const selected = chosen && usable(chosen) ? chosen : best
++  const chosen = selected?.id === choice?.runtimeId ? selected : undefined
+ 
+   function save(next: NewChatChoice) {
+     saveNewChatChoice(newChatChoiceKey(teamId), next)
+diff --git a/apps/desktop/src/lib/agentName.test.ts b/apps/desktop/src/lib/agentName.test.ts
+index a89cfa9..a474881 100644
+--- a/apps/desktop/src/lib/agentName.test.ts
++++ b/apps/desktop/src/lib/agentName.test.ts
+@@ -7,6 +7,7 @@ import {
+   defaultAgent,
+   groupAgentsByTier,
+   listedAgents,
++  newChatAgent,
+   unavailable,
+   usable,
+ } from './agentName.ts'
+@@ -56,7 +57,7 @@ test('the picker lists every agent in one untitled group', () => {
+   assert.deepEqual(groupAgentsByTier([], me), [])
+ })
+ 
+-test('a new conversation starts on the usable agent with the most quota left', () => {
++test('a new conversation starts on the nearest usable agent, quota breaking ties', () => {
+   const cloud = { ...managed, status: 'active' as const }
+   const local = { ...here, status: 'active' as const }
+   const remote = { ...studio, status: 'active' as const }
+@@ -65,10 +66,15 @@ test('a new conversation starts on the usable agent with the most quota left', (
+     ['local_u1_mac', 40],
+   ])
+ 
+-  assert.equal(defaultAgent([cloud, remote, local], me)?.id, 'rt-1')
+-  assert.equal(defaultAgent([cloud, local], me, (agent) => used.get(agent.id))?.id, 'local_u1_mac')
++  // This computer comes first, however much quota the others have left.
++  assert.equal(defaultAgent([cloud, remote, local], me)?.id, 'local_u1_mac')
+   assert.equal(
+     defaultAgent([cloud, remote, local], me, (agent) => used.get(agent.id))?.id,
++    'local_u1_mac',
++  )
++  // Among the rest, the most quota left.
++  assert.equal(
++    defaultAgent([cloud, remote], me, (agent) => used.get(agent.id))?.id,
+     'local_u1_studio',
+   )
+   assert.equal(
+@@ -118,3 +124,36 @@ test('an offline computer is never the default, though its unread quota looks em
+     online.id,
+   )
+ })
++
++test('new chats pick: last used, then Claude Code here, other agents here, any other', () => {
++  const claude = { ...here, provider: 'claude-code', status: 'active' as const }
++  const codex = { ...hereCodex, provider: 'codex', status: 'active' as const }
++  const remote = { ...studio, provider: 'claude-code', status: 'active' as const }
++  const cloud = { ...managed, provider: 'claude-code', status: 'active' as const }
++  const all = [cloud, remote, codex, claude]
++
++  assert.equal(newChatAgent(all, 'rt-1', me)?.id, 'rt-1')
++  assert.equal(newChatAgent(all, undefined, me)?.id, 'local_u1_mac')
++  assert.equal(newChatAgent([cloud, remote, codex], undefined, me)?.id, 'local_u1_mac_codex')
++  // Any other: quota decides, then list order.
++  assert.equal(newChatAgent([cloud, remote], undefined, me)?.id, 'rt-1')
++  // The last pick stands only while it can run: offline, disabled or gone, it is passed over.
++  const disabled = { ...cloud, id: 'rt-9', status: 'disabled' as const }
++  const offline = { ...remote, local: { ...remote.local, online: false } }
++
++  assert.equal(newChatAgent([disabled, ...all], 'rt-9', me)?.id, 'local_u1_mac')
++  assert.equal(newChatAgent([offline, cloud], 'local_u1_studio', me)?.id, 'rt-1')
++  assert.equal(newChatAgent(all, 'deleted-id', me)?.id, 'local_u1_mac')
++  assert.equal(newChatAgent([], 'rt-1', me), undefined)
++})
++
++test('the agent connected from the home composer is picked as soon as it lists', () => {
++  // Before setup: nothing to run. Setup signs in Claude Code here, and this
++  // computer's agent lists (first as the desktop's own pending entry).
++  const connected = { ...here, provider: 'claude-code', status: 'active' as const, starting: true }
++  const signedOut = { ...connected, local: { ...here.local, signedIn: false } }
++
++  assert.equal(newChatAgent([], undefined, me), undefined)
++  assert.equal(newChatAgent([signedOut], undefined, me), undefined)
++  assert.equal(newChatAgent([connected], undefined, me)?.id, 'local_u1_mac')
++})
+diff --git a/apps/desktop/src/lib/agentName.ts b/apps/desktop/src/lib/agentName.ts
+index 347587f..9169bb7 100644
+--- a/apps/desktop/src/lib/agentName.ts
++++ b/apps/desktop/src/lib/agentName.ts
+@@ -50,7 +50,11 @@ export function groupAgentsByTier<T extends NamedAgent>(
+   return agents.length ? [{ tier: 'local' as const, title: '', agents: [...agents] }] : []
+ }
+ 
+-type SelectableAgent = NamedAgent & { status: 'active' | 'disabled'; notReady?: boolean }
++type SelectableAgent = NamedAgent & {
++  status: 'active' | 'disabled'
++  notReady?: boolean
++  provider?: string
++}
+ 
+ /** Why an agent cannot take a turn now: listed greyed out with this, never chosen. */
+ export function unavailable(agent: NamedAgent): string | null {
+@@ -74,24 +78,47 @@ export function listedAgents<T extends SelectableAgent>(agents: readonly T[]): T
+   return agents.filter(listable)
+ }
+ 
+-/** A new conversation starts on the usable agent with the most quota left; unknown counts as full. */
++// This computer's Claude Code, then its other agents, then any other: the one
++// the person most likely just set up comes first.
++function nearness(agent: SelectableAgent, owner: ThisComputer): number {
++  if (agentTier(agent, owner) !== 'local') return 2
++
++  return agent.provider === 'claude-code' ? 0 : 1
++}
++
++/**
++ * A new conversation starts on the nearest usable agent; among equally near
++ * ones, the one with the most quota left, unknown counting as full.
++ */
+ export function defaultAgent<T extends SelectableAgent & { id: string }>(
+   agents: readonly T[],
+-  _owner: ThisComputer,
++  owner: ThisComputer,
+   usedPercent: (agent: T) => number | undefined = () => {},
+ ): T | undefined {
+   let best: T | undefined
+-  let bestUsed = Infinity
++  let bestRank: [number, number] = [Infinity, Infinity]
+ 
+   for (const agent of agents) {
+     if (!usable(agent)) continue
+-    const used = usedPercent(agent) ?? 0
++    const rank: [number, number] = [nearness(agent, owner), usedPercent(agent) ?? 0]
+ 
+-    if (used < bestUsed) {
++    if (rank[0] < bestRank[0] || (rank[0] === bestRank[0] && rank[1] < bestRank[1])) {
+       best = agent
+-      bestUsed = used
++      bestRank = rank
+     }
+   }
+ 
+   return best
+ }
++
++/** The agent a new chat starts on: the last one picked while it can still run, else the default. */
++export function newChatAgent<T extends SelectableAgent & { id: string }>(
++  agents: readonly T[],
++  lastPickedId: string | undefined,
++  owner: ThisComputer,
++  usedPercent?: (agent: T) => number | undefined,
++): T | undefined {
++  const last = agents.find((agent) => agent.id === lastPickedId)
++
++  return last && usable(last) ? last : defaultAgent(agents, owner, usedPercent)
++}
