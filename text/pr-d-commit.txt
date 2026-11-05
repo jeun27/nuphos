@@ -1,0 +1,5 @@
+fix(desktop): a conversation whose agent is gone offers Switch runtime instead of failing
+
+A conversation whose agent was removed showed only "· Unavailable" on its chip and still let you send, which came back as a raw "Agent chat request failed with runtime_not_found (HTTP 404)". runtimeControlSendBlock only knew the disabled status, and a removed agent has none.
+
+runtimeGone() reads the control's existing unavailable flag. Send is blocked, and the banner says "{name} is no longer available." with Switch runtime, which opens the picker to move the conversation. New key "{name} is no longer available." in all 7 locales.
