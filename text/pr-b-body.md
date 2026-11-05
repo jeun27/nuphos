@@ -25,7 +25,7 @@ Part of the runtime sign-in dead-end audit. **Merge order:** this goes before th
   - your own other computer → **Sign in**, which runs the runtime sign-in;
   - a teammate's computer → "Ask its owner", no button;
   - offline → Resume for your own paused Box, Retry otherwise, Switch runtime in a new chat.
-- Desktop `node --test`: 2685 tests, 2684 pass. The only failure is `electron/local-terminal.test.ts`, which fails identically on main in this sandbox (no `node-pty` native build); CI builds it.
+- Desktop `node --test`: 2681 pass, 1 fail. The failure is `electron/local-terminal.test.ts`, which fails identically on main in this sandbox (no `node-pty` native build); CI builds it.
 - `tsc -b --noEmit` is clean. ESLint has 0 errors and no new warnings: `AgentStatusBanner` complexity drops from 37 to 19. Prettier is clean. No locale keys added.
 - **Reproduced end to end:** the real `Composer` was rendered in a page-only harness with fixture data (viewer Alex, a member; "Alex's MacBook" is this computer, Claude Code signed out), on main and on this branch. On main the banner has no action. On this branch **Sign in** opens "Connect Claude on this computer". Captures are in the Visuals comment.
 
