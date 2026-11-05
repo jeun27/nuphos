@@ -11,7 +11,7 @@ Settings already has both actions on its local runtime card: **Install {name}**,
 
 **Fix: reuse them, don't rebuild them.** `InstallButton` is exported from `LocalAgentCard.tsx` unchanged. The onboarding card's "missing" state now shows **Install {name}** and **Check again** under the existing PATH hint. The "How to install" link stays.
 
-The card is no longer dimmed while missing. With buttons on it, the dimming read as "disabled". **@Lin, design call:** say if you'd rather keep a lighter treatment.
+The card is no longer dimmed while missing. With buttons on it, the dimming read as "disabled". **Design call for Lin:** say if you'd rather keep a lighter treatment.
 
 No new strings: "Check again" and "Install {name}" already exist in all 7 locales.
 
