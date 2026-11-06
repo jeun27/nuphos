@@ -1,0 +1,16 @@
+after light {"scene":"composer","kind":"pasted","font":"14.5px","chipH":18.5,"centerVsXHeight":0.03,"lineGrowth":0}
+after light {"scene":"composer","kind":"image","font":"14.5px","chipH":18.5,"centerVsXHeight":0.03,"lineGrowth":0}
+after light {"scene":"composer","kind":"link","font":"14.5px","chipH":18.5,"centerVsXHeight":0.03,"lineGrowth":0}
+after light {"scene":"hero","kind":"pasted","font":"16px","chipH":18.5,"centerVsXHeight":0.13,"lineGrowth":0}
+after light {"scene":"hero","kind":"image","font":"16px","chipH":18.5,"centerVsXHeight":0.13,"lineGrowth":0}
+after light {"scene":"hero","kind":"link","font":"16px","chipH":18.5,"centerVsXHeight":0.13,"lineGrowth":0}
+after light {"scene":"transcript","kind":"pasted","ownRow":true,"display":"flex","chipH":19.6}
+after light {"scene":"transcript","kind":"link","font":"14px","chipH":20.8,"centerVsXHeight":0.17,"lineGrowth":0}
+after dark {"scene":"composer","kind":"pasted","font":"14.5px","chipH":18.5,"centerVsXHeight":0.03,"lineGrowth":0}
+after dark {"scene":"composer","kind":"image","font":"14.5px","chipH":18.5,"centerVsXHeight":0.03,"lineGrowth":0}
+after dark {"scene":"composer","kind":"link","font":"14.5px","chipH":18.5,"centerVsXHeight":0.03,"lineGrowth":0}
+after dark {"scene":"hero","kind":"pasted","font":"16px","chipH":18.5,"centerVsXHeight":0.13,"lineGrowth":0}
+after dark {"scene":"hero","kind":"image","font":"16px","chipH":18.5,"centerVsXHeight":0.13,"lineGrowth":0}
+after dark {"scene":"hero","kind":"link","font":"16px","chipH":18.5,"centerVsXHeight":0.13,"lineGrowth":0}
+after dark {"scene":"transcript","kind":"pasted","ownRow":true,"display":"flex","chipH":19.6}
+after dark {"scene":"transcript","kind":"link","font":"14px","chipH":20.8,"centerVsXHeight":0.17,"lineGrowth":0}
