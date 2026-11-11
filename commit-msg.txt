@@ -1,0 +1,16 @@
+fix(backend): show the model settings a chat actually runs on
+
+The model chip for a started chat is built from the settings the backend
+stored when someone picked them. The runtime's own changes never reached
+that copy, so the chip could disagree with what Claude Code ran:
+
+- Fast mode: on an account without extra usage, Claude Code turns fast
+  mode off after the first reply and says so. The chip kept showing it on.
+- Defaults: a chat started on the agent's defaults (sub-agents, bots) had
+  picked nothing, so the chip showed "Model settings" with no effort
+  slider or fast toggle.
+
+After each reply, read the settings from the now-idle session and store
+them, so the chip shows what the session runs. A busy or replaced session
+keeps the stored settings. Claude Code's "default" model shows as the
+model it stands for, as the runtime catalog already lists it.
