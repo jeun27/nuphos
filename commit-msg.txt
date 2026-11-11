@@ -1,0 +1,7 @@
+feat(desktop): ask before restarting to update, and open the update button into a pill on hover
+
+The round update button now opens into an "Update" pill on hover. Clicking it,
+or the "Restart to update" row in the help menu, opens an "Update ready" dialog
+(Not now / Update) instead of restarting at once, so there is one way to update.
+The update button sits beside the help button, so Help and What's new stay
+reachable while an update waits. Respects prefers-reduced-motion.
