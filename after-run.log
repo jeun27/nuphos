@@ -1,0 +1,19 @@
+2026-11-11T17:29:45.201Z pid=49902 v1.0.0 [after] checking for update
+2026-11-11T17:29:47.054Z pid=49902 v1.0.0 [after] update-downloaded
+2026-11-11T17:29:47.862Z pid=49902 v1.0.0 [after] screenshot after-1-ready.png
+2026-11-11T17:29:47.865Z pid=49902 v1.0.0 [after] Restart to update clicked
+2026-11-11T17:29:47.865Z pid=49902 v1.0.0 [after] before-quit-for-update
+2026-11-11T17:29:47.866Z pid=49902 v1.0.0 [after] agent tab close (quitting=true)
+2026-11-11T17:29:47.978Z pid=49902 v1.0.0 [after] main window closed
+2026-11-11T17:29:47.978Z pid=49902 v1.0.0 [after] window-all-closed
+2026-11-11T17:29:47.979Z pid=49902 v1.0.0 [after] before-quit-for-update
+2026-11-11T17:29:47.987Z pid=49902 v1.0.0 [after] before-quit
+2026-11-11T17:29:48.488Z pid=49902 v1.0.0 [after] before-quit
+2026-11-11T17:29:48.489Z pid=49902 v1.0.0 [after] will-quit
+2026-11-11T17:29:48.489Z pid=49902 v1.0.0 [after] quit: main process exiting
+2026-11-11T17:29:52.093Z pid=50077 v2.0.0 [after] launched after update
+2026-11-11T17:29:53.166Z pid=50077 v2.0.0 [after] screenshot after-2-after-restart.png
+2026-11-11T17:29:54.167Z pid=50077 v2.0.0 [after] before-quit
+2026-11-11T17:29:54.669Z pid=50077 v2.0.0 [after] before-quit
+2026-11-11T17:29:54.772Z pid=50077 v2.0.0 [after] will-quit
+2026-11-11T17:29:54.772Z pid=50077 v2.0.0 [after] quit: main process exiting

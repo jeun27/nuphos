@@ -1,0 +1,9 @@
+2026-11-11T17:28:58.073Z pid=48821 v1.0.0 [before] checking for update
+2026-11-11T17:29:00.137Z pid=48821 v1.0.0 [before] update-downloaded
+2026-11-11T17:29:01.159Z pid=48821 v1.0.0 [before] screenshot before-1-ready.png
+2026-11-11T17:29:01.163Z pid=48821 v1.0.0 [before] Restart to update clicked
+2026-11-11T17:29:01.163Z pid=48821 v1.0.0 [before] before-quit-for-update
+2026-11-11T17:29:01.163Z pid=48821 v1.0.0 [before] agent tab close (quitting=false)
+2026-11-11T17:29:01.268Z pid=48821 v1.0.0 [before] main window closed
+2026-11-11T17:29:13.267Z pid=48821 v1.0.0 [before] still running 12s after the click; windows=1
+2026-11-11T17:29:14.110Z pid=48821 v1.0.0 [before] screenshot before-2-after-restart.png
