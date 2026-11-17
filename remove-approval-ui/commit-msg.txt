@@ -1,0 +1,9 @@
+refactor: remove the dead computer-use approval UI
+
+Since #1391 the backend no longer asks a computer's owner to approve a
+teammate's conversation, so no new approval is created. Remove what only
+showed those approvals: the Inbox section, its badge count and OS
+notification on Desktop, and the waiting strip on iOS and Android, with
+their now-unused strings and tests. The backend routes and stores stay
+for released builds.
+
