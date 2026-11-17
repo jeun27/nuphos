@@ -1,0 +1,1 @@
+feat: offer to stop computer use after removing someone from a chat
