@@ -1,0 +1,29 @@
+feat(desktop): ask before restarting to update, and open the update button into a pill on hover
+
+The update button in the sidebar footer now sits beside Help instead of
+replacing it, so Help, What's new and Keyboard shortcuts stay reachable
+while an update waits. It is the standard Button (primary, sm, round)
+and opens into an "Update" pill on hover and keyboard focus. The pill
+grows to the left over the Connectors button, so the footer row never
+moves, and the Connectors label fades out while the pill is open (hover
+or keyboard focus, CSS only), so no text shows half-covered. The grid 0fr to 1fr label fits any language and is off under
+prefers-reduced-motion.
+
+The pill and the help menu's "Restart to update" row both open an
+"Update ready" confirmation through the shared ConfirmDialog, with Not
+now and Update. Update runs the existing updater install. The copy says
+what a restart does: Bots and tasks on this computer stop, so replies
+still running there are cut off. It promises nothing resumes.
+
+Since #2505 a restart no longer downloads anything, so the percent now
+covers the one download left that a person can see: a newer release
+replacing the update already on offer. The button stays, disabled, with
+the percent, and the menu row reads "Downloading Nuphos {version}…",
+instead of the button disappearing until the new one is ready.
+
+The Connectors button gives up its three logo chips when it is narrower
+than they need (a container query), so its label still fits beside the
+update button.
+
+Two strings, in all 7 locales.
+

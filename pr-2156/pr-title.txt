@@ -1,0 +1,1 @@
+feat(desktop): ask before restarting to update, and open the update button into a pill on hover
