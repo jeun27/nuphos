@@ -117,9 +117,9 @@ Page-only captures of the real components in a Vite harness with fixture data (l
 - **Flow exercised:** Each surface above rendered from the real component in both trees and driven with playwright-core and headless Chromium: opening the invite window, the pending-invite menu, both Share dialogs with history, the chat invite and removal confirms, the settings sections, the Inbox and the agent banner.
 - **Build and environment:** macOS (Apple Silicon), this branch rebased on `282f164f0`. Captures on Linux x64 with Chromium.
 - **Result:**
-  - Backend: `tsc` clean. `bun test src/lib src/routes`: 5,517 pass, 18 fail. The same 18 fail on main on this Mac (avatar and photo processing, loopback lookups, Windows paths, the Kubernetes exec socket, one timing test, one that needs Linux `readlink -f`). None are in files this PR touches.
+  - Backend: `tsc` clean. `bun test src/lib src/routes`: 5,517 pass, 18 fail (avatar and photo processing, loopback lookups, Windows paths, the Kubernetes exec socket, one timing test, one that needs Linux `readlink -f`). None are in files this PR touches, and the two I re-ran on a branch without this change fail there the same way. On Linux, a full run of main and of this change failed the identical set.
   - Desktop: `tsc -b` clean. Node tests: 3,257 pass, 1 fail (`agent-cli-apps.test.ts`, which finds this Mac's `/opt/homebrew/bin/codex`). `test:ui`: 68 pass, 0 fail.
-  - iOS: `apps/ios/tests/run.sh` passes, and the simulator build succeeded before the review fixes, which touch no iOS code.
+  - iOS: `apps/ios/tests/run.sh` passes, and `xcodebuild build` for the iOS Simulator succeeds at this head.
   - `prettier --check` clean and ESLint 0 errors on the changed files.
 - **Automated test added or updated:**
   - Backend: `routes/invitations.test.ts` (Admin invitation after the inviter loses admin), `routes/teams/invitations.test.ts` (role, resend, link for admins only), `conversation-computer-use.test.ts`, the participants route tests, `sign-in-request.test.ts`, `sign-in-signers.test.ts`, `management.test.ts` (role change), `routes-devices-access-audit.test.ts` (owner change).
