@@ -1,1 +1,0 @@
-fix(desktop): mark failed tool calls in the transcript
