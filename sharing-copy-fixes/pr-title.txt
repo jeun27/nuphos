@@ -1,0 +1,1 @@
+fix: say what sharing grants and name destructive confirms
