@@ -1,0 +1,9 @@
+fix(backend): keep a member's computer streams open on a role change
+
+A role change called revokeTeamBoxStreams, a leftover from before #1391 when an
+administrator managed every team computer by role. Since #1391 deviceAccess grants
+only by owner and access list, so a role change grants or removes nothing on a
+computer. Only leaving or being removed closes streams (revokeTeamMemberAccess).
+
+Part of #3197.
+

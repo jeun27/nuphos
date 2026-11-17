@@ -1,0 +1,1 @@
+fix(backend): keep a member's computer streams open on a role change
