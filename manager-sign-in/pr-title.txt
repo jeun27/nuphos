@@ -1,1 +1,0 @@
-fix: let a computer's managers sign its agents in from chat
