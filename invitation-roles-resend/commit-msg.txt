@@ -1,0 +1,8 @@
+feat(members): invite with a role, and resend an invitation's email
+
+An invitation carries the role its person joins with (Editor when a client does not say). An Admin invitation gives Admin only while its inviter is still an admin of the team. Admins can resend an invitation's email at most every 5 minutes, counted from an email that went out, and get the invite link on the list and create answers.
+
+Desktop: a "Joins as" picker in the invite window, the role on a pending row, Resend email and Copy invite link on its menu, a notice when no email went out, and one when an older server ignored the role.
+
+Part of #3197.
+
