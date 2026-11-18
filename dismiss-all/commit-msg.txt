@@ -1,0 +1,22 @@
+feat(desktop): dismiss every question shown in the Inbox at once
+
+The Inbox had no way to clear itself: each question had to be dismissed
+on its own. "Dismiss all" in the Inbox page's header, beside its search
+and count, dismisses every question it shows (not snoozed ones, and only
+those a search matches). It shows when there are two or more, asks first
+with the standard confirmation, and goes through the same 5 s Undo hold
+as a single Dismiss: they all leave at once, one Undo brings them all
+back unsent, and once the window passes each is dismissed through the
+existing resolve route, so each Bot or Task that asked is told. Those
+refused come back in the list, and the toast says how many.
+
+- useInbox: holdAnswer is built on a new holdReplies, which holds any
+  set of questions under the one Undo window.
+- dismissAll.ts: holdDismissals, and the result of a partial failure.
+- inboxItems: the Inbox's search filter moves to shownQuestions.
+- DismissAllButton: Button and ConfirmDialog in the toolbar's right
+  slot; the Inbox's keys rest while it asks.
+- Five new strings in all 7 locales.
+- e2e: two Tasks ask, Undo keeps both open, then both close and both
+  are told. Registered in questionScenarios.
+

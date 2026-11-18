@@ -1,0 +1,1 @@
+feat(desktop): dismiss every question shown in the Inbox at once
