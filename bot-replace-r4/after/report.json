@@ -1,0 +1,24 @@
+{
+  "side": "after",
+  "buttons": [
+    {
+      "label": "Edit Bot",
+      "disabled": false
+    },
+    {
+      "label": "Task",
+      "disabled": false
+    },
+    {
+      "label": "Desktop",
+      "disabled": false
+    },
+    {
+      "label": "Replace",
+      "disabled": false
+    }
+  ],
+  "errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ]
+}
